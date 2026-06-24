@@ -1,0 +1,84 @@
+{
+  "generatedBy": "tools/render-hub.mjs",
+  "project": "project-system",
+  "entities": 7,
+  "migrated": 7,
+  "counts": {
+    "error": 0,
+    "warning": 0,
+    "info": 0
+  },
+  "byKind": {
+    "decision": {
+      "total": 3,
+      "byStatus": {
+        "accepted": 3
+      },
+      "ids": [
+        "0001-home-the-project-system-framework-in-its-own-space",
+        "0002-mirror-the-contract-with-a-ci-check-before-publishing",
+        "0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter"
+      ]
+    },
+    "report": {
+      "total": 1,
+      "byStatus": {
+        "complete": 1
+      },
+      "ids": [
+        "2026-06-24-extract-and-generalize-the-framework-from-soul-steel"
+      ]
+    },
+    "pipeline": {
+      "total": 1,
+      "byStatus": {
+        "design": 1
+      },
+      "ids": [
+        "package-as-trembus-project-schema"
+      ]
+    },
+    "roadmap": {
+      "total": 1,
+      "byStatus": {
+        "proposed": 1
+      },
+      "ids": [
+        "migrate-soul-steel-to-consume-the-packaged-framework"
+      ]
+    },
+    "session": {
+      "total": 1,
+      "byStatus": {
+        "active": 1
+      },
+      "ids": [
+        "2026-06-24-extract-and-generalize-project-system-into-its-own-space"
+      ]
+    }
+  },
+  "edges": [
+    {
+      "from": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
+      "fromKind": "report",
+      "rel": "decided-in",
+      "target": "decisions/0001-home-the-project-system-framework-in-its-own-space"
+    },
+    {
+      "from": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
+      "fromKind": "report",
+      "rel": "references",
+      "target": "sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space"
+    },
+    {
+      "from": "migrate-soul-steel-to-consume-the-packaged-framework",
+      "fromKind": "roadmap",
+      "rel": "references",
+      "target": "decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing"
+    }
+  ],
+  "edgesByRel": {
+    "decided-in": 1,
+    "references": 2
+  }
+}

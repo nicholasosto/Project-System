@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trembus.dev/schemas/project-config.schema.json",
+  "title": "ProjectSystem config",
+  "description": "Per-project configuration that, composed with project-entity.base.schema.json, forms the effective ProjectEntity contract for one project. This is the ONLY place project-specific vocabulary lives: which kinds exist, the per-kind status enums and folders, body-section conventions, the tag registry, milestone markers, rel->kind target rules, and render metadata. The framework core is identical across projects; only this file changes.",
+  "x-version": "1.0.0",
+  "type": "object",
+  "required": ["project", "kinds"],
+  "additionalProperties": false,
+  "properties": {
+    "project": {
+      "description": "Short identifier for the consuming project (e.g. 'project-system', 'soul-steel'). Display/label only.",
+      "type": "string",
+      "minLength": 1
+    },
+    "projectRoot": {
+      "description": "Optional. Path to the directory that contains _project/, relative to this config file. Defaults to '.' (config sits at the project root). Overridable at the CLI with --root.",
+      "type": "string"
+    },
+    "kinds": {
+      "description": "Ordered map of entity kind -> its rules. Insertion order is the display/auto-placement order. Each key is a kind name; each kind owns a folder under _project/.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/kind" }
+    },
+    "tagRegistry": {
+      "description": "Known tag keys. Known keys have their VALUES validated; unknown keys are allowed but surfaced (info). Keys that shadow a primitive are rejected by the base schema.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/tagSpec" },
+      "default": {}
+    },
+    "relTargetKinds": {
+      "description": "For each rel in the base vocabulary, what its target must be: an array of kind names (target must resolve to a file of one of those kinds), or the literal 'marker' (a milestone marker), 'external' (off-graph ref; resolves only if it looks internal), or 'any'.",
+      "type": "object",
+      "propertyNames": { "enum": ["supersedes", "superseded-by", "predecessor", "successor", "milestone", "implements", "decided-in", "references"] },
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "array", "items": { "type": "string" } },
+          { "enum": ["marker", "external", "any"] }
+        ]
+      },
+      "default": {}
+    },
+    "milestones": {
+      "description": "The known milestone markers (e.g. ['M1','M2']). A `milestone` link to a marker outside this set is a warning, not an error. Empty/omitted => any marker shape (e.g. M\\d+) is accepted with an unknown-milestone warning.",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "milestonePattern": {
+      "description": "Regex (string) a milestone marker must match to be recognized as a marker at all. Default '^M\\\\d+$'.",
+      "type": "string",
+      "default": "^M\\d+$"
+    },
+    "proseStatusEnforcement": {
+      "description": "Whether the prose '**Status:**' header must agree with the frontmatter status, and at what severity.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rollout": { "enum": ["off", "warn", "error"], "default": "warn" }
+      },
+      "default": { "rollout": "warn" }
+    },
+    "render": {
+      "description": "Optional. Drives the hub dashboard renderer. Entirely project-agnostic: a brand string, accent tone, editorial copy, and the path to a visual-grammar kit. Kinds are auto-placed into the kit's hex slots in declared order; the kit's slot-naming is an internal adapter concern, never surfaced here.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "kit": { "type": "string", "description": "Absolute path to a visual-grammar kit directory (must contain build.mjs). If absent or missing, the renderer emits JSON only." },
+        "brand": { "type": "string" },
+        "code": { "type": "string" },
+        "tagline": { "type": "string" },
+        "tone": { "type": "string", "description": "Accent hex, default #D4AF37." },
+        "centerName": { "type": "string", "description": "Label for the center tile (the contract). Default 'ProjectEntity'." }
+      }
+    }
+  },
+  "$defs": {
+    "kind": {
+      "type": "object",
+      "required": ["folder", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "folder": {
+          "description": "The subfolder under _project/ that holds this kind (e.g. 'decisions'). Identity: kind is derived from this folder.",
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "description": "The per-kind status enum. status is the single State axis; it ranges over exactly these values for this kind.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "initialStatus": {
+          "description": "The 'born' status a freshly scaffolded entity gets. Must be in `status`. Defaults to status[0].",
+          "type": "string"
+        },
+        "filename": {
+          "description": "Filename scheme the scaffolder uses: 'serial' (NNNN-slug, zero-padded running number), 'date-slug' (YYYY-MM-DD-slug), or 'slug' (bare slug). Default 'slug'.",
+          "enum": ["serial", "date-slug", "slug"],
+          "default": "slug"
+        },
+        "serialPad": {
+          "description": "For filename:'serial', how many digits to pad to. Default 4.",
+          "type": "integer",
+          "minimum": 1,
+          "default": 4
+        },
+        "requiredSections": {
+          "description": "Body sections whose absence is a WARNING (never an error) — the empirically-universal core for this kind. Body structure is convention, not contract.",
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "scaffoldSections": {
+          "description": "The fuller per-kind template the scaffolder writes at CREATE time. Supersets requiredSections so a fresh scaffold has zero missing-section warnings. Defaults to requiredSections.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "render": {
+          "description": "Optional render metadata for this kind's hub tile: accent dot color and human labels. NO slot/position — the renderer auto-places kinds in declared order.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "dot": { "type": "string", "description": "Accent hex for the tile dot." },
+            "tag": { "type": "string", "description": "Short eyebrow label." },
+            "name": { "type": "string", "description": "Tile name." },
+            "sub": { "type": "string", "description": "One-line subtitle." }
+          }
+        }
+      }
+    },
+    "tagSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["enum", "string"] },
+        "values": { "type": "array", "items": { "type": "string" }, "description": "For type:'enum', the allowed values (invalid value => error)." },
+        "lintAgainst": { "type": "array", "items": { "type": "string" }, "description": "For type:'string', familiar values (an unfamiliar value => warning, still allowed)." },
+        "unknownAllowed": { "type": "boolean", "default": true }
+      }
+    }
+  }
+}

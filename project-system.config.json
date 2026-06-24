@@ -1,0 +1,94 @@
+{
+  "$schema": "./schema/project-config.schema.json",
+  "project": "project-system",
+  "projectRoot": ".",
+  "kinds": {
+    "decision": {
+      "folder": "decisions",
+      "status": ["proposed", "accepted", "superseded", "rejected"],
+      "initialStatus": "proposed",
+      "filename": "serial",
+      "serialPad": 4,
+      "requiredSections": ["Context"],
+      "scaffoldSections": ["Context", "Decision", "Consequences", "Options considered", "Cites", "Re-open if"],
+      "render": { "dot": "#44DDFF", "tag": "Decisions", "name": "ADR ledger", "sub": "supersession-linked" }
+    },
+    "report": {
+      "folder": "reports",
+      "status": ["draft", "complete"],
+      "initialStatus": "draft",
+      "filename": "date-slug",
+      "requiredSections": [],
+      "scaffoldSections": ["Outcome", "Surprises", "Decisions made", "Carry-forward", "Verification evidence"],
+      "render": { "dot": "#7BD88F", "tag": "Reports", "name": "Retro log", "sub": "milestone + meta retros" }
+    },
+    "pipeline": {
+      "folder": "pipeline",
+      "status": ["design", "qualify", "build", "ship", "archive", "shelved"],
+      "initialStatus": "design",
+      "filename": "slug",
+      "requiredSections": [],
+      "scaffoldSections": ["Context", "Build plan", "Exit criteria"],
+      "render": { "dot": "#B884FF", "tag": "Pipeline", "name": "Build plans", "sub": "design → ship lifecycle" }
+    },
+    "roadmap": {
+      "folder": "roadmap",
+      "status": ["proposed", "active", "superseded", "complete"],
+      "initialStatus": "proposed",
+      "filename": "slug",
+      "requiredSections": ["Context"],
+      "scaffoldSections": ["Context", "Plan", "Open questions"],
+      "render": { "dot": "#6BC9FF", "tag": "Roadmap", "name": "Plans", "sub": "phase + workstream" }
+    },
+    "session": {
+      "folder": "sessions",
+      "status": ["planned", "active", "blocked", "completed", "shelved"],
+      "initialStatus": "planned",
+      "filename": "date-slug",
+      "requiredSections": ["Goal", "Success Criteria", "Source References", "Decisions", "Outputs", "Blockers", "Next Action", "Handoff Notes"],
+      "render": { "dot": "#D4AF37", "tag": "Sessions", "name": "Work log", "sub": "reference shape · 8 sections" }
+    }
+  },
+  "tagRegistry": {
+    "priority": { "type": "enum", "values": ["high", "medium", "low"] },
+    "agent": { "type": "enum", "values": ["neutral", "codex", "claude", "human"] },
+    "scope": { "type": "string", "lintAgainst": ["framework", "tooling", "docs", "packaging"], "unknownAllowed": true },
+    "horizon": { "type": "enum", "values": ["milestone", "phase", "cross-domain"] }
+  },
+  "relTargetKinds": {
+    "supersedes": ["decision", "roadmap"],
+    "superseded-by": ["decision", "roadmap"],
+    "predecessor": ["pipeline", "report"],
+    "successor": ["pipeline", "report"],
+    "decided-in": ["decision"],
+    "milestone": "marker",
+    "implements": "external",
+    "references": "any"
+  },
+  "milestones": [],
+  "proseStatusEnforcement": { "rollout": "error" },
+  "render": {
+    "kit": "/Users/nicholasosto/Master-Managed/Project-Spaces/LLM-Agent-Development/canonical/kits/visual-grammar",
+    "brand": "Project System",
+    "code": "project-system.entity-graph",
+    "tone": "#D4AF37",
+    "tagline": "first-principles planning contract",
+    "taglineNote": "1 shape · 5 kinds · derived renderers",
+    "centerName": "ProjectEntity",
+    "sub": "Every _project/ artifact is one ProjectEntity — Identity · State · Relation, reduced from five per-kind interfaces to three primitives. The center is the contract; each petal is an entity kind; the last slot is the tooling it feeds. Project-agnostic: the kinds, enums, and copy all come from a per-project config.",
+    "strategy": "One contract, three primitives, many disposable renderers — the planning layer reduced the way a UI reduces to State and Relation. A good reduction deletes fields; this one dropped five interfaces to three.",
+    "banner": {
+      "text": "Self-sustaining: new files are born valid, invalid writes are blocked at save time — for any project that supplies a config.",
+      "note": "project-system · extracted + generalized from Soul-Steel 2026-06-24"
+    },
+    "ribbonTitle": "Extraction · generalize · package",
+    "ribbonTotal": "3 shipped · 1 now · 1 planned",
+    "ribbon": [
+      { "code": "1", "name": "Extracted from Soul-Steel", "date": "06-24", "kind": "shipped" },
+      { "code": "2", "name": "Generalized: config-driven core", "date": "06-24", "kind": "shipped" },
+      { "code": "3", "name": "Dogfoods its own _project/", "date": "now", "kind": "current" },
+      { "code": "4", "name": "Consumer drift-check (mirror)", "date": "06-24", "kind": "shipped" },
+      { "code": "5", "name": "Publish @trembus/project-schema (3rd consumer)", "date": "later", "kind": "planned" }
+    ]
+  }
+}

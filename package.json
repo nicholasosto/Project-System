@@ -1,0 +1,23 @@
+{
+  "name": "@trembus/project-system",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "First-principles, project-agnostic planning-artifact framework: one ProjectEntity contract (Identity · State · Relation), with a config-driven validator / scaffolder / guard / hub renderer. Zero runtime dependencies.",
+  "bin": {
+    "project-validate": "tools/validate.mjs",
+    "project-new": "tools/new-entity.mjs",
+    "project-guard": "tools/guard.mjs",
+    "project-render": "tools/render-hub.mjs"
+  },
+  "scripts": {
+    "validate": "node tools/validate.mjs",
+    "new": "node tools/new-entity.mjs",
+    "render": "node tools/render-hub.mjs",
+    "check-drift": "node tools/check-consumer-drift.mjs",
+    "test": "node tools/validate.mjs --self-test && node tools/new-entity.mjs --self-test && node tools/guard.mjs --self-test"
+  },
+  "engines": { "node": ">=18" },
+  "files": ["lib", "tools", "schema", "examples"],
+  "license": "UNLICENSED"
+}

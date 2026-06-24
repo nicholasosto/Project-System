@@ -1,0 +1,272 @@
+#!/usr/bin/env node
+// Validate a project's _project/ planning artifacts against the effective
+// ProjectEntity contract (base schema + the project's project-system.config.json).
+//
+// Zero-dependency. All project specifics come from ctx (see lib/contract.mjs); this
+// file is the check LOGIC and the CLI, and is identical across every consuming project.
+// validateEntity() is the single source of truth reused by the scaffolder, the guard,
+// and the renderer — no check is re-implemented anywhere else.
+//
+// Usage:
+//   node tools/validate.mjs [--root <dir>] [--config <path>]   # report (exit 1 on errors)
+//   node tools/validate.mjs --json                              # machine-readable issues + summary
+//   node tools/validate.mjs --self-test                         # assert the checks themselves work
+
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { daysSince } from "../lib/md.mjs";
+import {
+  AUTHORED_FIELDS,
+  DERIVED_FIELDS,
+  PRIMITIVE_KEYS,
+  classifyTarget,
+  loadBaseSchema,
+  loadContract,
+  loadEntities,
+  readProjectArgs,
+} from "../lib/contract.mjs";
+
+// Pull the leading status word out of a prose "**Status:** …" header, normalized.
+function proseStatusWord(fullText) {
+  const m = fullText.match(/\*\*status:?\*\*:?\s*([^\n]+)/i);
+  if (!m) return null;
+  const word = m[1].replace(/^[^A-Za-z]+/, "").match(/^([A-Za-z]+)/);
+  return word ? word[1].toLowerCase() : null;
+}
+
+function statusesAgree(prose, fm) {
+  if (prose === fm) return true;
+  const synonyms = { complete: "completed", completed: "complete" };
+  return synonyms[prose] === fm;
+}
+
+export function validateEntity(entity, ctx) {
+  const issues = [];
+  const add = (severity, message) => issues.push({ severity, file: entity.file, message });
+  const fm = entity.fm ?? {};
+
+  if (!entity.hasFrontmatter) {
+    add("info", "pending migration — no frontmatter block yet");
+    return issues;
+  }
+
+  // Field hygiene: derived fields authored, legacy fields to migrate.
+  const migrate = [];
+  for (const key of Object.keys(fm)) {
+    if (ctx.authoredFields.has(key)) continue;
+    migrate.push(ctx.derivedFields.has(key) ? `${key} (derived — remove)` : `${key} (→ tags/links)`);
+  }
+  if (migrate.length) add("info", `frontmatter fields to migrate: ${migrate.join(", ")}`);
+
+  // Required authored fields.
+  for (const field of ["title", "status", "updated"]) {
+    if (!fm[field]) add("error", `missing required field: ${field}`);
+  }
+
+  // status ∈ per-kind enum.
+  const enumForKind = ctx.statusEnums[entity.kind];
+  if (fm.status && enumForKind && !enumForKind.has(fm.status)) {
+    add("error", `invalid status "${fm.status}" for kind ${entity.kind} (expected: ${[...enumForKind].join(", ")})`);
+  }
+
+  // updated: ISO + not in the future.
+  if (fm.updated) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fm.updated)) add("error", `updated not ISO YYYY-MM-DD: "${fm.updated}"`);
+    else if (daysSince(fm.updated) < 0) add("warning", `updated is in the future: ${fm.updated}`);
+  }
+
+  // Conventional sections for the kind — convention, not contract → warning, never error.
+  for (const section of ctx.requiredSections[entity.kind] ?? []) {
+    if (!entity.sections[section]) add("warning", `missing conventional section: ${section}`);
+  }
+
+  // tags.
+  if (fm.tags && typeof fm.tags === "object" && !Array.isArray(fm.tags)) {
+    for (const [key, val] of Object.entries(fm.tags)) {
+      if (ctx.primitiveKeys.has(key)) {
+        add("error", `tag "${key}" shadows a primitive — belongs in ${key === "supersedes" || key === "superseded-by" ? "links" : "the core fields"}, not tags`);
+        continue;
+      }
+      const reg = ctx.tagRegistry[key];
+      if (!reg) {
+        add("info", `unknown tag key "${key}" (allowed; promote if it recurs)`);
+      } else if (reg.type === "enum" && !reg.values.includes(val)) {
+        add("error", `invalid tag ${key}="${val}" (expected: ${reg.values.join(", ")})`);
+      } else if (reg.lintAgainst && !reg.lintAgainst.includes(val)) {
+        add("warning", `unfamiliar ${key} "${val}" (known: ${reg.lintAgainst.join(", ")}; allowed)`);
+      }
+    }
+  } else if (fm.tags) {
+    add("warning", "tags is not a map");
+  }
+
+  // links.
+  if (Array.isArray(fm.links)) {
+    for (const link of fm.links) {
+      if (!link || typeof link !== "object") {
+        add("error", "malformed link (expected { rel, target })");
+        continue;
+      }
+      if (!ctx.relEnum.has(link.rel)) {
+        add("error", `invalid link rel "${link.rel}"`);
+        continue;
+      }
+      if (!link.target) {
+        add("error", `link rel ${link.rel} has no target`);
+        continue;
+      }
+      const allowed = ctx.relTargetKinds[link.rel];
+      const t = classifyTarget(ctx, link.target);
+      if (allowed === "marker") {
+        if (t.type !== "marker") add("error", `rel ${link.rel} expects a milestone marker, got "${link.target}"`);
+        else if (ctx.knownMilestones.size && !ctx.knownMilestones.has(t.milestone)) add("warning", `unknown milestone ${t.milestone}`);
+      } else if (allowed === "external" || allowed === "any") {
+        if (t.type === "internal" && !t.exists) add("error", `dangling link target: ${link.target}`);
+      } else if (Array.isArray(allowed)) {
+        if (t.type !== "internal") add("error", `rel ${link.rel} expects ${allowed.join("/")} target, got "${link.target}"`);
+        else if (!t.exists) add("error", `dangling link target: ${link.target}`);
+        else if (!allowed.includes(t.kind)) add("error", `rel ${link.rel} points at a ${t.kind} (${link.target}); expected ${allowed.join("/")}`);
+      }
+    }
+  } else if (fm.links) {
+    add("warning", "links is not a sequence");
+  }
+
+  // Prose ↔ frontmatter status agreement (severity per config rollout).
+  if (ctx.proseSeverity !== "off") {
+    const prose = proseStatusWord(entity.fullText ?? "");
+    if (prose && fm.status && enumForKind?.has(prose) && !statusesAgree(prose, fm.status)) {
+      add(ctx.proseSeverity, `prose status "${prose}" disagrees with frontmatter status "${fm.status}"`);
+    }
+  }
+
+  return issues;
+}
+
+export function run(opts) {
+  const ctx = loadContract(opts);
+  const entities = loadEntities(ctx);
+  const issues = entities.flatMap((e) => validateEntity(e, ctx));
+  const migrated = entities.filter((e) => e.hasFrontmatter).length;
+  const counts = {
+    error: issues.filter((i) => i.severity === "error").length,
+    warning: issues.filter((i) => i.severity === "warning").length,
+    info: issues.filter((i) => i.severity === "info").length,
+  };
+  return { ctx, entities, issues, migrated, counts };
+}
+
+function printReport({ ctx, entities, issues, migrated, counts }) {
+  console.log(
+    `[${ctx.project}] ${entities.length} files across ${ctx.kinds.length} kinds — ` +
+      `${migrated} with frontmatter, ${entities.length - migrated} pending; ` +
+      `${counts.error} errors, ${counts.warning} warnings, ${counts.info} info`,
+  );
+  const order = { error: 0, warning: 1, info: 2 };
+  for (const issue of [...issues].sort((a, b) => order[a.severity] - order[b.severity])) {
+    console.log(`${issue.severity.toUpperCase()}: ${issue.file}: ${issue.message}`);
+  }
+  return counts.error === 0;
+}
+
+// --- self-test: assert the checks themselves catch what they should ----------
+// Hermetic: builds a synthetic ctx + a throwaway fixture tree, independent of any
+// real project config, so it tests the LOGIC, not a particular project's content.
+
+function syntheticCtx(projectRoot) {
+  return {
+    project: "synthetic",
+    projectRoot,
+    kinds: ["decision", "pipeline", "report"],
+    folderByKind: { decision: "decisions", pipeline: "pipeline", report: "reports" },
+    kindByFolder: { decisions: "decision", pipeline: "pipeline", reports: "report" },
+    statusEnums: {
+      decision: new Set(["proposed", "accepted", "superseded", "rejected"]),
+      pipeline: new Set(["design", "qualify", "build", "ship", "archive", "shelved"]),
+      report: new Set(["draft", "complete"]),
+    },
+    requiredSections: { decision: ["Context"], pipeline: [], report: [] },
+    tagRegistry: {
+      priority: { type: "enum", values: ["high", "medium", "low"] },
+      scope: { type: "string", lintAgainst: ["alpha", "beta"], unknownAllowed: true },
+    },
+    relEnum: new Set(loadBaseSchema().$defs.rel.enum),
+    relTargetKinds: { "superseded-by": ["decision"], predecessor: ["pipeline", "report"], milestone: "marker", references: "any" },
+    knownMilestones: new Set(["M5"]),
+    milestonePattern: /^M\d+$/,
+    proseSeverity: "error",
+    primitiveKeys: PRIMITIVE_KEYS,
+    derivedFields: DERIVED_FIELDS,
+    authoredFields: AUTHORED_FIELDS,
+  };
+}
+
+function selfTest() {
+  const root = mkdtempSync(join(tmpdir(), "ps-validate-"));
+  try {
+    mkdirSync(join(root, "_project", "decisions"), { recursive: true });
+    writeFileSync(join(root, "_project", "decisions", "sample.md"), "---\ntitle: S\nstatus: accepted\nupdated: 2026-06-20\n---\n\n## Context\n\nx\n");
+    const ctx = syntheticCtx(root);
+    const sectionsFor = (kind) => Object.fromEntries((ctx.requiredSections[kind] ?? []).map((s) => [s, "x"]));
+    const base = (over = {}) => ({
+      kind: "decision",
+      id: "synthetic",
+      file: "synthetic.md",
+      hasFrontmatter: true,
+      sections: sectionsFor("decision"),
+      fullText: "",
+      fm: { title: "T", status: "accepted", updated: "2026-06-20" },
+      ...over,
+    });
+    const errs = (e) => validateEntity(e, ctx).filter((i) => i.severity === "error");
+    const cases = [
+      ["valid decision → 0 errors", () => errs(base()).length === 0],
+      ["bad status enum → error", () => errs(base({ fm: { title: "T", status: "active", updated: "2026-06-20" } })).some((i) => /invalid status/.test(i.message))],
+      ["missing title → error", () => errs(base({ fm: { status: "accepted", updated: "2026-06-20" } })).some((i) => /missing required field: title/.test(i.message))],
+      ["bad date format → error", () => errs(base({ fm: { title: "T", status: "accepted", updated: "June 20" } })).some((i) => /not ISO/.test(i.message))],
+      ["missing section → warning (not error)", () => { const r = validateEntity(base({ sections: {} }), ctx); return r.some((i) => i.severity === "warning" && /missing conventional section/.test(i.message)) && !r.some((i) => i.severity === "error"); }],
+      ["primitive-shadowing tag → error", () => errs(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", tags: { status: "x" } } })).some((i) => /shadows a primitive/.test(i.message))],
+      ["dangling link → error", () => errs(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", links: [{ rel: "superseded-by", target: "decisions/does-not-exist" }] } })).some((i) => /dangling/.test(i.message))],
+      ["wrong-kind link → error", () => errs(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", links: [{ rel: "predecessor", target: "decisions/sample" }] } })).some((i) => /expected pipeline\/report/.test(i.message))],
+      ["valid milestone marker → 0 errors", () => errs(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", links: [{ rel: "milestone", target: "M5" }] } })).length === 0],
+      ["no frontmatter → pending info, no error", () => { const r = validateEntity(base({ hasFrontmatter: false }), ctx); return r.length === 1 && r[0].severity === "info"; }],
+      ["prose↔fm mismatch → ratcheted severity", () => validateEntity(base({ fullText: "> **Status:** proposed (draft)" }), ctx).some((i) => i.severity === ctx.proseSeverity && /disagrees/.test(i.message))],
+    ];
+    let pass = 0;
+    for (const [name, fn] of cases) {
+      let ok = false;
+      try { ok = fn(); } catch { ok = false; }
+      console.log(`${ok ? "PASS" : "FAIL"}: ${name}`);
+      if (ok) pass += 1;
+    }
+    console.log(`self-test: ${pass}/${cases.length} passed`);
+    return pass === cases.length;
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+function main() {
+  const argv = process.argv.slice(2);
+  if (argv.includes("--self-test")) process.exit(selfTest() ? 0 : 1);
+
+  const { opts, rest } = readProjectArgs(argv);
+  let result;
+  try {
+    result = run(opts);
+  } catch (e) {
+    console.error(`validate: ${e.message}`);
+    process.exit(1);
+  }
+  if (rest.includes("--json")) {
+    console.log(JSON.stringify({ summary: { project: result.ctx.project, files: result.entities.length, migrated: result.migrated, ...result.counts }, issues: result.issues }, null, 2));
+    return;
+  }
+  process.exit(printReport(result) ? 0 : 1);
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}

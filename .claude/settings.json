@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node tools/new-entity.mjs:*)",
+      "Bash(node tools/validate.mjs:*)",
+      "Bash(node tools/render-hub.mjs:*)",
+      "Bash(node tools/check-consumer-drift.mjs:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/tools/guard.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}
