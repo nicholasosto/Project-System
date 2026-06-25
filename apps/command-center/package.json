@@ -1,0 +1,33 @@
+{
+  "name": "@project-system/command-center",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Live web command center for the Project-System ProjectEntity graph — a separate dependency island that consumes the framework's emitted JSON contract and renders it with the Trembus Component Library. NOT part of the zero-dep framework-core.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 5175",
+    "typecheck": "tsc --noEmit",
+    "verify:contract": "node scripts/verify-contract.mjs"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "d3-hierarchy": "^3.1.2",
+    "@dagrejs/dagre": "^3.0.0"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.9.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/node": "^22.10.0",
+    "@types/d3-hierarchy": "^3.1.7"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}

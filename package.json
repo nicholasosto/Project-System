@@ -15,7 +15,8 @@
     "new": "node tools/new-entity.mjs",
     "render": "node tools/render-hub.mjs",
     "check-drift": "node tools/check-consumer-drift.mjs",
-    "test": "node tools/validate.mjs --self-test && node tools/new-entity.mjs --self-test && node tools/guard.mjs --self-test"
+    "check-zero-deps": "node tools/check-zero-deps.mjs",
+    "test": "node tools/validate.mjs --self-test && node tools/new-entity.mjs --self-test && node tools/guard.mjs --self-test && node tools/check-zero-deps.mjs --self-test && node tools/check-zero-deps.mjs"
   },
   "engines": { "node": ">=18" },
   "files": ["lib", "tools", "schema", "examples"],

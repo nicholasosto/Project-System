@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "command-center",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["-C", "apps/command-center", "preview"],
+      "port": 5175
+    }
+  ]
+}

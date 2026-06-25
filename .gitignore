@@ -1,3 +1,12 @@
 .DS_Store
 node_modules/
 *.log
+
+# apps/* render islands are separate dependency islands — never commit their build/cache
+# artifacts into the zero-dep core (node_modules/ above already covers nested installs).
+apps/*/dist/
+apps/*/build/
+apps/*/.vite/
+apps/*/.cache/
+apps/*/coverage/
+apps/*/*.tsbuildinfo
