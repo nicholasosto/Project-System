@@ -1,23 +1,114 @@
 {
   "generatedBy": "tools/render-hub.mjs",
   "project": "project-system",
-  "entities": 7,
-  "migrated": 7,
+  "folderByKind": {
+    "decision": "decisions",
+    "report": "reports",
+    "pipeline": "pipeline",
+    "roadmap": "roadmap",
+    "session": "sessions"
+  },
+  "entities": 10,
+  "migrated": 10,
   "counts": {
     "error": 0,
     "warning": 0,
     "info": 0
   },
+  "nodes": [
+    {
+      "id": "0001-home-the-project-system-framework-in-its-own-space",
+      "kind": "decision",
+      "title": "Home the project-system framework in its own space",
+      "status": "accepted",
+      "updated": "2026-06-24",
+      "file": "_project/decisions/0001-home-the-project-system-framework-in-its-own-space.md"
+    },
+    {
+      "id": "0002-mirror-the-contract-with-a-ci-check-before-publishing",
+      "kind": "decision",
+      "title": "Mirror the contract with a CI check before publishing",
+      "status": "accepted",
+      "updated": "2026-06-24",
+      "file": "_project/decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing.md"
+    },
+    {
+      "id": "0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter",
+      "kind": "decision",
+      "title": "Quarantine the kit domain slot names behind a render adapter",
+      "status": "accepted",
+      "updated": "2026-06-24",
+      "file": "_project/decisions/0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter.md"
+    },
+    {
+      "id": "0004-pipeline-entities-carry-a-structured-workflow-block",
+      "kind": "decision",
+      "title": "Pipeline entities carry a structured workflow block",
+      "status": "accepted",
+      "updated": "2026-06-25",
+      "file": "_project/decisions/0004-pipeline-entities-carry-a-structured-workflow-block.md"
+    },
+    {
+      "id": "0005-window-run-history-in-the-contract-sidecar-at-scale",
+      "kind": "decision",
+      "title": "Window run history in the contract; sidecar at scale",
+      "status": "accepted",
+      "updated": "2026-06-25",
+      "file": "_project/decisions/0005-window-run-history-in-the-contract-sidecar-at-scale.md"
+    },
+    {
+      "id": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
+      "kind": "report",
+      "title": "Extract and generalize the framework from Soul-Steel",
+      "status": "complete",
+      "updated": "2026-06-24",
+      "file": "_project/reports/2026-06-24-extract-and-generalize-the-framework-from-soul-steel.md"
+    },
+    {
+      "id": "package-as-trembus-project-schema",
+      "kind": "pipeline",
+      "title": "Package as trembus project-schema",
+      "status": "design",
+      "updated": "2026-06-25",
+      "file": "_project/pipeline/package-as-trembus-project-schema.md"
+    },
+    {
+      "id": "command-center",
+      "kind": "roadmap",
+      "title": "Command-Center",
+      "status": "proposed",
+      "updated": "2026-06-25",
+      "file": "_project/roadmap/command-center.md"
+    },
+    {
+      "id": "migrate-soul-steel-to-consume-the-packaged-framework",
+      "kind": "roadmap",
+      "title": "Migrate Soul-Steel to consume the packaged framework",
+      "status": "proposed",
+      "updated": "2026-06-24",
+      "file": "_project/roadmap/migrate-soul-steel-to-consume-the-packaged-framework.md"
+    },
+    {
+      "id": "2026-06-24-extract-and-generalize-project-system-into-its-own-space",
+      "kind": "session",
+      "title": "Extract and generalize project-system into its own space",
+      "status": "active",
+      "updated": "2026-06-24",
+      "file": "_project/sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space.md"
+    }
+  ],
   "byKind": {
     "decision": {
-      "total": 3,
+      "total": 5,
       "byStatus": {
-        "accepted": 3
+        "accepted": 5
       },
       "ids": [
         "0001-home-the-project-system-framework-in-its-own-space",
         "0002-mirror-the-contract-with-a-ci-check-before-publishing",
-        "0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter"
+        "0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter",
+        "0004-pipeline-entities-carry-a-structured-workflow-block",
+        "0005-window-run-history-in-the-contract-sidecar-at-scale"
       ]
     },
     "report": {
@@ -39,11 +130,12 @@
       ]
     },
     "roadmap": {
-      "total": 1,
+      "total": 2,
       "byStatus": {
-        "proposed": 1
+        "proposed": 2
       },
       "ids": [
+        "command-center",
         "migrate-soul-steel-to-consume-the-packaged-framework"
       ]
     },
@@ -71,6 +163,12 @@
       "target": "sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space"
     },
     {
+      "from": "command-center",
+      "fromKind": "roadmap",
+      "rel": "references",
+      "target": "decisions/0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter"
+    },
+    {
       "from": "migrate-soul-steel-to-consume-the-packaged-framework",
       "fromKind": "roadmap",
       "rel": "references",
@@ -79,6 +177,135 @@
   ],
   "edgesByRel": {
     "decided-in": 1,
-    "references": 2
+    "references": 3
+  },
+  "workflows": {
+    "package-as-trembus-project-schema": {
+      "view": "swimlane",
+      "title": "Package as trembus project-schema",
+      "code": "pipeline.package-as-trembus-project-schema",
+      "caption": "Where the packaging plan stands today.",
+      "lanes": [
+        {
+          "id": "framework",
+          "label": "Framework",
+          "kind": "system"
+        },
+        {
+          "id": "consumers",
+          "label": "Consumers",
+          "kind": "neutral"
+        },
+        {
+          "id": "registry",
+          "label": "npm",
+          "kind": "tool"
+        }
+      ],
+      "steps": [
+        {
+          "id": "mirror",
+          "lane": "framework",
+          "label": "Mirror contract + drift check",
+          "detail": "decision 0002 · check-consumer-drift.mjs",
+          "status": "done",
+          "to": [
+            "adopt"
+          ]
+        },
+        {
+          "id": "adopt",
+          "lane": "consumers",
+          "label": "3rd consumer adopts",
+          "detail": "the publish threshold",
+          "status": "active",
+          "to": [
+            "publish"
+          ]
+        },
+        {
+          "id": "publish",
+          "lane": "framework",
+          "label": "Publish package",
+          "detail": "@trembus/project-schema",
+          "status": "pending",
+          "to": [
+            "release"
+          ]
+        },
+        {
+          "id": "release",
+          "lane": "registry",
+          "label": "Live on npm",
+          "status": "pending",
+          "to": [
+            "install"
+          ]
+        },
+        {
+          "id": "install",
+          "lane": "consumers",
+          "label": "Consumers install it",
+          "detail": "drop the mirrored copy",
+          "status": "pending",
+          "to": []
+        }
+      ]
+    }
+  },
+  "runs": {
+    "package-as-trembus-project-schema": {
+      "total": 2,
+      "rollup": {
+        "byStatus": {
+          "partial": 1,
+          "running": 1
+        }
+      },
+      "runs": [
+        {
+          "id": "2026-06-25-adoption-gate",
+          "label": "At the adoption gate",
+          "status": "running",
+          "startedAt": "2026-06-25",
+          "trigger": "manual",
+          "note": "Mirror holding green; waiting on a 3rd independent consumer before publishing.",
+          "stepOutcomes": [
+            {
+              "step": "mirror",
+              "status": "done"
+            },
+            {
+              "step": "adopt",
+              "status": "active"
+            }
+          ]
+        },
+        {
+          "id": "2026-06-24-mirror-shipped",
+          "label": "Mirror shipped",
+          "status": "partial",
+          "startedAt": "2026-06-24",
+          "trigger": "decision 0002",
+          "note": "Contract mirrored with the CI drift check; nothing downstream has started.",
+          "stepOutcomes": [
+            {
+              "step": "mirror",
+              "status": "done"
+            }
+          ],
+          "outputs": [
+            {
+              "label": "decision 0002",
+              "kind": "doc"
+            },
+            {
+              "label": "check-consumer-drift.mjs",
+              "kind": "log"
+            }
+          ]
+        }
+      ]
+    }
   }
 }

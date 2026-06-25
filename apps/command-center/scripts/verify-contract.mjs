@@ -24,7 +24,7 @@ try {
   die(`could not read/parse ${GRAPH}: ${err.message}`);
 }
 if (!g || typeof g !== 'object' || typeof g.byKind !== 'object' || !Array.isArray(g.edges)) {
-  die(`malformed graph.json — expected { byKind: object, edges: array }. Regenerate with: node tools/render-hub.mjs --no-render`);
+  die(`malformed graph.json — expected { byKind: object, edges: array }. Regenerate with: node tools/render-hub.mjs`);
 }
 
 // Synthesize node ids and detect cross-kind collisions (graph.json has no nodes[] array;
@@ -44,6 +44,30 @@ if (collisions.length) {
 }
 const ids = new Set(idKinds.keys());
 
+// nodes[] (emitted since the contract enrichment) must agree with byKind: same id set,
+// every record carrying a string id + kind. byKind stays the aggregate; nodes[] is the
+// per-entity detail the navigator reads. A mismatch means a stale or hand-edited graph.json.
+if (Array.isArray(g.nodes)) {
+  const nodeIds = new Set();
+  for (const n of g.nodes) {
+    if (!n || typeof n.id !== 'string' || typeof n.kind !== 'string') {
+      die(`malformed node in nodes[] (every node needs a string id + kind): ${JSON.stringify(n)}`);
+    }
+    nodeIds.add(n.id);
+  }
+  const onlyInNodes = [...nodeIds].filter((id) => !ids.has(id));
+  const onlyInByKind = [...ids].filter((id) => !nodeIds.has(id));
+  if (onlyInNodes.length || onlyInByKind.length) {
+    console.error('[verify-contract] nodes[] and byKind disagree on the entity set:');
+    for (const id of onlyInNodes) console.error(`  ✗ "${id}" in nodes[] but not byKind`);
+    for (const id of onlyInByKind) console.error(`  ✗ "${id}" in byKind but not nodes[]`);
+    process.exit(1);
+  }
+}
+
+// Resolve each edge target to a node id. `from` is a bare id; `target` is `<folder>/<id>`
+// (folderByKind confirms the folder is a real kind). Node ids are globally unique (the
+// collision check above), so the final path segment resolves unambiguously.
 const dangling = [];
 for (const e of g.edges) {
   const to = String(e.target).split('/').pop();

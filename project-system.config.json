@@ -68,7 +68,7 @@
   "milestones": [],
   "proseStatusEnforcement": { "rollout": "error" },
   "render": {
-    "kit": "/Users/nicholasosto/Master-Managed/Project-Spaces/LLM-Agent-Development/canonical/kits/visual-grammar",
+    "runsWindow": 25,
     "brand": "Project System",
     "code": "project-system.entity-graph",
     "tone": "#D4AF37",

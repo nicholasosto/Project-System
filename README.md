@@ -31,7 +31,7 @@ the same engines at a different project.
 npm test                      # validator + scaffolder + guard self-tests
 node tools/validate.mjs       # validate this repo's own _project/ graph
 node tools/new-entity.mjs decision "Adopt X over Y"   # scaffold a conformant ADR
-node tools/render-hub.mjs     # regenerate previews/dashboards/project-system-hub.html
+node tools/render-hub.mjs     # regenerate the Command Center's JSON contract (graph + hub)
 ```
 
 ## Use it in another project
