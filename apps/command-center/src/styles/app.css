@@ -15,14 +15,11 @@ body,
   gap: 1px;
 }
 
+/* Slim app bar — just the wordmark. The Overview hub owns the full hero (brand, tagline,
+   stats, axis), so the top bar stays out of its way and reads as persistent app identity. */
 .cc-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1.5rem;
-  flex-wrap: wrap;
   padding: 1.25rem 1.75rem;
-  border-bottom: 1px solid var(--tcl-color-border, rgba(255, 255, 255, 0.1));
+  border-bottom: 1px solid var(--tcl-border, rgba(255, 255, 255, 0.1));
 }
 
 .cc-title {
@@ -32,55 +29,122 @@ body,
   letter-spacing: 0.01em;
 }
 
-.cc-tagline {
-  margin: 0.25rem 0 0;
-  opacity: 0.7;
-  font-size: 0.9rem;
-}
-
-.cc-stats {
-  display: flex;
-  gap: 1.5rem;
-  margin: 0;
-}
-
-.cc-stat {
+/* Tab shell — fills the space under the header; the active panel flexes to the viewport. */
+.cc-tabs {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
 }
 
-.cc-stat dt {
+.cc-tablist {
+  padding: 0 1.75rem;
+}
+
+.cc-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem 1.75rem;
+}
+
+/* The Graph panel hosts the full-bleed lineage; its first child (the Lineage) fills it. */
+.cc-panel--stage {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 1rem 1.25rem;
+}
+
+.cc-panel--stage > :first-child {
+  flex: 1;
+  min-height: 24rem;
+}
+
+/* The Overview panel hosts the hex-flower hub — centered, scrollable if it overflows. */
+.cc-panel--hub {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Workflow picker — pill buttons to choose which workflow the console shows. */
+.cc-wf-picker {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.cc-wf-picker__btn {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--tcl-radius-full, 9999px);
+  border: 1px solid var(--tcl-border, rgba(255, 255, 255, 0.12));
+  background: var(--tcl-surface-raised, transparent);
+  color: var(--tcl-text-dim, inherit);
+  cursor: pointer;
+}
+
+.cc-wf-picker__btn[data-active='true'] {
+  color: var(--tcl-text, inherit);
+  border-color: var(--tcl-accent, #d4af37);
+}
+
+/* Workflow console — the flow (Swimlane) over its optional run history. */
+.cc-workflow {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.cc-workflow__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cc-eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  opacity: 0.6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.cc-workflow__title {
+  margin: 0.15rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 650;
+}
+
+.cc-section {
+  margin-top: 2rem;
+}
+
+.cc-section-title {
+  margin: 0 0 0.6rem;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   opacity: 0.6;
 }
 
-.cc-stat dd {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.cc-stage {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  padding: 1rem 1.25rem;
-}
-
-.cc-stage > * {
-  flex: 1;
-  min-height: 24rem;
+/* Tabs hide inactive panels with [hidden]; our explicit `display` on --stage would otherwise
+   beat the UA [hidden]{display:none} (equal specificity, later source), leaking the graph's
+   min-height onto other tabs. This out-specifies it so inactive panels truly collapse. */
+.cc-panel[hidden] {
+  display: none;
 }
 
 .cc-foot {
-  padding: 0.6rem 1.75rem;
+  margin: 0.6rem 0 0;
   font-size: 0.85rem;
-  color: var(--tcl-color-warning, #e6a700);
-  border-top: 1px solid var(--tcl-color-border, rgba(255, 255, 255, 0.1));
+  color: var(--tcl-status-warning, #e6a700);
 }
 
 .cc-foot code {

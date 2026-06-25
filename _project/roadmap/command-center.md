@@ -1,7 +1,7 @@
 ---
 title: "Command-Center"
 status: proposed
-updated: 2026-06-24
+updated: 2026-06-25
 links:
   - { rel: references, target: decisions/0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter }
 ---
@@ -67,9 +67,10 @@ Phased; each phase is a standalone deliverable.
 - **P4 · Live reload.** Dev-only watch that re-runs `render-hub.mjs --no-render` on any
   `_project/` write and hot-updates the app, so editing a decision repaints the board. The
   committed JSON stays the source the static build reads.
-- **P5 · Supersede or coexist.** Decide the static kit HTML's fate: retire it, or keep it
-  as the zero-dep fallback and point `previews/` at the app's static export. Update
-  CLAUDE.md's Map + Dogfooding sections to name the new surface.
+- **P5 · Supersede.** ✅ Done (2026-06-25): the live `@trembus/ui` `Hub` renders `hub.json`,
+  so the static single-file HTML was retired — `render-hub.mjs` no longer shells out to the
+  external kit and emits JSON only. CLAUDE.md's Map + Dogfooding sections now name the live
+  surface.
 
 ## Open questions
 
@@ -77,10 +78,11 @@ Phased; each phase is a standalone deliverable.
   `import` of the committed JSON — closest to the npm-free spirit, one artifact) or run a
   small server that re-renders on demand. Leaning static for the dogfood; revisit if
   multi-project aggregation lands.
-- **`@trembus/viz` via published package or workspace path?** It is `private: false` /
-  `@trembus/viz@0.1.0`, but a registry publish is not confirmed. Until then the app pins a
-  relative path to `Repositories/Trembus-Component-Library`, coupling this repo to a sibling
-  checkout. Fine for dogfood; a publish decouples it.
+- **`@trembus/viz` via published package or workspace path?** ✅ Resolved (2026-06-25):
+  `@trembus/tokens` · `@trembus/ui` · `@trembus/viz` are published to npm at `^0.1.0`, and the
+  app installs them as normal dependencies. The vite-alias-to-sibling-checkout workaround (and
+  its `pnpm -r build` precondition) is gone — this repo no longer couples to a
+  `Repositories/Trembus-Component-Library` checkout.
 - **Does `graph.json` carry enough for `Lineage`?** Confirm node `tone`/`label`/`group`
   fields map onto `GraphNode`, and whether `Tree` needs a decisions-only projection rather
   than the full graph.

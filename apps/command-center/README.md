@@ -31,24 +31,21 @@ The app reads **only** `previews/dashboards/project-system-graph.json` and
 
 ## How the Trembus packages are wired
 
-They are **not** npm dependencies here. `@trembus/viz`'s manifest declares
-`@trembus/tokens: workspace:*`, which a cross-repo `file:` install cannot resolve. Instead
-`vite.config.ts` **aliases** `@trembus/ui` / `@trembus/viz` to their built `dist/` in the
-sibling checkout (the dist already bundles the tokens layer). The app installs only the
-genuinely-external runtime deps the viz bundle expects: `react`, `react-dom`, `d3-hierarchy`,
-`@dagrejs/dagre`.
+They are installed from the **npm registry** like any other dependency — `@trembus/ui` and
+`@trembus/viz` at `^0.1.0`, with `@trembus/tokens` pulled in transitively. `@trembus/viz`
+brings its own runtime deps (`d3-hierarchy`, `@dagrejs/dagre`); `react`/`react-dom` are peer
+deps this app provides. `vite.config.ts` keeps only `dedupe: ['react','react-dom']` so a
+transitive copy can't shadow the app's React. CSS arrives via each package's `./styles.css`
+export, imported in load-bearing order in `main.tsx` (ui → viz → app chrome).
 
-> **Precondition:** the library `dist/` must exist. Build it once from the TCL repo root:
-> `pnpm -r build` (rebuild after pulling TCL changes). `@trembus/tokens` is source-only and
-> needs no build.
+> Earlier (pre-publish) the app aliased `@trembus/*` to a sibling `Trembus-Component-Library`
+> checkout's `dist/` to dodge the unresolvable `@trembus/tokens: workspace:*`. The registry
+> publish (2026-06-25) rewrote that to a real range, so the alias workaround and its
+> `pnpm -r build` precondition are gone.
 
 ## Run it
 
 ```sh
-# 1. one-time, in the Trembus-Component-Library repo:
-pnpm -r build
-
-# 2. here:
 pnpm install
 pnpm dev            # http://localhost:5175
 ```
@@ -59,6 +56,9 @@ Other scripts: `pnpm build` (typecheck + production bundle), `pnpm preview`,
 ## Status / next
 
 - **P1 — island scaffold** ✅ Vite + React 19, Trembus aliases, theme wired (`data-theme="dark"`).
-- **P2 — render the graph** ✅ (first pass) `graph.json` → `@trembus/viz` `Lineage`.
-- **P3 — three boards** ⏳ Hub · Decision-Tree (`Tree`) · Plan-Progress tabs.
+- **P2 — render the graph** ✅ `graph.json` → `@trembus/viz` `Lineage`. The contract now emits
+  per-entity `nodes[]` + `folderByKind`, so nodes show real titles and live status.
+- **P3 — navigate the areas** 🚧 `@trembus/ui` `Tabs` shell — **Overview** (the graph) ·
+  **Decisions** · **Workflows** · **Progress** (per-area entity tables from `nodes[]`). Next:
+  the rich per-area visuals (Hub stats, Decision-`Tree`, Plan-Progress board) + entity drill-down.
 - **P4 — live reload** ⏳ watch `_project/` → re-run `render-hub.mjs --no-render` → hot repaint.

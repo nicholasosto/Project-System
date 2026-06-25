@@ -1,6 +1,7 @@
 # Command-Center input contract
 
-> **Status:** frozen-for-v1 (2026-06-24) · realizes roadmap `command-center` **P0**.
+> **Status:** frozen-for-v1 (2026-06-24) · enriched 2026-06-25 (per-entity `nodes[]` +
+> `folderByKind`; P0 gaps closed) · realizes roadmap `command-center` **P0**.
 >
 > This is the seam between the zero-dep framework-core and the `apps/command-center/`
 > render island. The framework emits two JSON artifacts; the app consumes **only** these.
@@ -17,35 +18,48 @@
 
 `--no-render` is the npm-free path: it produces the JSON without invoking the external
 visual-grammar kit, so the contract refreshes with zero dependencies. `tools/render-hub.mjs
---check` asserts the committed **`hub.json`** is in sync (date-insensitive). ⚠ It does **not**
-yet compare `graph.json` — the topology the app actually consumes — so the drift guard has a
-hole; see *Known gaps* below. Run `node apps/command-center/scripts/verify-contract.mjs` to
-check `graph.json`'s internal integrity in the meantime.
+--check` asserts **both** committed files are in sync — `graph.json` by exact diff (it carries
+no daily-drifting field) and `hub.json` date-insensitively (`updated` drifts daily). Both
+`--check` and `node apps/command-center/scripts/verify-contract.mjs` (graph.json internal
+integrity: id-uniqueness, `nodes[]`↔`byKind` agreement, edge resolution) are wired into
+`npm test`.
 
 ---
 
 ## `project-system-graph.json`
 
-Top-level keys (all always present): `generatedBy`, `project`, `entities` (number),
-`migrated` (number), `counts` `{error,warning,info}`, `byKind`, `edges`, `edgesByRel`.
+Top-level keys (all always present): `generatedBy`, `project`, `folderByKind`
+(`kind → folder` map), `entities` (number), `migrated` (number), `counts`
+`{error,warning,info}`, `nodes`, `byKind`, `edges`, `edgesByRel`, `workflows`
+(`id → swimlane contract`; `{}` when none).
 
-### Nodes are not an array — they are `byKind`
+### `nodes[]` — the per-entity records
 
-`byKind` is an **object keyed by kind name**; every configured kind is seeded even at zero
-count. Each bucket is `{ total: number, byStatus: Record<status,count>, ids: string[] }`.
+`nodes` is a flat array, one object per entity, carrying the authored detail the navigator reads:
 
 ```json
-"decision": {
-  "total": 3,
-  "byStatus": { "accepted": 3 },
-  "ids": ["0001-home-…", "0002-mirror-…", "0003-quarantine-…"]
-}
+{ "id": "0001-home-…", "kind": "decision",
+  "title": "Home the project-system framework in its own space",
+  "status": "accepted", "updated": "2026-06-24",
+  "file": "_project/decisions/0001-home-….md" }
 ```
 
-There is **no per-entity object** — only the `id` strings in `ids[]` and the aggregate
-`byStatus`. A node, to the app, is the synthesized pair **`(kind, id)`**; an individual
-entity's `title`/`status`/`updated` are **not** recoverable from this file (only the per-kind
-status *distribution* is). `byStatus` uses the literal key `"—"` for a statusless entity.
+`title`/`status`/`updated` are `null` when the entity omits them. `kind` and `id` stay
+loader-derived (from folder + filename); `file` is the repo-relative source path, so the UI can
+link straight back to the markdown.
+
+### `byKind` — the per-kind aggregate
+
+`byKind` is an **object keyed by kind name**; every configured kind is seeded even at zero
+count. Each bucket is `{ total: number, byStatus: Record<status,count>, ids: string[] }`:
+
+```json
+"decision": { "total": 3, "byStatus": { "accepted": 3 }, "ids": ["0001-…", "0002-…", "0003-…"] }
+```
+
+It is the rollup (status distribution, counts) that complements `nodes[]`. `byStatus` uses the
+literal key `"—"` for a statusless entity. `nodes[]` and `byKind` always describe the **same
+entity set** — `verify-contract.mjs` asserts it.
 
 ### `edges[]`
 
@@ -57,12 +71,59 @@ Each edge is exactly `{ from, fromKind, rel, target }`, all four always present:
 ```
 
 **Namespace asymmetry (the load-bearing gotcha):** `from` is a **bare id**; `target` is a
-**`<folder>/<id>` path**. They are not in the same namespace. To resolve an edge to a node,
-strip the folder: `target.split('/').pop()`. The folder→kind map (`folderByKind`) lives in
-`project-system.config.json`, **not** in this file, so do not assume `folder === kind`
-(`decisions`→`decision`, but `roadmap`→`roadmap`).
+**`<folder>/<id>` path**. To resolve an edge to a node, strip the folder:
+`target.split('/').pop()` — node ids are globally unique (`verify-contract.mjs` enforces it).
+The folder→kind map (`folderByKind`) is now **emitted at the top level** of this file, so a
+consumer can also resolve precisely via `kind = folderByKind[folder]` without assuming
+`folder === kind` (`decisions`→`decision`, but `roadmap`→`roadmap`).
 
 `edgesByRel` is a `rel → count` frequency map over `edges` — a ready-made legend.
+
+### `workflows` — optional structured swimlanes
+
+An entity MAY declare a workflow by putting a single fenced ` ```json ` block — a Trembus
+swimlane contract (`{ lanes[], steps[] }`) — inside a `## Workflow` body section (the section
+name is config-driven via `render.workflowSection`). `buildModel()` extracts each into
+`workflows`, an object keyed by **entity id**:
+
+```json
+"workflows": {
+  "package-as-trembus-project-schema": {
+    "view": "swimlane", "title": "Package as trembus project-schema",
+    "code": "pipeline.package-as-trembus-project-schema",
+    "lanes": [ { "id": "framework", "label": "Framework", "kind": "system" }, … ],
+    "steps": [ { "id": "mirror", "lane": "framework", "label": "…", "status": "done", "to": ["adopt"] }, … ]
+  }
+}
+```
+
+`title`/`code` default from the entity (overridable in the block). A malformed block is warned
+and skipped (it never appears here). The Command Center renders each as a `@trembus/ui`
+`Swimlane`. See decision `0004-pipeline-entities-carry-a-structured-workflow-block`.
+
+### `runs` — optional, windowed run history
+
+An entity MAY also declare a `## Runs` body section: a fenced ` ```json ` block holding an
+**array of run records** (the `@trembus/ui` `RunHistory` shape — `{ id, label, status, startedAt,
+durationMs?, trigger?, note?, stepOutcomes?, outputs? }`). `buildModel()` sorts them newest-first
+and emits, under `runs` keyed by **entity id**, only the latest `render.runsWindow` (default 25)
+plus a summary of the full set:
+
+```json
+"runs": {
+  "package-as-trembus-project-schema": {
+    "total": 2,
+    "rollup": { "byStatus": { "running": 1, "partial": 1 } },
+    "runs": [ { "id": "…", "status": "running", "startedAt": "2026-06-25",
+                "stepOutcomes": [ { "step": "mirror", "status": "done" } ] }, … ]
+  }
+}
+```
+
+A run's `stepOutcomes[].step` must match a `SwimlaneStep.id` in the same entity's workflow; the
+Command Center replays the selected run over the swimlane (steps with no outcome fall to
+`pending`). Windowing keeps the contract bounded as the log grows — see decision
+`0005-window-run-history-in-the-contract-sidecar-at-scale`.
 
 ---
 
@@ -94,8 +155,9 @@ shapes (see `@trembus/viz` `dist/index.d.ts`):
 
 ### Construction algorithm (implemented in `apps/command-center/src/contract.ts`)
 
-1. **Nodes** — for each `kind` in `byKind`, for each `id` in `byKind[kind].ids`, emit
-   `{ id, label: prettify(id), kind, sub: kind, tone: KIND_TONE[kind] ?? 'neutral' }`.
+1. **Nodes** — for each record in `nodes[]`, emit
+   `{ id, label: title ?? prettify(id), kind, sub: status ?? kind, tone: KIND_TONE[kind] ?? 'neutral' }`
+   (falls back to synthesizing from `byKind.ids` if an older contract has no `nodes[]`).
 2. **Edges** — for each `e` in `edges`, emit `{ from: e.from, to: e.target.split('/').pop(),
    label: e.rel }`. Drop (and count) any edge whose `from` **or** `to` does not resolve to a
    node id.
@@ -114,26 +176,21 @@ shapes (see `@trembus/viz` `dist/index.d.ts`):
 
 ---
 
-## Known gaps (contract backlog — surfaced by P0)
+## Contract backlog (status)
 
-These are why the mapping needs a join step rather than being identity. Each is a candidate
-enhancement to `buildModel()`; none blocks v1.
+The four P0 gaps were closed by the contract enrichment (2026-06-25):
 
-1. **No per-entity `title`/`status`.** The app prettifies the `id` slug for labels and cannot
-   show an entity's individual status. *Fix:* have `buildModel()` emit a flat
-   `nodes[] = { id, kind, title, status, updated }` alongside `byKind`.
-2. **Edge endpoints span two namespaces** (`from` bare, `target` folder-prefixed). The app
-   strips the folder; this is collision-unsafe if two kinds ever share an id slug. *Fix:*
-   emit `folderByKind`, or namespace both endpoints as `kind/id`.
-3. **No `nodes[]` array.** The app synthesizes nodes from `byKind`. Emitting a real `nodes[]`
-   (gap 1's fix) subsumes this.
-4. **`--check` does not cover `graph.json`.** `render-hub.mjs`'s `check()` only diffs
-   `hub.json`; the topology source the app consumes is unguarded, so a stale `graph.json`
-   passes CI silently. *Fix:* extend `check()` to also diff `graph.json` (it carries no daily
-   field, so no normalization is needed), then wire `render-hub.mjs --check` **and**
-   `apps/command-center/scripts/verify-contract.mjs` into `npm test`. Until then the
-   collision/integrity guard in `verify-contract.mjs` is the only automated check on the
-   graph.
+1. ✅ **Per-entity `title`/`status`/`updated`/`file`.** `buildModel()` now emits `nodes[]`
+   (above). The navigator shows real titles and live status, and can link to the source file.
+2. ✅ **Edge-endpoint namespace.** `folderByKind` is now emitted, so resolution can be made
+   collision-safe via the folder→kind map; `verify-contract.mjs` also asserts global
+   id-uniqueness as a backstop.
+3. ✅ **`nodes[]` array.** Emitted — subsumed by #1.
+4. ✅ **`--check` covers `graph.json`.** `render-hub.mjs --check` now diffs both files, and
+   `--check` + `verify-contract.mjs` are wired into `npm test`.
 
-When these land, bump this doc's status and re-verify with
-`node apps/command-center/scripts/verify-contract.mjs`.
+Remaining/optional: per-entity `links` and body sections are still not emitted (the app derives
+links from the top-level `edges[]`); add them to `nodes[]` if a richer detail view needs them.
+
+Re-verify any contract change with `node tools/render-hub.mjs --check && node
+apps/command-center/scripts/verify-contract.mjs` (both run in `npm test`).

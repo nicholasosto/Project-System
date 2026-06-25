@@ -1,17 +1,21 @@
 #!/usr/bin/env node
-// Project a validated ProjectEntity graph into the Trembus visual-grammar `hub` view
-// and render it — model-driven, so the dashboard derives from the contract instead of
-// being hand-rolled. Counts / statuses / edges come from the entities; the editorial
-// framing comes from the project's config.render. Domain-neutral end to end.
+// Project a validated ProjectEntity graph into the two JSON contracts the Command Center
+// consumes — model-driven, so the dashboard derives from the contract instead of being
+// hand-rolled. Counts / statuses / edges come from the entities; the editorial framing
+// comes from the project's config.render. Domain-neutral end to end.
 //
-//   source-of-truth (the project's _project/ entities) -> contract -> kit -> HTML
+//   source-of-truth (the project's _project/ entities) -> contract (graph.json + hub.json)
+//
+// The live React Command Center (apps/command-center) renders these. The old static
+// single-file HTML — built via the external visual-grammar kit — was retired once the live
+// hub superseded it (roadmap command-center P5), so this tool no longer shells out to a kit.
 //
 // Usage:
-//   node tools/render-hub.mjs [--root <dir>] [--config <path>]   # emit graph + hub JSON, then render
-//   node tools/render-hub.mjs --no-render                         # emit JSON only (skip the kit)
-//   node tools/render-hub.mjs --check                             # assert outputs are in sync (date-insensitive)
+//   node tools/render-hub.mjs [--root <dir>] [--config <path>]   # emit graph + hub JSON
+//   node tools/render-hub.mjs --check                            # assert outputs are in sync (date-insensitive)
+//
+// `--no-render` is still accepted (it is now the default behavior) so existing callers keep working.
 
-import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -48,6 +52,53 @@ function statusSummary(byStatus) {
   return entries.map(([s, n]) => `${n} ${s}`).join(" · ");
 }
 
+// Parse a single fenced ```json block out of an entity body section. The ONE place that reads
+// a structured block — both the Workflow and Runs facets go through it (single source, no
+// second fence parser). Returns { value }, { error } to warn on, or null (no block present).
+function fencedJson(sectionText) {
+  if (!sectionText) return null;
+  const m = sectionText.match(/```(?:json)?\s*\n([\s\S]*?)```/);
+  if (!m) return null;
+  try {
+    return { value: JSON.parse(m[1]) };
+  } catch (e) {
+    return { error: `invalid JSON (${e.message})` };
+  }
+}
+
+// A structured workflow (a Trembus swimlane contract). Domain-neutral: the engine invents no
+// workflow semantics — it just passes a `{ lanes[], steps[] }` block through.
+function extractWorkflow(sectionText) {
+  const block = fencedJson(sectionText);
+  if (!block || block.error) return block;
+  if (!Array.isArray(block.value?.lanes) || !Array.isArray(block.value?.steps)) {
+    return { error: "needs lanes[] and steps[] arrays" };
+  }
+  return { contract: block.value };
+}
+
+// A run-history log: an array of run records. Sorted newest-first and WINDOWED to the latest
+// `window` so the emitted contract stays bounded even as the authored log grows to hundreds;
+// `total` + `rollup` summarize the full set. Past the window, move the source to a sidecar —
+// only this function (and the `window`) change, never the renderers.
+function extractRuns(sectionText, window) {
+  const block = fencedJson(sectionText);
+  if (!block || block.error) return block;
+  const all = block.value;
+  if (!Array.isArray(all)) return { error: "needs an array of run records" };
+  const startedMs = (r) => {
+    const t = typeof r?.startedAt === "number" ? r.startedAt : Date.parse(r?.startedAt ?? "");
+    return Number.isNaN(t) ? 0 : t;
+  };
+  const sorted = [...all].sort((a, b) => startedMs(b) - startedMs(a));
+  const byStatus = {};
+  for (const r of all) {
+    const s = r?.status ?? "—";
+    byStatus[s] = (byStatus[s] ?? 0) + 1;
+  }
+  return { runs: { total: all.length, rollup: { byStatus }, runs: sorted.slice(0, window) } };
+}
+
 export function buildModel(ctx) {
   const entities = loadEntities(ctx);
   const issues = entities.flatMap((e) => validateEntity(e, ctx));
@@ -77,7 +128,48 @@ export function buildModel(ctx) {
   const edgesByRel = {};
   for (const ed of edges) edgesByRel[ed.rel] = (edgesByRel[ed.rel] ?? 0) + 1;
 
-  return { entities: entities.length, migrated, counts, byKind, edges, edgesByRel };
+  // Flat per-entity records — the navigable surface (title/status/updated/file) that the
+  // aggregate `byKind` buckets can't express. Authored fields only; kind & id stay derived.
+  const nodes = entities.map((e) => ({
+    id: e.id,
+    kind: e.kind,
+    title: e.fm?.title ?? null,
+    status: e.fm?.status ?? null,
+    updated: e.fm?.updated ?? null,
+    file: e.file,
+  }));
+
+  // Optional structured workflows: any entity may declare a swimlane in a `## <section>` body
+  // (a fenced json block). Keyed by entity id; the Command Center renders each as a Swimlane.
+  // The section name is config-driven so the engine carries no domain word.
+  const workflowSection = ctx.render?.workflowSection ?? "Workflow";
+  const workflows = {};
+  for (const e of entities) {
+    const found = extractWorkflow(e.sections?.[workflowSection]);
+    if (!found) continue;
+    if (found.error) {
+      console.warn(`! ${e.kind}/${e.id}: "${workflowSection}" block ignored — ${found.error}`);
+      continue;
+    }
+    workflows[e.id] = { view: "swimlane", title: e.fm?.title ?? e.id, code: `${e.kind}.${e.id}`, ...found.contract };
+  }
+
+  // Optional run history: a `## Runs` block (array of run records) replayed over the workflow.
+  // Windowed to the latest `runsWindow` so the contract stays bounded as the log grows.
+  const runsSection = ctx.render?.runsSection ?? "Runs";
+  const runsWindow = ctx.render?.runsWindow ?? 25;
+  const runs = {};
+  for (const e of entities) {
+    const found = extractRuns(e.sections?.[runsSection], runsWindow);
+    if (!found) continue;
+    if (found.error) {
+      console.warn(`! ${e.kind}/${e.id}: "${runsSection}" block ignored — ${found.error}`);
+      continue;
+    }
+    runs[e.id] = found.runs;
+  }
+
+  return { entities: entities.length, migrated, counts, nodes, byKind, edges, edgesByRel, workflows, runs };
 }
 
 function hubContract(ctx, model) {
@@ -205,44 +297,54 @@ function outPaths(ctx) {
     dir,
     graph: join(dir, `${ctx.project}-graph.json`),
     hub: join(dir, `${ctx.project}-hub.json`),
-    html: join(dir, `${ctx.project}-hub.html`),
   };
+}
+
+// The emitted graph document — the Command-Center's topology contract. `folderByKind`
+// makes edge resolution collision-safe (an edge `target` is `<folder>/<id>`; see
+// docs/spec/command-center-contract.md). Shared by write() and check() so the on-disk
+// file and the freshness check derive from one serialization and can't drift apart.
+function graphDoc(ctx, model) {
+  return { generatedBy: "tools/render-hub.mjs", project: ctx.project, folderByKind: ctx.folderByKind, ...model };
 }
 
 function write(ctx, model, hub) {
   const p = outPaths(ctx);
   if (!existsSync(p.dir)) mkdirSync(p.dir, { recursive: true });
-  writeFileSync(p.graph, `${JSON.stringify({ generatedBy: "tools/render-hub.mjs", project: ctx.project, ...model }, null, 2)}\n`);
+  writeFileSync(p.graph, `${JSON.stringify(graphDoc(ctx, model), null, 2)}\n`);
   writeFileSync(p.hub, `${JSON.stringify(hub, null, 2)}\n`);
   return p;
 }
 
-function render(ctx, p) {
-  const kit = ctx.render?.kit;
-  if (!kit) {
-    console.warn("! no render.kit in config — wrote JSON only.");
-    return null;
-  }
-  const build = join(kit, "build.mjs");
-  if (!existsSync(build)) {
-    console.warn(`! kit not found at ${build} — wrote JSON only.`);
-    return null;
-  }
-  execFileSync("node", [build, "--data", p.hub, "--out", p.html], { stdio: "inherit" });
-  return p.html;
-}
-
 function check(ctx) {
-  const hub = hubContract(ctx, buildModel(ctx));
+  const model = buildModel(ctx);
+  const hub = hubContract(ctx, model);
   const p = outPaths(ctx);
+  let ok = true;
+
+  // graph.json — the topology the app actually consumes. It carries no daily-drifting
+  // field, so an exact byte-diff against a fresh serialization is the whole check.
+  if (!existsSync(p.graph)) {
+    console.error(`check: ${p.graph} missing — run the generator`);
+    ok = false;
+  } else if (readFileSync(p.graph, "utf8") !== `${JSON.stringify(graphDoc(ctx, model), null, 2)}\n`) {
+    console.log("check: graph.json DRIFT — re-run the generator");
+    ok = false;
+  }
+
+  // hub.json — date-insensitive: `updated` drifts daily, so normalize it out.
   if (!existsSync(p.hub)) {
     console.error(`check: ${p.hub} missing — run the generator`);
-    return false;
+    ok = false;
+  } else {
+    const norm = (o) => JSON.stringify({ ...o, updated: "X" });
+    if (norm(JSON.parse(readFileSync(p.hub, "utf8"))) !== norm(hub)) {
+      console.log("check: hub.json DRIFT — re-run the generator");
+      ok = false;
+    }
   }
-  const onDisk = JSON.parse(readFileSync(p.hub, "utf8"));
-  const norm = (o) => JSON.stringify({ ...o, updated: "X" }); // date-insensitive: `updated` drifts daily
-  const ok = norm(onDisk) === norm(hub);
-  console.log(ok ? "check: in sync" : "check: DRIFT — re-run the generator");
+
+  if (ok) console.log("check: in sync");
   return ok;
 }
 
@@ -272,11 +374,6 @@ function main() {
   console.log(`wrote ${relOut(p.graph)}`);
   console.log(`wrote ${relOut(p.hub)}`);
   console.log(`model: ${model.entities} entities, ${model.edges.length} edges, ${model.counts.error} errors`);
-
-  if (!flags.includes("--no-render")) {
-    const out = render(ctx, p);
-    if (out) console.log(`rendered ${relOut(out)}`);
-  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
