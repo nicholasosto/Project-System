@@ -1,7 +1,7 @@
 // The single consumer of the Command-Center input contract.
 // See docs/spec/command-center-contract.md. The app reads ONLY these two emitted JSON
 // artifacts; it never re-reads _project/. Regenerate them with:
-//   node ../../tools/render-hub.mjs --no-render   (zero-dep; skips the external kit)
+//   node ../../tools/render-hub.mjs   (zero-dep)
 import type { GraphContract, GraphEdge, GraphNode, LineageTone } from '@trembus/viz';
 import type { HubContract, RunRecord, SwimlaneContract } from '@trembus/ui';
 import rawGraph from '../../../previews/dashboards/project-system-graph.json';

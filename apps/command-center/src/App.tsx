@@ -121,7 +121,7 @@ export function App() {
           {dropped.length > 0 && (
             <p className="cc-foot">
               ⚠ {dropped.length} edge(s) did not resolve to a node — the committed contract may be
-              stale. Regenerate with <code>node ../../tools/render-hub.mjs --no-render</code>.
+              stale. Regenerate with <code>node ../../tools/render-hub.mjs</code>.
             </p>
           )}
         </Tabs.Panel>

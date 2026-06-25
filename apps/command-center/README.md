@@ -20,8 +20,8 @@ must never share a manifest:
 ## Data flow
 
 ```
-_project/*.md ──(node tools/render-hub.mjs --no-render)──▶ previews/dashboards/*.json ──▶ this app
-   source of truth          zero-dep, no kit needed            the input contract        Trembus viz
+_project/*.md ──(node tools/render-hub.mjs)──▶ previews/dashboards/*.json ──▶ this app
+   source of truth   zero-dep JSON emit           the input contract        Trembus viz
 ```
 
 The app reads **only** `previews/dashboards/project-system-graph.json` and
@@ -61,4 +61,4 @@ Other scripts: `pnpm build` (typecheck + production bundle), `pnpm preview`,
 - **P3 — navigate the areas** 🚧 `@trembus/ui` `Tabs` shell — **Overview** (the graph) ·
   **Decisions** · **Workflows** · **Progress** (per-area entity tables from `nodes[]`). Next:
   the rich per-area visuals (Hub stats, Decision-`Tree`, Plan-Progress board) + entity drill-down.
-- **P4 — live reload** ⏳ watch `_project/` → re-run `render-hub.mjs --no-render` → hot repaint.
+- **P4 — live reload** ⏳ watch `_project/` → re-run `render-hub.mjs` → hot repaint.

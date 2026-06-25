@@ -24,7 +24,7 @@ try {
   die(`could not read/parse ${GRAPH}: ${err.message}`);
 }
 if (!g || typeof g !== 'object' || typeof g.byKind !== 'object' || !Array.isArray(g.edges)) {
-  die(`malformed graph.json — expected { byKind: object, edges: array }. Regenerate with: node tools/render-hub.mjs --no-render`);
+  die(`malformed graph.json — expected { byKind: object, edges: array }. Regenerate with: node tools/render-hub.mjs`);
 }
 
 // Synthesize node ids and detect cross-kind collisions (graph.json has no nodes[] array;

@@ -14,7 +14,7 @@
 //   node tools/render-hub.mjs [--root <dir>] [--config <path>]   # emit graph + hub JSON
 //   node tools/render-hub.mjs --check                            # assert outputs are in sync (date-insensitive)
 //
-// `--no-render` is still accepted (it is now the default behavior) so existing callers keep working.
+// `--no-render` is accepted but ignored — a no-op kept for back-compat (JSON emit is the only mode now).
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

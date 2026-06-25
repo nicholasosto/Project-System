@@ -62,11 +62,10 @@
       "default": { "rollout": "warn" }
     },
     "render": {
-      "description": "Optional. Drives the hub dashboard renderer. Entirely project-agnostic: a brand string, accent tone, editorial copy, and the path to a visual-grammar kit. Kinds are auto-placed into the kit's hex slots in declared order; the kit's slot-naming is an internal adapter concern, never surfaced here.",
+      "description": "Optional. Drives the hub dashboard renderer. Entirely project-agnostic: a brand string, accent tone, and editorial copy. Kinds are auto-placed into the hub's hex slots in declared order; the slot-naming is an internal adapter concern, never surfaced here.",
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "kit": { "type": "string", "description": "Absolute path to a visual-grammar kit directory (must contain build.mjs). If absent or missing, the renderer emits JSON only." },
         "brand": { "type": "string" },
         "code": { "type": "string" },
         "tagline": { "type": "string" },

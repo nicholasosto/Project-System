@@ -9,15 +9,14 @@
 
 ## What the framework emits
 
-`node tools/render-hub.mjs --no-render` writes two files into `previews/dashboards/`:
+`node tools/render-hub.mjs` writes two files into `previews/dashboards/`:
 
 | File | Role | Built by |
 |---|---|---|
 | `project-system-graph.json` | the **entity graph** — node-link source of truth | `buildModel()` |
 | `project-system-hub.json` | the **hub view-model** — presentation-ready chrome copy | `hubContract()` |
 
-`--no-render` is the npm-free path: it produces the JSON without invoking the external
-visual-grammar kit, so the contract refreshes with zero dependencies. `tools/render-hub.mjs
+The generator is npm-free — it produces the JSON with zero dependencies. `tools/render-hub.mjs
 --check` asserts **both** committed files are in sync — `graph.json` by exact diff (it carries
 no daily-drifting field) and `hub.json` date-insensitively (`updated` drifts daily). Both
 `--check` and `node apps/command-center/scripts/verify-contract.mjs` (graph.json internal
