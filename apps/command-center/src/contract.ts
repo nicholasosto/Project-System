@@ -41,6 +41,7 @@ export interface RawGraph {
   edgesByRel: Record<string, number>;
   workflows?: Record<string, unknown>;
   runs?: Record<string, unknown>;
+  phases?: Record<string, unknown>;
 }
 export interface RawHub {
   brand: string;
@@ -178,5 +179,60 @@ export interface EntityRuns {
   runs: RunRecord[];
 }
 export const runs: Record<string, EntityRuns> = (graph.runs ?? {}) as Record<string, EntityRuns>;
+
+// ── Planning / progress facets ──
+// These already ship in hub.json (the live <Hub> renders only brand/stats/domains/inspector,
+// so it ignores them). The Progress board reads the development `ribbon` (milestone phases),
+// the coverage `scope` tiles, and `strategy`; the hex details panel reads `domains` to caption
+// the selected tile. No renderer change needed — the contract already carries all of it.
+export interface RibbonMilestone {
+  code: string;
+  name: string;
+  date?: string;
+  /** Config-driven progress state: shipped | current | planned. */
+  kind: string;
+}
+export interface ScopeItem {
+  label: string;
+  num: string;
+  value: string;
+}
+export type DomainSource = string | { label: string; href?: string };
+export interface HubDomainRec {
+  id: string;
+  kind: string;
+  tag: string;
+  name: string;
+  sub: string;
+  status: string;
+  dot?: string;
+  note?: string;
+  sources?: DomainSource[];
+}
+
+// Per-entity development phases emitted from a `## Phases` block (a roadmap's structured plan),
+// keyed by entity id. The Progress board renders these as a Timeline. Domain-neutral: `status`
+// is the project's own vocabulary, mapped to a tone by the consumer.
+export interface Phase {
+  id?: string;
+  label: string;
+  status?: string;
+  detail?: string;
+  note?: string;
+}
+export const phasesByEntity: Record<string, Phase[]> = (graph.phases ?? {}) as Record<
+  string,
+  Phase[]
+>;
+
+export const ribbon: RibbonMilestone[] = (hub.ribbon as RibbonMilestone[]) ?? [];
+export const ribbonTitle: string = (hub.ribbonTitle as string) ?? 'Milestones';
+export const ribbonTotal: string | undefined = hub.ribbonTotal as string | undefined;
+export const scope: ScopeItem[] = (hub.scope as ScopeItem[]) ?? [];
+export const strategy: string = (hub.strategy as string) ?? '';
+export const domains: HubDomainRec[] = (hub.domains as HubDomainRec[]) ?? [];
+// Selected hub tile id → its domain record (id is the entity kind for petals; 'contract'/'tooling'
+// for the center + tooling slot). Powers the hex details panel.
+export const domainById: Map<string, HubDomainRec> = new Map(domains.map((d) => [d.id, d]));
 
 export { graph, hub };
