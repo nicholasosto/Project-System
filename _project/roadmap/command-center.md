@@ -72,6 +72,24 @@ Phased; each phase is a standalone deliverable.
   external kit and emits JSON only. CLAUDE.md's Map + Dogfooding sections now name the live
   surface.
 
+## Phases
+
+A structured projection of the Plan above — `render-hub.mjs` emits this (per entity, keyed by
+id) into `graph.json` under `phases`, and the Command Center renders it as a progress Timeline.
+Domain-neutral: the engine passes the array straight through; `status` words are this project's
+own, mapped to tones by the consumer.
+
+```json
+[
+  { "id": "P0", "label": "Freeze the contract", "status": "done", "detail": "graph.json + hub.json adopted as the input interface, spec'd in docs/spec/, with render-hub --check in CI." },
+  { "id": "P1", "label": "Scaffold the island", "status": "done", "detail": "apps/command-center — Vite + React 19, its own lockfile/node_modules; never leaks a dependency into the zero-dep core." },
+  { "id": "P2", "label": "Render the graph", "status": "parked", "detail": "Lineage view built, then removed 2026-06-25 ('remove the Graph section for now'); buildGraphContract + the @trembus/viz dep stay for an easy revival." },
+  { "id": "P3", "label": "The three boards", "status": "active", "detail": "Hub (Overview) and the Plan-Progress board are in; the Decision-Tree board is still to do." },
+  { "id": "P4", "label": "Live reload", "status": "planned", "detail": "Dev-only watch to re-run render-hub on _project/ writes and hot-update; today the preview serves a built dist." },
+  { "id": "P5", "label": "Supersede the static HTML", "status": "done", "detail": "✅ 2026-06-25 — the live Hub renders hub.json, so render-hub emits JSON only." }
+]
+```
+
 ## Open questions
 
 - **Static export vs. running server?** The app can ship a static bundle (build-time

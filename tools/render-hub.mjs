@@ -99,6 +99,17 @@ function extractRuns(sectionText, window) {
   return { runs: { total: all.length, rollup: { byStatus }, runs: sorted.slice(0, window) } };
 }
 
+// A development-phase list: an array of phase records. Domain-neutral — like extractWorkflow,
+// the engine invents no phase semantics; it passes a `[{ … }]` block straight through. The
+// Command Center renders it as a progress Timeline. Authored shape is open; a typical record is
+// `{ id?, label, status?, detail? }`.
+function extractPhases(sectionText) {
+  const block = fencedJson(sectionText);
+  if (!block || block.error) return block;
+  if (!Array.isArray(block.value)) return { error: "needs an array of phase records" };
+  return { phases: block.value };
+}
+
 export function buildModel(ctx) {
   const entities = loadEntities(ctx);
   const issues = entities.flatMap((e) => validateEntity(e, ctx));
@@ -169,7 +180,21 @@ export function buildModel(ctx) {
     runs[e.id] = found.runs;
   }
 
-  return { entities: entities.length, migrated, counts, nodes, byKind, edges, edgesByRel, workflows, runs };
+  // Optional development phases: a `## Phases` block (array of phase records) on any entity —
+  // typically a roadmap. Keyed by entity id; the Command Center renders each as a Timeline.
+  const phasesSection = ctx.render?.phasesSection ?? "Phases";
+  const phases = {};
+  for (const e of entities) {
+    const found = extractPhases(e.sections?.[phasesSection]);
+    if (!found) continue;
+    if (found.error) {
+      console.warn(`! ${e.kind}/${e.id}: "${phasesSection}" block ignored — ${found.error}`);
+      continue;
+    }
+    phases[e.id] = found.phases;
+  }
+
+  return { entities: entities.length, migrated, counts, nodes, byKind, edges, edgesByRel, workflows, runs, phases };
 }
 
 function hubContract(ctx, model) {

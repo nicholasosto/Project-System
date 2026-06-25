@@ -30,7 +30,8 @@ integrity: id-uniqueness, `nodes[]`↔`byKind` agreement, edge resolution) are w
 Top-level keys (all always present): `generatedBy`, `project`, `folderByKind`
 (`kind → folder` map), `entities` (number), `migrated` (number), `counts`
 `{error,warning,info}`, `nodes`, `byKind`, `edges`, `edgesByRel`, `workflows`
-(`id → swimlane contract`; `{}` when none).
+(`id → swimlane contract`), `runs` (`id → windowed run history`), and `phases`
+(`id → phase list`) — each `{}` when none.
 
 ### `nodes[]` — the per-entity records
 
@@ -123,6 +124,26 @@ A run's `stepOutcomes[].step` must match a `SwimlaneStep.id` in the same entity'
 Command Center replays the selected run over the swimlane (steps with no outcome fall to
 `pending`). Windowing keeps the contract bounded as the log grows — see decision
 `0005-window-run-history-in-the-contract-sidecar-at-scale`.
+
+### `phases` — optional development phases
+
+An entity (typically a roadmap) MAY declare a `## Phases` body section: a fenced ` ```json `
+block holding an **array of phase records** — a structured projection of its prose plan. The
+section name is config-driven via `render.phasesSection` (default `Phases`). `buildModel()`
+passes the array straight through under `phases`, keyed by **entity id**:
+
+```json
+"phases": {
+  "command-center": [
+    { "id": "P0", "label": "Freeze the contract", "status": "done", "detail": "…" },
+    { "id": "P3", "label": "The three boards", "status": "active", "detail": "…" }
+  ]
+}
+```
+
+The shape is open; a typical record is `{ id?, label, status?, detail? }`. Domain-neutral: the
+engine invents no phase semantics — `status` words are the project's own, mapped to tones by the
+consumer (the Command Center renders each list as a `@trembus/ui` `Timeline`).
 
 ---
 
