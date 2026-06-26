@@ -77,7 +77,7 @@
       "kind": "roadmap",
       "title": "Command-Center",
       "status": "proposed",
-      "updated": "2026-06-25",
+      "updated": "2026-06-26",
       "file": "_project/roadmap/command-center.md"
     },
     {
@@ -337,8 +337,8 @@
       {
         "id": "P4",
         "label": "Live reload",
-        "status": "planned",
-        "detail": "Dev-only watch to re-run render-hub on _project/ writes and hot-update; today the preview serves a built dist."
+        "status": "done",
+        "detail": "✅ 2026-06-26 — a dev-only Vite plugin (apply:'serve') watches _project/** and re-runs render-hub on each edit; the static JSON import means Vite repaints on the rewritten contract. vite dev is now the launch.json target; build/preview still read the committed JSON."
       },
       {
         "id": "P5",

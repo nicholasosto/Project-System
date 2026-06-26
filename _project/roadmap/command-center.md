@@ -1,7 +1,7 @@
 ---
 title: "Command-Center"
 status: proposed
-updated: 2026-06-25
+updated: 2026-06-26
 links:
   - { rel: references, target: decisions/0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter }
 ---
@@ -64,9 +64,11 @@ Phased; each phase is a standalone deliverable.
   routed tabs (`@trembus/ui` `Tabs`): **Hub** (stats + scope tiles from `hub.json` via
   `Card`/`Badge`), **Decision-Tree** (the ADR ledger via `@trembus/viz` `Tree`, parent =
   `decided-in` target), **Plan-Progress** (roadmap + pipeline command board).
-- **P4 · Live reload.** Dev-only watch that re-runs `render-hub.mjs --no-render` on any
-  `_project/` write and hot-updates the app, so editing a decision repaints the board. The
-  committed JSON stays the source the static build reads.
+- **P4 · Live reload.** ✅ Done (2026-06-26): a dev-only Vite plugin (`apply: 'serve'`, in
+  `apps/command-center/vite.config.ts`) watches `_project/**` and re-runs the zero-dep
+  `render-hub.mjs` on each edit; because the app imports the emitted JSON statically, Vite
+  repaints on the rewritten contract. Scoped to `vite dev` (now the `launch.json` target),
+  so `vite build` / `vite preview` keep reading the committed JSON.
 - **P5 · Supersede.** ✅ Done (2026-06-25): the live `@trembus/ui` `Hub` renders `hub.json`,
   so the static single-file HTML was retired — `render-hub.mjs` no longer shells out to the
   external kit and emits JSON only. CLAUDE.md's Map + Dogfooding sections now name the live
@@ -85,7 +87,7 @@ own, mapped to tones by the consumer.
   { "id": "P1", "label": "Scaffold the island", "status": "done", "detail": "apps/command-center — Vite + React 19, its own lockfile/node_modules; never leaks a dependency into the zero-dep core." },
   { "id": "P2", "label": "Render the graph", "status": "parked", "detail": "Lineage view built, then removed 2026-06-25 ('remove the Graph section for now'); buildGraphContract + the @trembus/viz dep stay for an easy revival." },
   { "id": "P3", "label": "The three boards", "status": "active", "detail": "Hub (Overview) and the Plan-Progress board are in; the Decision-Tree board is still to do." },
-  { "id": "P4", "label": "Live reload", "status": "planned", "detail": "Dev-only watch to re-run render-hub on _project/ writes and hot-update; today the preview serves a built dist." },
+  { "id": "P4", "label": "Live reload", "status": "done", "detail": "✅ 2026-06-26 — a dev-only Vite plugin (apply:'serve') watches _project/** and re-runs render-hub on each edit; the static JSON import means Vite repaints on the rewritten contract. vite dev is now the launch.json target; build/preview still read the committed JSON." },
   { "id": "P5", "label": "Supersede the static HTML", "status": "done", "detail": "✅ 2026-06-25 — the live Hub renders hub.json, so render-hub emits JSON only." }
 ]
 ```
