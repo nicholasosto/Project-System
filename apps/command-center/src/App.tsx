@@ -130,73 +130,44 @@ function AreaTable({ kinds, empty }: { kinds: string[]; empty: string }) {
   );
 }
 
-// Selecting a hub tile no longer navigates — it reveals that tile's planning artifacts here,
-// beneath the Hub's own (note + sources) inspector. The selected id is the domain id, which
-// equals the entity kind for petals (and 'contract'/'tooling' for the center + tooling slot,
-// which carry no entity list — those fall back to the domain's sources).
-function HexDetails({ id }: { id?: string }) {
-  if (!id) {
-    return (
-      <Card className="cc-hexdetails cc-hexdetails--empty">
-        <p className="cc-hexdetails__hint">Select a hexagon to inspect its planning artifacts.</p>
-      </Card>
-    );
-  }
+// Selecting a hub tile reveals that tile's detail in the right-side drawer (not below the grid).
+// The selected id is the domain id — the entity kind for petals, or 'contract'/'tooling' for the
+// center + tooling slot. This projects the selection into a Trembus BriefContract: kind tiles list
+// their entities via an `artifacts` section; the center/tooling slots carry no entity list, so they
+// fall back to the domain's note + `reference` sources (the same data the Hub's own inspector used).
+function hexBrief(id: string): BriefContract {
   const domain = domainById.get(id);
   const rows = entitiesOfKinds(id);
-  return (
-    <Card className="cc-hexdetails">
-      <header className="cc-hexdetails__head">
-        <div>
-          <p className="cc-eyebrow">{domain?.tag ?? id}</p>
-          <h3 className="cc-hexdetails__title">{domain?.name ?? id}</h3>
-        </div>
-        {domain?.status && (
-          <Badge tone="neutral" variant="soft" size="sm">
-            {domain.status}
-          </Badge>
-        )}
-      </header>
-      {rows.length > 0 ? (
-        // A kind tile: list its entities. The Hub's own inspector (above) already carries the
-        // note + sources, so the card stays focused on the artifacts it uniquely adds.
-        <Table density="compact">
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell>Title</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell align="end">Updated</Table.HeaderCell>
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {rows.map((e) => (
-              <Table.Row key={`${e.kind}/${e.id}`}>
-                <Table.Cell>{e.title}</Table.Cell>
-                <Table.Cell>
-                  <Badge tone={statusTone(e.status)} variant="soft" size="sm" dot>
-                    {e.status}
-                  </Badge>
-                </Table.Cell>
-                <Table.Cell numeric>{e.updated}</Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
-      ) : (
-        // The center (contract) or tooling tile: no entity list, so the card carries the detail.
-        <>
-          {domain?.note && <p className="cc-hexdetails__note">{domain.note}</p>}
-          {domain?.sources?.length ? (
-            <ul className="cc-hexdetails__sources">
-              {domain.sources.map((s, i) => (
-                <li key={i}>{typeof s === 'string' ? s : s.label}</li>
-              ))}
-            </ul>
-          ) : null}
-        </>
-      )}
-    </Card>
-  );
+  const sections: NonNullable<BriefContract['sections']> = [];
+
+  if (rows.length) {
+    sections.push({
+      id: 'artifacts',
+      heading: 'Planning artifacts',
+      kind: 'artifacts',
+      items: rows.map((e) => ({ text: e.title, status: e.status, ref: e.updated })),
+    });
+  } else if (domain?.sources?.length) {
+    sections.push({
+      id: 'sources',
+      heading: 'Sources',
+      kind: 'reference',
+      items: domain.sources.map((s) => (typeof s === 'string' ? s : { text: s.label, ref: s.href })),
+    });
+  }
+
+  return {
+    view: 'brief',
+    kind: 'spec',
+    id: domain?.tag ?? id,
+    title: domain?.name ?? id,
+    summary: domain?.note ?? domain?.sub,
+    meta: [
+      ...(domain?.status ? [{ label: 'state', value: domain.status }] : []),
+      ...(rows.length ? [{ label: 'entities', value: rows.length }] : []),
+    ],
+    sections,
+  };
 }
 
 // The development board (in the slot the Graph view used to hold). It visualizes progress from
@@ -324,8 +295,26 @@ export function App() {
 
         <Tabs.Panel value="overview" className="cc-panel cc-panel--hub">
           <div className="cc-overview">
-            <Hub data={hubData} selectedId={hubSel} onSelect={setHubSel} />
-            <HexDetails id={hubSel} />
+            <div className="cc-overview__hub">
+              <Hub data={hubData} selectedId={hubSel} onSelect={setHubSel} />
+            </div>
+            <aside className="cc-detailpanel" data-open={Boolean(hubSel)} aria-label="Entity details">
+              <div className="cc-detailpanel__inner">
+                {hubSel ? (
+                  <Card className="cc-detailpanel__card">
+                    <button
+                      type="button"
+                      className="cc-detailpanel__close"
+                      onClick={() => setHubSel(undefined)}
+                      aria-label="Close details"
+                    >
+                      ✕
+                    </button>
+                    <Brief data={hexBrief(hubSel)} />
+                  </Card>
+                ) : null}
+              </div>
+            </aside>
           </div>
         </Tabs.Panel>
 
