@@ -48,68 +48,106 @@ body,
   padding: 1rem 1.75rem;
 }
 
-/* The Overview panel hosts the hex-flower hub — centered, scrollable if it overflows. */
+/* The Overview panel hosts the hex-flower hub on the left and the detail drawer on the right. */
 .cc-panel--hub {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  display: block;
 }
 
-/* Hub above its details panel: the flower, then the selected tile's planning artifacts. */
+/* Hub beside its detail drawer: the flower fills the space; the drawer opens on the right when a
+   tile is selected (collapsed to zero width otherwise). */
 .cc-overview {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 1.5rem;
   width: 100%;
-  max-width: 64rem;
+  max-width: 76rem;
+  margin: 0 auto;
 }
 
-/* Hex details panel — the rich, non-navigating surface a tile click opens. */
-.cc-hexdetails {
-  width: 100%;
+.cc-overview__hub {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  padding: 1.1rem 1.25rem;
+  justify-content: center;
 }
 
-.cc-hexdetails--empty {
-  border-style: dashed;
+/* The Hub ships its own inspector + axis below the petals; the right-side drawer replaces the
+   inspector, so hide both here — the Overview reads as just the flower, with details on the right. */
+.cc-overview .tcl-hub__inspector,
+.cc-overview .tcl-hub__axis {
+  display: none;
 }
 
-.cc-hexdetails__hint {
-  margin: 0;
-  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.6));
-  font-size: 0.9rem;
+/* Declutter the tiles: with detail now in the drawer, drop each hex's descriptive sub-line so the
+   flower reads as tag · name · status instead of four stacked text rows. The `sub` text stays in
+   the contract (the drawer's Brief still uses it) — it's only hidden on the tile face. */
+.cc-overview .tcl-hub__tile-sub {
+  display: none;
 }
 
-.cc-hexdetails__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+/* Right detail drawer — collapsed to 0 width until a hex is selected, then slides open. Sticky so
+   it stays in view while the (taller) hub scrolls. */
+.cc-detailpanel {
+  flex: 0 0 0;
+  align-self: stretch;
+  overflow: hidden;
+  opacity: 0;
+  position: sticky;
+  top: 0.25rem;
+  transition: flex-basis 0.22s ease, opacity 0.18s ease;
 }
 
-.cc-hexdetails__title {
-  margin: 0.1rem 0 0;
-  font-size: 1.05rem;
-  font-weight: 650;
+.cc-detailpanel[data-open='true'] {
+  flex-basis: 23rem;
+  opacity: 1;
 }
 
-.cc-hexdetails__note {
-  margin: 0;
-  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.7));
-  font-size: 0.88rem;
-  line-height: 1.55;
+/* Fixed inner width so the Brief content doesn't reflow/squish during the flex-basis transition. */
+.cc-detailpanel__inner {
+  width: 23rem;
 }
 
-.cc-hexdetails__sources {
-  margin: 0;
-  padding-left: 1.1rem;
-  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.65));
-  font-size: 0.82rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+.cc-detailpanel__card {
+  position: relative;
+  padding: 1.15rem 1.25rem;
+}
+
+.cc-detailpanel__close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.6rem;
+  z-index: 1;
+  font: inherit;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.55));
+  cursor: pointer;
+}
+
+.cc-detailpanel__close:hover {
+  color: var(--tcl-text, #fff);
+  background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.06));
+}
+
+/* Stack on narrow viewports — the drawer becomes a full-width panel below the hub. */
+@media (max-width: 60rem) {
+  .cc-overview {
+    flex-direction: column;
+  }
+  .cc-detailpanel {
+    position: static;
+    width: 100%;
+  }
+  .cc-detailpanel[data-open='true'] {
+    flex-basis: auto;
+  }
+  .cc-detailpanel__inner {
+    width: 100%;
+  }
 }
 
 /* Progress board — the development view in the slot the Graph used to hold. */
