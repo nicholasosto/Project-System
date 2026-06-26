@@ -4,8 +4,9 @@
     {
       "name": "command-center",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["-C", "apps/command-center", "preview"],
-      "port": 5175
+      "runtimeArgs": ["-C", "apps/command-center", "dev"],
+      "port": 5175,
+      "autoPort": true
     }
   ]
 }
