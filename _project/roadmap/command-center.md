@@ -1,14 +1,15 @@
 ---
 title: "Command-Center"
-status: proposed
-updated: 2026-06-26
+status: active
+updated: 2026-06-27
 links:
   - { rel: references, target: decisions/0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter }
+  - { rel: references, target: decisions/0007-derive-kind-presentation-from-the-contract }
 ---
 
 # Command-Center
 
-> **Status:** proposed (2026-06-24)
+> **Status:** active (2026-06-27)
 
 A live, interactive web surface for the ProjectEntity graph — built on the
 **Trembus-Component-Library** (`@trembus/viz` + `@trembus/ui` + `@trembus/tokens`),
@@ -73,6 +74,13 @@ Phased; each phase is a standalone deliverable.
   so the static single-file HTML was retired — `render-hub.mjs` no longer shells out to the
   external kit and emits JSON only. CLAUDE.md's Map + Dogfooding sections now name the live
   surface.
+- **P6 · Data-driven kinds.** ✅ Done (2026-06-27): the hub gained **control-surface tiles**
+  (commands · workflows · hooks via a curated `render.hex`), `workflow` became a first-class kind
+  with the authoring loop migrated to `_project/` data, and per-kind presentation (tone · nav ·
+  swimlane-carrier) is now **derived from the emitted contract** — so adding a kind is a config
+  edit + folder with zero app edits. See decisions
+  [0006](../decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline.md) +
+  [0007](../decisions/0007-derive-kind-presentation-from-the-contract.md).
 
 ## Phases
 
@@ -86,9 +94,10 @@ own, mapped to tones by the consumer.
   { "id": "P0", "label": "Freeze the contract", "status": "done", "detail": "graph.json + hub.json adopted as the input interface, spec'd in docs/spec/, with render-hub --check in CI." },
   { "id": "P1", "label": "Scaffold the island", "status": "done", "detail": "apps/command-center — Vite + React 19, its own lockfile/node_modules; never leaks a dependency into the zero-dep core." },
   { "id": "P2", "label": "Render the graph", "status": "parked", "detail": "Lineage view built, then removed 2026-06-25 ('remove the Graph section for now'); buildGraphContract + the @trembus/viz dep stay for an easy revival." },
-  { "id": "P3", "label": "The three boards", "status": "active", "detail": "Hub (Overview) and the Plan-Progress board are in; the Decision-Tree board is still to do." },
+  { "id": "P3", "label": "The three boards", "status": "active", "detail": "Hub (Overview) — now with control-surface tiles (commands · workflows · hooks) + a right-side details drawer — and the Plan-Progress board are in; the Workflows tab replays swimlanes from _project/ data. The Decision-Tree board is still to do." },
   { "id": "P4", "label": "Live reload", "status": "done", "detail": "✅ 2026-06-26 — a dev-only Vite plugin (apply:'serve') watches _project/** and re-runs render-hub on each edit; the static JSON import means Vite repaints on the rewritten contract. vite dev is now the launch.json target; build/preview still read the committed JSON." },
-  { "id": "P5", "label": "Supersede the static HTML", "status": "done", "detail": "✅ 2026-06-25 — the live Hub renders hub.json, so render-hub emits JSON only." }
+  { "id": "P5", "label": "Supersede the static HTML", "status": "done", "detail": "✅ 2026-06-25 — the live Hub renders hub.json, so render-hub emits JSON only." },
+  { "id": "P6", "label": "Data-driven kinds", "status": "done", "detail": "✅ 2026-06-27 — render-hub emits per-kind tone + swimlaneKinds + a nav passthrough; the app derives presentation from the contract, so adding a kind is config + folder with zero app edits (decisions 0006 workflow-kind + 0007 data-driven). The control-surface hub tiles and the migrated authoring-loop workflow landed here too." }
 ]
 ```
 

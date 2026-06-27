@@ -12,7 +12,7 @@
   "stats": [
     {
       "label": "entities",
-      "value": 11
+      "value": 14
     },
     {
       "label": "kinds",
@@ -25,19 +25,19 @@
     },
     {
       "label": "edges",
-      "value": 4
+      "value": 10
     }
   ],
   "scopeTitle": "Contract · coverage",
   "scope": [
     {
       "label": "Entities",
-      "num": "11",
+      "num": "14",
       "value": "across 6 kinds"
     },
     {
       "label": "Conformant",
-      "num": "11/11",
+      "num": "14/14",
       "value": "carry frontmatter · 0 pending"
     },
     {
@@ -47,7 +47,7 @@
     },
     {
       "label": "Edges",
-      "num": "4",
+      "num": "10",
       "value": "typed links · decided-in · references"
     },
     {
@@ -70,7 +70,7 @@
       "tag": "Contract",
       "name": "ProjectEntity",
       "sub": "3 primitives · 1 shape",
-      "status": "11 entities · 11/11 conformant",
+      "status": "14 entities · 14/14 conformant",
       "dot": "#D4AF37",
       "note": "One non-optional contract every _project/ file derives from — Identity (kind·id·title) · State (status·updated) · Relation (links). kind & id are loader-derived from the path; the authored surface is just title/status/updated (+links/tags). The validator, scaffolder, guard, and this dashboard all read this single source.",
       "sources": [
@@ -85,9 +85,9 @@
       "tag": "Decisions",
       "name": "ADR ledger",
       "sub": "supersession-linked",
-      "status": "5 · all accepted",
+      "status": "7 · all accepted",
       "dot": "#44DDFF",
-      "note": "5 decision entities — status over the per-kind enum (all accepted). 3 typed links touch this kind.",
+      "note": "7 decision entities — status over the per-kind enum (all accepted). 8 typed links touch this kind.",
       "sources": [
         "_project/decisions/"
       ]
@@ -160,9 +160,9 @@
       "tag": "Sessions",
       "name": "Work log",
       "sub": "reference shape · 8 sections",
-      "status": "1 · all active",
+      "status": "2 · 1 active · 1 completed",
       "dot": "#D4AF37",
-      "note": "1 session entity — status over the per-kind enum (all active). 1 typed link touch this kind.",
+      "note": "2 session entities — status over the per-kind enum (1 active · 1 completed). 4 typed links touch this kind.",
       "sources": [
         "_project/sessions/"
       ]

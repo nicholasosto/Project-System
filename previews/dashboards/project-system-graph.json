@@ -9,8 +9,8 @@
     "session": "sessions",
     "workflow": "workflows"
   },
-  "entities": 11,
-  "migrated": 11,
+  "entities": 14,
+  "migrated": 14,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -58,6 +58,22 @@
       "file": "_project/decisions/0005-window-run-history-in-the-contract-sidecar-at-scale.md"
     },
     {
+      "id": "0006-workflow-as-a-first-class-kind-distinct-from-pipeline",
+      "kind": "decision",
+      "title": "Workflow as a first-class kind, distinct from pipeline",
+      "status": "accepted",
+      "updated": "2026-06-27",
+      "file": "_project/decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline.md"
+    },
+    {
+      "id": "0007-derive-kind-presentation-from-the-contract",
+      "kind": "decision",
+      "title": "Derive kind presentation from the contract",
+      "status": "accepted",
+      "updated": "2026-06-27",
+      "file": "_project/decisions/0007-derive-kind-presentation-from-the-contract.md"
+    },
+    {
       "id": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
       "kind": "report",
       "title": "Extract and generalize the framework from Soul-Steel",
@@ -77,8 +93,8 @@
       "id": "command-center",
       "kind": "roadmap",
       "title": "Command-Center",
-      "status": "proposed",
-      "updated": "2026-06-26",
+      "status": "active",
+      "updated": "2026-06-27",
       "file": "_project/roadmap/command-center.md"
     },
     {
@@ -98,6 +114,14 @@
       "file": "_project/sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space.md"
     },
     {
+      "id": "2026-06-27-command-center-evolution-and-data-driven-kinds",
+      "kind": "session",
+      "title": "Command Center evolution and data-driven kinds",
+      "status": "completed",
+      "updated": "2026-06-27",
+      "file": "_project/sessions/2026-06-27-command-center-evolution-and-data-driven-kinds.md"
+    },
+    {
       "id": "authoring-loop",
       "kind": "workflow",
       "title": "Authoring loop",
@@ -108,16 +132,18 @@
   ],
   "byKind": {
     "decision": {
-      "total": 5,
+      "total": 7,
       "byStatus": {
-        "accepted": 5
+        "accepted": 7
       },
       "ids": [
         "0001-home-the-project-system-framework-in-its-own-space",
         "0002-mirror-the-contract-with-a-ci-check-before-publishing",
         "0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter",
         "0004-pipeline-entities-carry-a-structured-workflow-block",
-        "0005-window-run-history-in-the-contract-sidecar-at-scale"
+        "0005-window-run-history-in-the-contract-sidecar-at-scale",
+        "0006-workflow-as-a-first-class-kind-distinct-from-pipeline",
+        "0007-derive-kind-presentation-from-the-contract"
       ],
       "tone": "info"
     },
@@ -144,7 +170,8 @@
     "roadmap": {
       "total": 2,
       "byStatus": {
-        "proposed": 2
+        "active": 1,
+        "proposed": 1
       },
       "ids": [
         "command-center",
@@ -153,12 +180,14 @@
       "tone": "neutral"
     },
     "session": {
-      "total": 1,
+      "total": 2,
       "byStatus": {
-        "active": 1
+        "active": 1,
+        "completed": 1
       },
       "ids": [
-        "2026-06-24-extract-and-generalize-project-system-into-its-own-space"
+        "2026-06-24-extract-and-generalize-project-system-into-its-own-space",
+        "2026-06-27-command-center-evolution-and-data-driven-kinds"
       ],
       "tone": "warning"
     },
@@ -174,6 +203,18 @@
     }
   },
   "edges": [
+    {
+      "from": "0006-workflow-as-a-first-class-kind-distinct-from-pipeline",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "decisions/0004-pipeline-entities-carry-a-structured-workflow-block"
+    },
+    {
+      "from": "0007-derive-kind-presentation-from-the-contract",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "roadmap/command-center"
+    },
     {
       "from": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
       "fromKind": "report",
@@ -193,15 +234,39 @@
       "target": "decisions/0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter"
     },
     {
+      "from": "command-center",
+      "fromKind": "roadmap",
+      "rel": "references",
+      "target": "decisions/0007-derive-kind-presentation-from-the-contract"
+    },
+    {
       "from": "migrate-soul-steel-to-consume-the-packaged-framework",
       "fromKind": "roadmap",
       "rel": "references",
       "target": "decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing"
+    },
+    {
+      "from": "2026-06-27-command-center-evolution-and-data-driven-kinds",
+      "fromKind": "session",
+      "rel": "references",
+      "target": "decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline"
+    },
+    {
+      "from": "2026-06-27-command-center-evolution-and-data-driven-kinds",
+      "fromKind": "session",
+      "rel": "references",
+      "target": "decisions/0007-derive-kind-presentation-from-the-contract"
+    },
+    {
+      "from": "2026-06-27-command-center-evolution-and-data-driven-kinds",
+      "fromKind": "session",
+      "rel": "references",
+      "target": "roadmap/command-center"
     }
   ],
   "edgesByRel": {
-    "decided-in": 1,
-    "references": 3
+    "references": 9,
+    "decided-in": 1
   },
   "workflows": {
     "package-as-trembus-project-schema": {
@@ -440,7 +505,7 @@
         "id": "P3",
         "label": "The three boards",
         "status": "active",
-        "detail": "Hub (Overview) and the Plan-Progress board are in; the Decision-Tree board is still to do."
+        "detail": "Hub (Overview) — now with control-surface tiles (commands · workflows · hooks) + a right-side details drawer — and the Plan-Progress board are in; the Workflows tab replays swimlanes from _project/ data. The Decision-Tree board is still to do."
       },
       {
         "id": "P4",
@@ -453,6 +518,12 @@
         "label": "Supersede the static HTML",
         "status": "done",
         "detail": "✅ 2026-06-25 — the live Hub renders hub.json, so render-hub emits JSON only."
+      },
+      {
+        "id": "P6",
+        "label": "Data-driven kinds",
+        "status": "done",
+        "detail": "✅ 2026-06-27 — render-hub emits per-kind tone + swimlaneKinds + a nav passthrough; the app derives presentation from the contract, so adding a kind is config + folder with zero app edits (decisions 0006 workflow-kind + 0007 data-driven). The control-surface hub tiles and the migrated authoring-loop workflow landed here too."
       }
     ]
   },
