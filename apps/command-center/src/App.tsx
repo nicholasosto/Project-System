@@ -169,23 +169,37 @@ function AreaTable({ kinds, empty }: { kinds: string[]; empty: string }) {
   );
 }
 
-// Section kind per control-surface facet — all three render each item's `desc` as a gloss.
+// Section kind per control-surface facet. Commands keep the bespoke command/gloss rows;
+// workflows list their swimlane entries; hooks render as a `reference` list so each row can
+// carry a role chip (`status`) + its command (`ref` → mono code) — the `rules` renderer shows
+// only text + desc, which is what made the old drawer read as a flat, glossless list.
 const FACET_SECTION: Record<string, SectionKind> = {
   commands: 'commands',
-  hooks: 'rules',
+  hooks: 'reference',
   workflows: 'artifacts',
 };
+
+// The Claude Code events that can *block* a tool call (PreToolUse / UserPromptSubmit exit-2);
+// everything else only advises. Lets the Hooks brief show a blocking/advisory split without the
+// domain-neutral emitter having to carry the role — it's derivable from the event name.
+const BLOCKING_HOOK = /^(PreToolUse|UserPromptSubmit)\b/;
+const hookRole = (text: string): string => (BLOCKING_HOOK.test(text) ? 'blocking' : 'advisory');
 
 // Selecting a hub tile reveals that tile's detail in the right-side drawer (not below the grid).
 // The selected id is the domain id — an entity kind for kind-petals, a facet id (commands /
 // workflows / hooks) for control-surface petals, or 'contract' for the center. This projects the
 // selection into a Trembus BriefContract: kind tiles list their entities via an `artifacts`
-// section; facet tiles list their `entries` (syntax + gloss); the center carries neither, so it
-// falls back to the domain's note + `reference` sources (the data the Hub's inspector once used).
+// section; facet tiles list their `entries`; the center carries neither, so it falls back to the
+// domain's note + `reference` sources. The eyebrow is the tile's *source path* (its most
+// identifying handle) rather than the generic "Control surface" tag three petals share; the meta
+// pills lead with a toned count, then the status rollup (or, for hooks, the blocking/advisory
+// split) — never the old triple-counted "STATE 2 · … / COUNT 2".
 function hexBrief(id: string): BriefContract {
   const domain = domainById.get(id);
   const rows = entitiesOfKinds(id);
   const entries = domain?.entries ?? [];
+  const dot = domain?.dot;
+  const isHooks = id === 'hooks';
   const sections: NonNullable<BriefContract['sections']> = [];
 
   if (rows.length) {
@@ -200,7 +214,11 @@ function hexBrief(id: string): BriefContract {
       id: 'entries',
       heading: domain?.name ?? 'Details',
       kind: FACET_SECTION[id] ?? 'reference',
-      items: entries.map((e) => ({ text: e.text, desc: e.desc, status: e.status, ref: e.ref })),
+      items: entries.map((e) =>
+        isHooks
+          ? { text: e.text, status: hookRole(e.text), ref: e.desc?.replace(/^node\s+/, '') }
+          : { text: e.text, desc: e.desc, status: e.status, ref: e.ref },
+      ),
     });
   } else if (domain?.sources?.length) {
     sections.push({
@@ -211,17 +229,35 @@ function hexBrief(id: string): BriefContract {
     });
   }
 
+  // Eyebrow (the gold mono `id` slot): the tile's first source path — its most identifying
+  // handle — falling back to the shared tag only when a tile declares no source.
+  const firstSource = domain?.sources?.[0];
+  const eyebrow = (typeof firstSource === 'string' ? firstSource : firstSource?.label) ?? domain?.tag;
+
+  // Meta pills — scannable + toned, no repetition. Lead with a count (entities, or facet items);
+  // hooks add the derived blocking/advisory split; every other tile shows the *rollup* — the part
+  // of `status` after the leading "N · ", which would otherwise just repeat the count.
+  const meta: NonNullable<BriefContract['meta']> = [];
+  if (rows.length) meta.push({ label: 'entities', value: rows.length, tone: dot });
+  else if (entries.length) meta.push({ label: domain?.name?.toLowerCase() ?? 'items', value: entries.length, tone: dot });
+
+  if (isHooks && entries.length) {
+    const blocking = entries.filter((e) => BLOCKING_HOOK.test(e.text)).length;
+    if (blocking) meta.push({ label: 'blocking', value: blocking, tone: '#FF9F45' });
+    if (entries.length - blocking) meta.push({ label: 'advisory', value: entries.length - blocking, tone: '#5a6478' });
+  } else {
+    const rollup = (domain?.status ?? '').split(' · ').slice(1).join(' · ').trim();
+    if (rollup) meta.push({ label: 'state', value: rollup });
+  }
+  if (!meta.length && domain?.status) meta.push({ label: 'state', value: domain.status });
+
   return {
     view: 'brief',
     kind: 'spec',
-    id: domain?.tag ?? id,
+    id: eyebrow ?? id,
     title: domain?.name ?? id,
     summary: domain?.note ?? domain?.sub,
-    meta: [
-      ...(domain?.status ? [{ label: 'state', value: domain.status }] : []),
-      ...(rows.length ? [{ label: 'entities', value: rows.length }] : []),
-      ...(entries.length ? [{ label: 'count', value: entries.length }] : []),
-    ],
+    meta,
     sections,
   };
 }

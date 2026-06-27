@@ -51,13 +51,20 @@ A consuming project supplies a config; the framework supplies everything else.
 
 ## Using it in another project
 
-1. Drop a `project-system.config.json` at the project root (copy `examples/soul-steel.config.json`
-   and edit the kinds/enums/sections/registry/milestones).
-2. Run the engines against it:
-   `node <path-to-framework>/tools/validate.mjs --root <project> --config <project>/project-system.config.json`.
-3. Wire the guard as a `PreToolUse` (`Write|Edit`) hook and copy the `/new` command
-   (see this repo's `.claude/`).
-4. Register the project in `tools/check-consumer-drift.mjs` so the mirror stays honest.
+1. **Vendor** this framework verbatim into a reserved `.project-system/` at the project root
+   (`schema/`, `lib/`, `tools/`). Never edit or rename a file inside it — updating = re-copy the folder.
+2. **Author** `project-system.config.json` at the project root (copy `examples/soul-steel.config.json`
+   and edit the kinds/enums/sections/registry/milestones). This is the *only* project-specific file you write.
+3. **Copy** `templates/consumer/.claude/` into the project (`settings.json` + `commands/new.md`). Don't edit
+   it — the wiring is domain-neutral and identical for every consumer: a blocking `PreToolUse` guard plus an
+   advisory `SessionStart` health summary, both pointing at `.project-system/tools/…` via `$CLAUDE_PROJECT_DIR`.
+4. **Register** the project in `tools/check-consumer-drift.mjs` (add `schema`/`root`/`config`, plus a
+   `claudeDir` to opt into the hook-parity axis) so the mirror — schema, validator, **and** hooks — stays honest.
+5. **Verify:** `node .project-system/tools/check-consumer-drift.mjs` (or `npm test` from the framework).
+
+Run the engines directly any time with `node .project-system/tools/validate.mjs --root . --config ./project-system.config.json`.
+The single generic `/new <kind>` command is canonical — the scaffolder validates the kind against your config,
+so there are no per-kind commands to hand-maintain.
 
 ## Conventions
 
@@ -75,8 +82,15 @@ A consuming project supplies a config; the framework supplies everything else.
   filename. The authored surface is just `title`/`status`/`updated` (+ optional `links`/`tags`).
 - **prose ↔ frontmatter.** The leading word of a doc's `**Status:**` header must agree with
   its frontmatter `status` (severity per `proseStatusEnforcement.rollout`).
+- **Two hooks, no more.** The contract is enforced by exactly two Claude Code hooks (see
+  `.claude/settings.json` and `templates/consumer/.claude/settings.json`): a **blocking**
+  `PreToolUse(Write|Edit)` guard (`tools/guard.mjs` — the only hook that can block; exit 2 +
+  reason, read-only, fails open) and an **advisory** `SessionStart` health summary
+  (`validate.mjs --summary`, always exit 0 — surfaces ambient drift the per-write guard can't
+  see). Rendering is **not** a hook — it's the Command Center's Vite dev plugin. Consumers
+  **vendor verbatim and never rename**; the drift check's hook-parity axis fails any rename/fork.
 - **Self-tests are the contract on the tooling.** Every engine has `--self-test`; run
-  `npm test` (validator + scaffolder + guard). Keep them green.
+  `npm test` (validator + scaffolder + guard + consumer-drift, incl. the hook-parity axis). Keep them green.
 
 ## Packaging status
 

@@ -28,7 +28,7 @@ the same engines at a different project.
 ## Quickstart (this repo dogfoods itself)
 
 ```bash
-npm test                      # validator + scaffolder + guard self-tests
+npm test                      # all engine self-tests (validator · scaffolder · guard · consumer-drift) + checks
 node tools/validate.mjs       # validate this repo's own _project/ graph
 node tools/new-entity.mjs decision "Adopt X over Y"   # scaffold a conformant ADR
 node tools/render-hub.mjs     # regenerate the Command Center's JSON contract (graph + hub)
@@ -37,16 +37,24 @@ node tools/render-hub.mjs     # regenerate the Command Center's JSON contract (g
 ## Use it in another project
 
 ```bash
-# 1. copy a config and edit the kinds/enums/sections to taste
-cp examples/soul-steel.config.json /path/to/my-project/project-system.config.json
+# 1. vendor the framework verbatim into a reserved .project-system/ (never edit/rename inside it)
+cp -R schema lib tools /path/to/my-project/.project-system/
 
-# 2. run the engines against it
-node tools/validate.mjs --root /path/to/my-project \
-                        --config /path/to/my-project/project-system.config.json
+# 2. author the ONLY project-specific file: the config
+cp examples/soul-steel.config.json /path/to/my-project/project-system.config.json   # then edit kinds/enums/sections
 
-# 3. (optional) wire the guard as a PreToolUse Write|Edit hook and copy .claude/commands/
-# 4. register the project in tools/check-consumer-drift.mjs
+# 3. copy the hook + command wiring (identical for every consumer — don't edit it)
+cp -R templates/consumer/.claude /path/to/my-project/.claude
+
+# 4. register the project (with claudeDir) in tools/check-consumer-drift.mjs, then verify
+node /path/to/my-project/.project-system/tools/check-consumer-drift.mjs
 ```
+
+The `.claude/` template wires two hooks: a **blocking** `PreToolUse(Write|Edit)` guard that rejects any
+`_project/` write breaking the contract, and an **advisory** `SessionStart` summary
+(`validate.mjs --summary`) that surfaces the planning surface's health at session open. The single generic
+`/new <kind>` command is canonical (no per-kind commands to maintain). The drift check's hook-parity axis
+fails if a consumer renames a vendored tool or forks the wiring — so "copy the template" actually sticks.
 
 ## Packaging
 

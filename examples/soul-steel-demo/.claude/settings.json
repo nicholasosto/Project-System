@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node .project-system/tools/new-entity.mjs:*)",
+      "Bash(node .project-system/tools/validate.mjs:*)",
+      "Bash(node .project-system/tools/render-hub.mjs:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.project-system/tools/guard.mjs\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.project-system/tools/validate.mjs\" --summary"
+          }
+        ]
+      }
+    ]
+  }
+}

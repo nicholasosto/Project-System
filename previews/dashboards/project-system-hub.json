@@ -79,43 +79,59 @@
       ]
     },
     {
-      "id": "decision",
+      "id": "hooks",
       "pos": "robot",
       "kind": "shipped",
-      "tag": "Decisions",
-      "name": "ADR ledger",
-      "sub": "supersession-linked",
-      "status": "7 · all accepted",
-      "dot": "#44DDFF",
-      "note": "7 decision entities — status over the per-kind enum (all accepted). 8 typed links touch this kind.",
+      "tag": "Control surface",
+      "name": "Hooks",
+      "sub": "guard + session summary",
+      "status": "2 · guard + session summary",
+      "dot": "#FF9F45",
+      "note": "Two Claude Code hooks enforce the contract at the edges of a session — a blocking guard on every write, an advisory health check when a session opens. (Rendering isn't a hook; it's the Command Center's Vite plugin.)",
+      "entries": [
+        {
+          "text": "PreToolUse · Write|Edit",
+          "desc": "node tools/guard.mjs"
+        },
+        {
+          "text": "SessionStart",
+          "desc": "node tools/validate.mjs --summary"
+        }
+      ],
       "sources": [
-        "_project/decisions/"
+        ".claude/settings.json"
       ]
     },
     {
-      "id": "report",
-      "pos": "blood",
+      "id": "commands",
+      "pos": "decay",
       "kind": "shipped",
-      "tag": "Reports",
-      "name": "Retro log",
-      "sub": "milestone + meta retros",
-      "status": "1 · all complete",
-      "dot": "#7BD88F",
-      "note": "1 report entity — status over the per-kind enum (all complete). 2 typed links touch this kind.",
+      "tag": "Control surface",
+      "name": "Commands",
+      "sub": "slash commands",
+      "status": "1 · slash commands",
+      "dot": "#5a6478",
+      "note": "The project's slash commands — one generic /new <kind> scaffolder that writes valid frontmatter and self-validates against the config.",
+      "entries": [
+        {
+          "text": "/new <kind> <title>",
+          "desc": "Scaffold a new _project/ entity of any kind — decision · report · pipeline · roadmap · session · workflow"
+        }
+      ],
       "sources": [
-        "_project/reports/"
+        ".claude/commands/"
       ]
     },
     {
       "id": "workflows",
-      "pos": "decay",
+      "pos": "fate",
       "kind": "shipped",
       "tag": "Control surface",
       "name": "Workflows",
       "sub": "swimlane definitions",
       "status": "2 · swimlane definitions",
       "dot": "#B884FF",
-      "note": "Operating workflows the Command Center replays as swimlanes — the framework's built-in authoring loop plus any entity that declares a ## Workflow block.",
+      "note": "Operating workflows the Command Center replays as swimlanes — the authoring loop plus any entity that declares a ## Workflow block.",
       "entries": [
         {
           "text": "Package as trembus project-schema",
@@ -131,60 +147,6 @@
       "sources": [
         "apps/command-center/src/workflows.ts",
         "_project/ (## Workflow blocks)"
-      ]
-    },
-    {
-      "id": "hooks",
-      "pos": "spirit",
-      "kind": "shipped",
-      "tag": "Control surface",
-      "name": "Hooks",
-      "sub": "PreToolUse guard",
-      "status": "1 · PreToolUse guard",
-      "dot": "#FF9F45",
-      "note": "Claude Code hooks wired for this project (.claude/settings.json). The PreToolUse guard blocks any _project/ write that would break the contract — the contract's enforcement, at save time. No user hooks added beyond it yet.",
-      "entries": [
-        {
-          "text": "PreToolUse · Write|Edit",
-          "desc": "node tools/guard.mjs"
-        }
-      ],
-      "sources": [
-        ".claude/settings.json"
-      ]
-    },
-    {
-      "id": "session",
-      "pos": "fate",
-      "kind": "current",
-      "tag": "Sessions",
-      "name": "Work log",
-      "sub": "reference shape · 8 sections",
-      "status": "2 · 1 active · 1 completed",
-      "dot": "#D4AF37",
-      "note": "2 session entities — status over the per-kind enum (1 active · 1 completed). 4 typed links touch this kind.",
-      "sources": [
-        "_project/sessions/"
-      ]
-    },
-    {
-      "id": "commands",
-      "pos": "shared",
-      "kind": "shipped",
-      "tag": "Control surface",
-      "name": "Commands",
-      "sub": "slash commands",
-      "status": "1 · slash commands",
-      "dot": "#5a6478",
-      "note": "The project's slash commands (.claude/commands/) — the unified /new <kind> scaffolder + friends. Each writes valid frontmatter and self-validates. The syntax + a one-line gloss of every command is listed here.",
-      "entries": [
-        {
-          "text": "/new <kind> <title>",
-          "desc": "Scaffold a new _project/ entity of any kind — decision · report · pipeline · roadmap · session · workflow"
-        }
-      ],
-      "sources": [
-        ".claude/commands/"
       ]
     }
   ],

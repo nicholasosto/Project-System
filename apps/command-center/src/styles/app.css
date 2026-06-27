@@ -99,13 +99,13 @@ body,
 }
 
 .cc-detailpanel[data-open='true'] {
-  flex-basis: 23rem;
+  flex-basis: 25rem;
   opacity: 1;
 }
 
 /* Fixed inner width so the Brief content doesn't reflow/squish during the flex-basis transition. */
 .cc-detailpanel__inner {
-  width: 23rem;
+  width: 25rem;
 }
 
 .cc-detailpanel__card {
@@ -131,6 +131,107 @@ body,
 .cc-detailpanel__close:hover {
   color: var(--tcl-text, #fff);
   background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.06));
+}
+
+/* ── Detail-drawer Brief — tune @trembus/ui's <Brief> for reading at drawer width. Scoped to the
+   drawer so the Progress board's Brief is untouched. We restyle the slots the component exposes
+   (tcl-brief__*) rather than fork it: a readable lead, toned meta chips, hairline-separated
+   sections, and list rows that align the mono command/date pointer + role chip hard-right. ── */
+
+/* Eyebrow now carries the source path (e.g. .claude/settings.json) — let it break, not truncate. */
+.cc-detailpanel .tcl-brief__id {
+  font-size: 0.72rem;
+  word-break: break-word;
+}
+
+/* The summary is a one-line lead now, not a wall — give it a comfortable measure + leading. */
+.cc-detailpanel .tcl-brief__summary {
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.72));
+}
+
+/* Meta pills: the component sets border + text color from each pill's `tone` inline; we add a faint
+   tone-matched fill, pill radius, and a small-caps label so the counts scan as chips. */
+.cc-detailpanel .tcl-brief__meta {
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+.cc-detailpanel .tcl-brief__metapill {
+  align-items: baseline;
+  padding: 0.18rem 0.55rem;
+  border-radius: var(--tcl-radius-full, 9999px);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  font-size: 0.72rem;
+}
+.cc-detailpanel .tcl-brief__metalabel {
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  opacity: 0.8;
+  margin-right: 0.32rem;
+}
+.cc-detailpanel .tcl-brief__metavalue {
+  font-weight: 600;
+}
+
+/* Sections: separate with a hairline; the heading carries the meaning, so hide the redundant
+   kind tag (the component prints REFERENCE / ARTIFACTS beside the heading). */
+.cc-detailpanel .tcl-brief__section {
+  margin-top: 1.05rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--tcl-border, rgba(255, 255, 255, 0.1));
+}
+.cc-detailpanel .tcl-brief__section-kind {
+  display: none;
+}
+.cc-detailpanel .tcl-brief__section-h {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  opacity: 0.6;
+}
+
+/* List rows (hooks · planning artifacts · sources): one row = bold label (left), with the mono
+   command/date pointer + role chip pushed hard-right. */
+.cc-detailpanel .tcl-brief__ref {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.55rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--tcl-border, rgba(255, 255, 255, 0.06));
+}
+.cc-detailpanel .tcl-brief__ref:last-child {
+  border-bottom: none;
+}
+.cc-detailpanel .tcl-brief__ref-main {
+  flex: 1 1 8rem;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+/* Role chip sits right after the label (order 1); the mono command trails (order 2) so a long
+   command wraps to its own line while the role stays beside the event. */
+.cc-detailpanel .tcl-brief__status {
+  order: 1;
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--tcl-radius-full, 9999px);
+  background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.08));
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.72));
+}
+/* The mono command/path pointer (the ref renders as <code class="tcl-brief__chip">). */
+.cc-detailpanel .tcl-brief__chip,
+.cc-detailpanel .tcl-brief__code {
+  order: 2;
+  font-size: 0.72rem;
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.62));
+  background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.05));
+  padding: 0.08rem 0.4rem;
+  border-radius: 5px;
+  white-space: nowrap;
 }
 
 /* Stack on narrow viewports — the drawer becomes a full-width panel below the hub. */

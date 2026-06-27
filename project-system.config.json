@@ -83,13 +83,23 @@
   "render": {
     "hex": {
       "petals": [
-        { "kind": "decision" },
-        { "kind": "report" },
-        { "facet": "workflows" },
         { "facet": "hooks" },
-        { "kind": "session" },
-        { "facet": "commands" }
-      ]
+        {},
+        { "facet": "commands" },
+        {},
+        { "facet": "workflows" }
+      ],
+      "facets": {
+        "hooks": {
+          "note": "Two Claude Code hooks enforce the contract at the edges of a session — a blocking guard on every write, an advisory health check when a session opens. (Rendering isn't a hook; it's the Command Center's Vite plugin.)"
+        },
+        "commands": {
+          "note": "The project's slash commands — one generic /new <kind> scaffolder that writes valid frontmatter and self-validates against the config."
+        },
+        "workflows": {
+          "note": "Operating workflows the Command Center replays as swimlanes — the authoring loop plus any entity that declares a ## Workflow block."
+        }
+      }
     },
     "runsWindow": 25,
     "brand": "Project System",

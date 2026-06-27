@@ -234,9 +234,9 @@ const FACET_DEFAULTS = {
   hooks: {
     tag: "Control surface",
     name: "Hooks",
-    sub: "PreToolUse guard",
+    sub: "guard + session summary",
     dot: "#FF9F45",
-    note: "Claude Code hooks wired for this project (.claude/settings.json). The PreToolUse guard blocks any _project/ write that would break the contract — the contract's enforcement, at save time. No user hooks added beyond it yet.",
+    note: "Claude Code hooks wired for this project (.claude/settings.json): a blocking PreToolUse(Write|Edit) guard that rejects any _project/ write breaking the contract — enforcement at save time — and an advisory SessionStart summary (validate.mjs --summary) that surfaces the planning surface's health when a session opens. Rendering is not a hook; it's the Command Center's Vite dev plugin.",
     sources: [".claude/settings.json"],
   },
 };

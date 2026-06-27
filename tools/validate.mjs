@@ -10,6 +10,7 @@
 // Usage:
 //   node tools/validate.mjs [--root <dir>] [--config <path>]   # report (exit 1 on errors)
 //   node tools/validate.mjs --json                              # machine-readable issues + summary
+//   node tools/validate.mjs --summary                           # one compact health line (always exit 0; for a SessionStart hook)
 //   node tools/validate.mjs --self-test                         # assert the checks themselves work
 
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -171,6 +172,32 @@ function printReport({ ctx, entities, issues, migrated, counts }) {
   return counts.error === 0;
 }
 
+// Compact, never-failing health line for an advisory SessionStart hook. Always prints one
+// line; on a broken tree it also lists the error/warning issues so the agent sees WHICH
+// files are off at session open. main() returns after this (exit 0) — it must never gate a
+// session: a red tree should not stop you opening one to fix it.
+function printSummary({ ctx, entities, issues, counts }) {
+  console.log(
+    `[${ctx.project}] ${entities.length} files · ${counts.error} errors · ${counts.warning} warnings · ${counts.info} info`,
+  );
+  if (counts.error > 0) {
+    const order = { error: 0, warning: 1 };
+    for (const issue of issues.filter((i) => i.severity in order).sort((a, b) => order[a.severity] - order[b.severity])) {
+      console.log(`${issue.severity.toUpperCase()}: ${issue.file}: ${issue.message}`);
+    }
+  }
+}
+
+// Run `fn`, capturing everything it writes to console.log as an array of lines (used by the
+// self-test to assert printSummary's shape without spawning a subprocess).
+function captureLines(fn) {
+  const orig = console.log;
+  const out = [];
+  console.log = (...a) => out.push(a.join(" "));
+  try { fn(); } finally { console.log = orig; }
+  return out;
+}
+
 // --- self-test: assert the checks themselves catch what they should ----------
 // Hermetic: builds a synthetic ctx + a throwaway fixture tree, independent of any
 // real project config, so it tests the LOGIC, not a particular project's content.
@@ -233,6 +260,14 @@ function selfTest() {
       ["valid milestone marker → 0 errors", () => errs(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", links: [{ rel: "milestone", target: "M5" }] } })).length === 0],
       ["no frontmatter → pending info, no error", () => { const r = validateEntity(base({ hasFrontmatter: false }), ctx); return r.length === 1 && r[0].severity === "info"; }],
       ["prose↔fm mismatch → ratcheted severity", () => validateEntity(base({ fullText: "> **Status:** proposed (draft)" }), ctx).some((i) => i.severity === ctx.proseSeverity && /disagrees/.test(i.message))],
+      ["--summary on a clean tree → exactly one compact line", () => {
+        const lines = captureLines(() => printSummary({ ctx, entities: [base()], issues: [], counts: { error: 0, warning: 0, info: 0 } }));
+        return lines.length === 1 && lines[0] === "[synthetic] 1 files · 0 errors · 0 warnings · 0 info";
+      }],
+      ["--summary on a broken tree → header + the offending error line", () => {
+        const lines = captureLines(() => printSummary({ ctx, entities: [base()], issues: [{ severity: "error", file: "decisions/x.md", message: "boom" }], counts: { error: 1, warning: 0, info: 0 } }));
+        return lines.length === 2 && /^\[synthetic\] 1 files · 1 errors/.test(lines[0]) && lines[1] === "ERROR: decisions/x.md: boom";
+      }],
     ];
     let pass = 0;
     for (const [name, fn] of cases) {
@@ -259,6 +294,10 @@ function main() {
   } catch (e) {
     console.error(`validate: ${e.message}`);
     process.exit(1);
+  }
+  if (rest.includes("--summary")) {
+    printSummary(result); // advisory SessionStart hook — returns (exit 0) regardless of errors
+    return;
   }
   if (rest.includes("--json")) {
     console.log(JSON.stringify({ summary: { project: result.ctx.project, files: result.entities.length, migrated: result.migrated, ...result.counts }, issues: result.issues }, null, 2));
