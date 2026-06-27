@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Badge, Brief, Card, EmptyState, Hub, Meter, Stat, Table, Tabs, Timeline } from '@trembus/ui';
 import type { BriefContract, SectionKind, TimelineContract, TimelineTone } from '@trembus/ui';
 import {
+  activeConsumer,
+  consumerOptions,
   domainById,
   entities,
   entitiesOfKinds,
@@ -14,6 +16,7 @@ import {
   ribbonTitle,
   ribbonTotal,
   scope,
+  setConsumer,
   strategy,
   swimlaneKinds,
 } from './contract';
@@ -405,8 +408,25 @@ export function App() {
 
   return (
     <div className="tcl-root cc-app">
-      <header className="cc-head">
+      <header className="cc-head" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
         <h1 className="cc-title">{hub.brand} · Command Center</h1>
+        {consumerOptions.length > 1 && (
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', opacity: 0.85 }}>
+            <span>Project</span>
+            <select
+              value={activeConsumer}
+              onChange={(e) => setConsumer(e.target.value)}
+              style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', font: 'inherit' }}
+              aria-label="Choose which consumer the board renders"
+            >
+              {consumerOptions.map((c) => (
+                <option key={c.key} value={c.key}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </header>
 
       <Tabs value={tab} onValueChange={setTab} className="cc-tabs">

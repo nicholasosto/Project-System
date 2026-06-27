@@ -486,7 +486,7 @@ function hubContract(ctx, model) {
 }
 
 function outPaths(ctx) {
-  const dir = join(ctx.projectRoot, "previews", "dashboards");
+  const dir = ctx.outDir ?? join(ctx.projectRoot, "previews", "dashboards");
   return {
     dir,
     graph: join(dir, `${ctx.project}-graph.json`),
@@ -549,15 +549,19 @@ function main() {
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === "--root") opts.root = argv[++i];
     else if (argv[i] === "--config") opts.config = argv[++i];
+    else if (argv[i] === "--out") opts.out = argv[++i];
     else flags.push(argv[i]);
   }
   let ctx;
   try {
-    ctx = loadContract(opts);
+    ctx = loadContract({ root: opts.root, config: opts.config });
   } catch (e) {
     console.error(`render-hub: ${e.message}`);
     process.exit(1);
   }
+  // --out co-locates a consumer's emission into one dir (used by render-all.mjs so the app can
+  // bundle every consumer's contract). Default stays <projectRoot>/previews/dashboards/.
+  if (opts.out) ctx.outDir = opts.out;
 
   if (flags.includes("--check")) process.exit(check(ctx) ? 0 : 1);
 

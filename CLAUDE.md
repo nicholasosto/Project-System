@@ -43,8 +43,9 @@ A consuming project supplies a config; the framework supplies everything else.
 | `tools/render-hub.mjs` | Emits the Command Center's JSON contract (`graph.json` + `hub.json`). **Contains the *only* line that names the kit's legacy hex-slot vocabulary** (`KIT_HEX_SLOTS`, quarantined). |
 | `tools/check-consumer-drift.mjs` | The packaging discipline: asserts each consumer mirrors the canonical contract. |
 | `project-system.config.json` | The framework's **own** config — it dogfoods on its own `_project/`. |
-| `examples/soul-steel.config.json` | A real consumer config; proves project-agnosticism by reproducing Soul-Steel's baseline. |
-| `_project/` | The framework's own planning artifacts (dogfood: decisions, report, roadmap, pipeline, session, workflow). |
+| `examples/soul-steel.config.json` | A real consumer config; proves project-agnosticism by reproducing Soul-Steel's baseline (the byte-faithful mirror the drift check runs against the live Soul-Steel project). |
+| `examples/soul-steel-demo/` | A **demo/fixture consumer** (config declares `"demo": true`) — NOT dogfood. A *fictional* Soul-Steel that adds `character` + `workflow` domain kinds the core has never seen; the test bed for consumer-shaped `/new`, validate, and drift. Its `_project/` is fixture data, not real planning. |
+| `_project/` | The framework's own planning artifacts — **the dogfood, the only real planning surface in this repo** (decisions, report, roadmap, pipeline, session, workflow). Contrast `examples/*/_project/`, which is fixture data. |
 | `previews/dashboards/` | The emitted JSON contract (`project-system-graph.json` + `project-system-hub.json`) the live Command Center renders. |
 | `docs/spec/schema.md` | The canonical spec + first-principles provenance. |
 
@@ -91,3 +92,12 @@ This repo eats its own cooking: its planning lives in `_project/` and validates 
 its own `project-system.config.json`. `node tools/validate.mjs` must be green; the JSON
 contract in `previews/dashboards/` is emitted by `tools/render-hub.mjs` and rendered live by
 the Command Center (`apps/command-center`).
+
+**Dogfood vs demo — don't confuse them.** Repo-root `_project/` is the dogfood: the framework's
+*actual* planning, and the only tree the Command Center renders. Everything under `examples/*/`
+is a *fixture consumer* — `examples/soul-steel-demo/` is a fictional Soul-Steel used to test
+consumer-shaped `/new`/validate/drift, and its `_project/` entities are demo data, not real
+work. The machine-readable signal is `"demo": true` in a consumer's config (see
+`schema/project-config.schema.json`); `tools/check-consumer-drift.mjs` derives demo-ness from it
+to keep demos out of the publish-trigger count. When adding planning, write to root `_project/`;
+only touch `examples/soul-steel-demo/_project/` when you mean to extend the fixture.

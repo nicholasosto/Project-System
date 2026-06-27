@@ -1,0 +1,312 @@
+{
+  "generatedBy": "tools/render-hub.mjs",
+  "project": "soul-steel-demo",
+  "folderByKind": {
+    "decision": "decisions",
+    "report": "reports",
+    "pipeline": "pipeline",
+    "roadmap": "roadmap",
+    "session": "sessions",
+    "character": "characters",
+    "workflow": "workflows"
+  },
+  "entities": 3,
+  "migrated": 3,
+  "counts": {
+    "error": 0,
+    "warning": 0,
+    "info": 0
+  },
+  "nodes": [
+    {
+      "id": "aria-vance",
+      "kind": "character",
+      "title": "Aria Vance",
+      "status": "concept",
+      "updated": "2026-06-27",
+      "file": "_project/characters/aria-vance.md"
+    },
+    {
+      "id": "character-creation",
+      "kind": "workflow",
+      "title": "Character creation",
+      "status": "draft",
+      "updated": "2026-06-27",
+      "file": "_project/workflows/character-creation.md"
+    },
+    {
+      "id": "character-onboarding",
+      "kind": "workflow",
+      "title": "Character onboarding",
+      "status": "draft",
+      "updated": "2026-06-27",
+      "file": "_project/workflows/character-onboarding.md"
+    }
+  ],
+  "byKind": {
+    "decision": {
+      "total": 0,
+      "byStatus": {},
+      "ids": [],
+      "tone": "info"
+    },
+    "report": {
+      "total": 0,
+      "byStatus": {},
+      "ids": [],
+      "tone": "warning"
+    },
+    "pipeline": {
+      "total": 0,
+      "byStatus": {},
+      "ids": [],
+      "tone": "success"
+    },
+    "roadmap": {
+      "total": 0,
+      "byStatus": {},
+      "ids": [],
+      "tone": "accent"
+    },
+    "session": {
+      "total": 0,
+      "byStatus": {},
+      "ids": [],
+      "tone": "warning"
+    },
+    "character": {
+      "total": 1,
+      "byStatus": {
+        "concept": 1
+      },
+      "ids": [
+        "aria-vance"
+      ],
+      "tone": "info"
+    },
+    "workflow": {
+      "total": 2,
+      "byStatus": {
+        "draft": 2
+      },
+      "ids": [
+        "character-creation",
+        "character-onboarding"
+      ],
+      "tone": "accent"
+    }
+  },
+  "edges": [
+    {
+      "from": "character-creation",
+      "fromKind": "workflow",
+      "rel": "references",
+      "target": "workflows/character-onboarding"
+    }
+  ],
+  "edgesByRel": {
+    "references": 1
+  },
+  "workflows": {
+    "character-creation": {
+      "view": "swimlane",
+      "title": "Character creation",
+      "code": "workflow.character-creation",
+      "lanes": [
+        {
+          "id": "design",
+          "label": "Design",
+          "kind": "human"
+        },
+        {
+          "id": "lore",
+          "label": "Lore Brain",
+          "kind": "system"
+        },
+        {
+          "id": "art",
+          "label": "Art",
+          "kind": "human"
+        },
+        {
+          "id": "model",
+          "label": "3D / Blender",
+          "kind": "system"
+        },
+        {
+          "id": "engine",
+          "label": "Roblox Studio",
+          "kind": "system"
+        },
+        {
+          "id": "review",
+          "label": "Canon Review",
+          "kind": "human"
+        }
+      ],
+      "steps": [
+        {
+          "id": "brief",
+          "lane": "design",
+          "label": "Write character brief — role, faction, reality tag",
+          "to": [
+            "recall"
+          ]
+        },
+        {
+          "id": "recall",
+          "lane": "lore",
+          "label": "/lore-brain:recall — continuity, scars, neighborhood",
+          "to": [
+            "entity"
+          ]
+        },
+        {
+          "id": "entity",
+          "lane": "design",
+          "label": "/new character — scaffold Concept · Abilities · Arc",
+          "to": [
+            "capture"
+          ]
+        },
+        {
+          "id": "capture",
+          "lane": "lore",
+          "label": "/lore-brain:capture — reality-tagged Neural Note",
+          "to": [
+            "concept-art"
+          ]
+        },
+        {
+          "id": "concept-art",
+          "lane": "art",
+          "label": "Concept art + key poses + palette",
+          "to": [
+            "sense"
+          ]
+        },
+        {
+          "id": "sense",
+          "lane": "lore",
+          "label": "brain-sense — voice line + ambient sensory assets",
+          "to": [
+            "sculpt"
+          ]
+        },
+        {
+          "id": "sculpt",
+          "lane": "model",
+          "label": "Blender — block out + sculpt mesh (Blender MCP)",
+          "to": [
+            "rig"
+          ]
+        },
+        {
+          "id": "rig",
+          "lane": "model",
+          "label": "Rig + skin to Roblox R15",
+          "to": [
+            "import"
+          ]
+        },
+        {
+          "id": "import",
+          "lane": "engine",
+          "label": "Import to Studio, attach loadout + abilities (Studio MCP)",
+          "to": [
+            "playtest"
+          ]
+        },
+        {
+          "id": "playtest",
+          "lane": "engine",
+          "label": "Playtest — hand off to Character-onboarding flow",
+          "to": [
+            "signoff"
+          ]
+        },
+        {
+          "id": "signoff",
+          "lane": "review",
+          "label": "Canon sign-off → set character status to canon",
+          "to": [
+            "weave"
+          ]
+        },
+        {
+          "id": "weave",
+          "lane": "lore",
+          "label": "/lore-brain:weave — link into lineage + factions",
+          "to": []
+        }
+      ]
+    },
+    "character-onboarding": {
+      "view": "swimlane",
+      "title": "Character onboarding",
+      "code": "workflow.character-onboarding",
+      "lanes": [
+        {
+          "id": "player",
+          "label": "Player",
+          "kind": "human"
+        },
+        {
+          "id": "system",
+          "label": "System",
+          "kind": "system"
+        },
+        {
+          "id": "designer",
+          "label": "Designer",
+          "kind": "human"
+        }
+      ],
+      "steps": [
+        {
+          "id": "select",
+          "lane": "player",
+          "label": "Select character",
+          "to": [
+            "load"
+          ]
+        },
+        {
+          "id": "load",
+          "lane": "system",
+          "label": "Load loadout + abilities",
+          "to": [
+            "tutorial"
+          ]
+        },
+        {
+          "id": "tutorial",
+          "lane": "system",
+          "label": "Run ability tutorial",
+          "to": [
+            "spawn"
+          ]
+        },
+        {
+          "id": "spawn",
+          "lane": "system",
+          "label": "Spawn into world",
+          "to": [
+            "review"
+          ]
+        },
+        {
+          "id": "review",
+          "lane": "designer",
+          "label": "Review onboarding funnel drop-off",
+          "to": []
+        }
+      ]
+    }
+  },
+  "runs": {},
+  "phases": {},
+  "swimlaneKinds": [
+    "workflow"
+  ]
+}

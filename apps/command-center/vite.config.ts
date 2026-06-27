@@ -21,8 +21,10 @@ const PORT = Number(process.env.PORT) || 5175;
 // `vite dev` only, so `vite build` / `vite preview` keep reading the committed JSON — the
 // committed contract stays the source the static build reads (roadmap command-center P4).
 function liveContract(): Plugin {
-  const PROJECT_DIR = resolve(REPO_ROOT, '_project');
-  const GENERATOR = resolve(REPO_ROOT, 'tools/render-hub.mjs');
+  // Watch the dogfood `_project/` AND every consumer's `examples/*/_project/`, and regenerate
+  // ALL contracts via render-all so whichever consumer is selected in the UI stays live.
+  const WATCH_DIRS = [resolve(REPO_ROOT, '_project'), resolve(REPO_ROOT, 'examples')];
+  const GENERATOR = resolve(REPO_ROOT, 'apps/command-center/scripts/render-all.mjs');
   return {
     name: 'project-system:live-contract',
     apply: 'serve',
@@ -52,14 +54,16 @@ function liveContract(): Plugin {
       };
 
       const onChange = (file: string) => {
-        if (!warm || !file.startsWith(PROJECT_DIR) || !file.endsWith('.md')) return;
+        // Any `_project/` markdown — the dogfood's or a consumer's under examples/ — triggers a
+        // full regenerate of every contract.
+        if (!warm || !file.endsWith('.md') || !file.includes('/_project/')) return;
         if (debounce) clearTimeout(debounce);
         debounce = setTimeout(regenerate, 120);
       };
 
-      server.watcher.add(PROJECT_DIR);
+      for (const dir of WATCH_DIRS) server.watcher.add(dir);
       for (const ev of ['add', 'change', 'unlink'] as const) server.watcher.on(ev, onChange);
-      log('watching _project/ — edits regenerate the dashboard contract');
+      log('watching _project/ + examples/*/_project/ — edits regenerate all dashboard contracts');
     },
   };
 }

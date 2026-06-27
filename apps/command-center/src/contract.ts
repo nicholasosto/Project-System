@@ -4,8 +4,10 @@
 //   node ../../tools/render-hub.mjs   (zero-dep)
 import type { GraphContract, GraphEdge, GraphNode, LineageTone } from '@trembus/viz';
 import type { HubContract, RunRecord, SwimlaneContract } from '@trembus/ui';
-import rawGraph from '../../../previews/dashboards/project-system-graph.json';
-import rawHub from '../../../previews/dashboards/project-system-hub.json';
+import psGraph from '../../../previews/dashboards/project-system-graph.json';
+import psHub from '../../../previews/dashboards/project-system-hub.json';
+import ssGraph from '../../../previews/dashboards/soul-steel-demo-graph.json';
+import ssHub from '../../../previews/dashboards/soul-steel-demo-hub.json';
 
 // ── Emitted contract shapes (mirror of buildModel()/hubContract() output) ──
 export interface KindBucket {
@@ -55,8 +57,45 @@ export interface RawHub {
   [k: string]: unknown;
 }
 
-const graph = rawGraph as unknown as RawGraph;
-const hub = rawHub as unknown as RawHub;
+// ── Consumer registry ──────────────────────────────────────────────────────────────────
+// Every in-repo project whose contract is bundled (emitted co-located by render-all.mjs).
+// The active one is chosen at module load from `?consumer=<key>` (default the framework
+// dogfood). Because every export below derives from `graph`/`hub`, swapping the active pair is
+// the ONLY change needed — App.tsx and workflows.ts read the selected consumer unchanged.
+interface ConsumerEntry {
+  key: string;
+  label: string;
+  graph: RawGraph;
+  hub: RawHub;
+}
+const CONSUMERS: ConsumerEntry[] = [
+  { key: 'project-system', label: 'Project System · dogfood', graph: psGraph as unknown as RawGraph, hub: psHub as unknown as RawHub },
+  { key: 'soul-steel-demo', label: 'Soul-Steel · demo fixture', graph: ssGraph as unknown as RawGraph, hub: ssHub as unknown as RawHub },
+];
+const DEFAULT_CONSUMER = 'project-system';
+
+function pickConsumerKey(): string {
+  if (typeof window === 'undefined') return DEFAULT_CONSUMER;
+  const want = new URLSearchParams(window.location.search).get('consumer');
+  return CONSUMERS.some((c) => c.key === want) ? (want as string) : DEFAULT_CONSUMER;
+}
+
+/** The consumers the header switcher offers. */
+export const consumerOptions: { key: string; label: string }[] = CONSUMERS.map(({ key, label }) => ({ key, label }));
+/** The consumer currently rendered (drives the whole module). */
+export const activeConsumer: string = pickConsumerKey();
+/** Switch consumers — sets `?consumer=<key>` and reloads, re-deriving the entire contract. */
+export function setConsumer(key: string): void {
+  if (typeof window === 'undefined' || key === activeConsumer) return;
+  const url = new URL(window.location.href);
+  if (key === DEFAULT_CONSUMER) url.searchParams.delete('consumer');
+  else url.searchParams.set('consumer', key);
+  window.location.assign(url.toString());
+}
+
+const selected = CONSUMERS.find((c) => c.key === activeConsumer) ?? CONSUMERS[0];
+const graph = selected.graph;
+const hub = selected.hub;
 
 // Per-kind lineage tone, DERIVED from the emitted contract (render-hub maps each kind's accent
 // dot → a tone). No hardcoded kind names — adding a kind needs no edit here. `danger` stays

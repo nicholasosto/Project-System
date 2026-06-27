@@ -17,6 +17,11 @@
       "description": "Optional. Path to the directory that contains _project/, relative to this config file. Defaults to '.' (config sits at the project root). Overridable at the CLI with --root.",
       "type": "string"
     },
+    "demo": {
+      "description": "Optional. Marks this config as describing a DEMONSTRATION / FIXTURE consumer (an in-repo example used to exercise the engines), NOT a production planning surface. The drift check derives demo-ness from this flag: a demo is validated every run but excluded from the consumer publish-trigger count, and runs under the demos-only smoke. Default false. The framework's own dogfood (`project-system`) and real consumers (e.g. soul-steel) omit it.",
+      "type": "boolean",
+      "default": false
+    },
     "kinds": {
       "description": "Ordered map of entity kind -> its rules. Insertion order is the display/auto-placement order. Each key is a kind name; each kind owns a folder under _project/.",
       "type": "object",

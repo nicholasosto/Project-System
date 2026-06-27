@@ -1,6 +1,7 @@
 {
   "$schema": "../../schema/project-config.schema.json",
   "project": "soul-steel-demo",
+  "demo": true,
   "kinds": {
     "decision": {
       "folder": "decisions",
@@ -84,5 +85,13 @@
     "references": "any"
   },
   "milestones": [],
-  "proseStatusEnforcement": { "rollout": "error" }
+  "proseStatusEnforcement": { "rollout": "error" },
+  "render": {
+    "brand": "Soul-Steel (demo)",
+    "code": "soul-steel-demo.entity-graph",
+    "tone": "#FF8FB1",
+    "tagline": "fixture consumer · character pipeline",
+    "centerName": "ProjectEntity",
+    "sub": "A fictional Soul-Steel consumer that adds character + workflow kinds — the test bed proving the framework renders a project it has never seen, with zero engine changes."
+  }
 }
