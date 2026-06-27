@@ -180,7 +180,7 @@
       "entries": [
         {
           "text": "/new <kind> <title>",
-          "desc": "Scaffold a new _project/ entity of any kind — decision · report · pipeline · roadmap · session"
+          "desc": "Scaffold a new _project/ entity of any kind — decision · report · pipeline · roadmap · session · workflow"
         }
       ],
       "sources": [

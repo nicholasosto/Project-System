@@ -1,11 +1,11 @@
 ---
-description: Scaffold a new _project/ entity of any kind — decision · report · pipeline · roadmap · session
+description: Scaffold a new _project/ entity of any kind — decision · report · pipeline · roadmap · session · workflow
 argument-hint: "<kind> <title>"
 allowed-tools: Bash(node tools/new-entity.mjs:*)
 ---
 Scaffold a new ProjectEntity from: **$ARGUMENTS**
 
-Read `$ARGUMENTS` as `<kind> <title…>` — the **first whitespace-delimited token is the kind**, everything after it is the title. Valid kinds: **decision · report · pipeline · roadmap · session** (the scaffolder validates `<kind>` against the project config and lists the current set on a mismatch, so this command never hard-codes the kinds).
+Read `$ARGUMENTS` as `<kind> <title…>` — the **first whitespace-delimited token is the kind**, everything after it is the title. Valid kinds: **decision · report · pipeline · roadmap · session · workflow** (the scaffolder validates `<kind>` against the project config and lists the current set on a mismatch, so this command never hard-codes the kinds).
 
 - If no kind/title was given, ask which kind and a title before proceeding.
 - Otherwise run, quoting the title so multi-word titles survive the shell:

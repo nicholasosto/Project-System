@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trembus.dev/schemas/project-entity.base.schema.json",
+  "title": "ProjectEntity (base contract)",
+  "description": "The PROJECT-AGNOSTIC core of a planning artifact's frontmatter: the three primitives (Identity, State, Relation) and nothing project-specific. The set of kinds, the per-kind status enums, the body-section conventions, the tag registry, the milestone markers, and the rel->kind target rules all live in a project-system.config.json (see project-config.schema.json) — NOT here. The validator composes this base with a project's config to form the effective contract. Documented by docs/spec/schema.md.",
+  "x-version": "1.0.0",
+  "x-configRequired": "Per-project specifics (kinds, status enums, sections, tagRegistry, milestones, relTargetKinds, render metadata) are supplied by a project-system.config.json validated against project-config.schema.json. This base file is identical across every consuming project; it is the artifact a consumer mirrors and the drift check compares against.",
+  "type": "object",
+  "required": ["kind", "id", "title", "status", "updated"],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "description": "Identity — the discriminant. Populated by the loader from the folder name; NEVER hand-authored. The allowed values are the project's declared kinds (config.kinds), not fixed here.",
+      "type": "string",
+      "minLength": 1
+    },
+    "id": {
+      "description": "Identity — the filename stem. Populated by the loader from the filename; NEVER hand-authored. The link target.",
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "description": "Identity — human label. The only authored Identity field.",
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "description": "State — a string at the base; narrowed to a per-kind enum by the project config (config.kinds[kind].status).",
+      "type": "string",
+      "minLength": 1
+    },
+    "updated": {
+      "description": "State — ISO date of the last substantive edit. The validator additionally rejects future dates.",
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "links": {
+      "description": "Relation — typed edges; omit if none.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/link" }
+    },
+    "tags": {
+      "description": "Accidental facets. The known-key registry and value linting are project config; the base only forbids a tag from shadowing a primitive.",
+      "type": "object",
+      "not": {
+        "anyOf": [
+          { "required": ["kind"] },
+          { "required": ["id"] },
+          { "required": ["title"] },
+          { "required": ["status"] },
+          { "required": ["updated"] },
+          { "required": ["links"] },
+          { "required": ["supersedes"] },
+          { "required": ["superseded-by"] }
+        ]
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "rel": {
+      "description": "The universal planning-edge vocabulary. A project may map each rel to the kinds it may target (config.relTargetKinds) but does not redefine the vocabulary here.",
+      "enum": ["supersedes", "superseded-by", "predecessor", "successor", "milestone", "implements", "decided-in", "references"]
+    },
+    "link": {
+      "type": "object",
+      "required": ["rel", "target"],
+      "additionalProperties": false,
+      "properties": {
+        "rel": { "$ref": "#/$defs/rel" },
+        "target": {
+          "description": "'<kind-folder>/<stem>' (e.g. 'decisions/0009-unified-registry'), a milestone marker (e.g. 'M5'), or an external ref ('slice.md#M5'). The folder set and milestone vocabulary are project config.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

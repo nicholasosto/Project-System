@@ -50,6 +50,7 @@ const BUILTIN_HINTS = {
   "Exit criteria": "- <the gate that closes this>",
   Plan: "- <the roadmap step>",
   "Open questions": "- <unresolved question>",
+  Purpose: "<the outcome this process reliably produces>",
   Goal: "<the single outcome this session targets>",
   "Success Criteria": "- <observable criterion>",
   "Source References": "- <spec / file link>",
