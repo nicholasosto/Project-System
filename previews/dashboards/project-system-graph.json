@@ -6,10 +6,11 @@
     "report": "reports",
     "pipeline": "pipeline",
     "roadmap": "roadmap",
-    "session": "sessions"
+    "session": "sessions",
+    "workflow": "workflows"
   },
-  "entities": 10,
-  "migrated": 10,
+  "entities": 11,
+  "migrated": 11,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -95,6 +96,14 @@
       "status": "active",
       "updated": "2026-06-24",
       "file": "_project/sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space.md"
+    },
+    {
+      "id": "authoring-loop",
+      "kind": "workflow",
+      "title": "Authoring loop",
+      "status": "active",
+      "updated": "2026-06-27",
+      "file": "_project/workflows/authoring-loop.md"
     }
   ],
   "byKind": {
@@ -109,7 +118,8 @@
         "0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter",
         "0004-pipeline-entities-carry-a-structured-workflow-block",
         "0005-window-run-history-in-the-contract-sidecar-at-scale"
-      ]
+      ],
+      "tone": "info"
     },
     "report": {
       "total": 1,
@@ -118,7 +128,8 @@
       },
       "ids": [
         "2026-06-24-extract-and-generalize-the-framework-from-soul-steel"
-      ]
+      ],
+      "tone": "success"
     },
     "pipeline": {
       "total": 1,
@@ -127,7 +138,8 @@
       },
       "ids": [
         "package-as-trembus-project-schema"
-      ]
+      ],
+      "tone": "accent"
     },
     "roadmap": {
       "total": 2,
@@ -137,7 +149,8 @@
       "ids": [
         "command-center",
         "migrate-soul-steel-to-consume-the-packaged-framework"
-      ]
+      ],
+      "tone": "neutral"
     },
     "session": {
       "total": 1,
@@ -146,7 +159,18 @@
       },
       "ids": [
         "2026-06-24-extract-and-generalize-project-system-into-its-own-space"
-      ]
+      ],
+      "tone": "warning"
+    },
+    "workflow": {
+      "total": 1,
+      "byStatus": {
+        "active": 1
+      },
+      "ids": [
+        "authoring-loop"
+      ],
+      "tone": "accent"
     }
   },
   "edges": [
@@ -251,6 +275,90 @@
           "to": []
         }
       ]
+    },
+    "authoring-loop": {
+      "view": "swimlane",
+      "title": "Authoring loop",
+      "code": "workflow.authoring-loop",
+      "caption": "How every _project/ artifact is born valid and reaches the dashboard.",
+      "lanes": [
+        {
+          "id": "you",
+          "label": "You",
+          "kind": "human"
+        },
+        {
+          "id": "engines",
+          "label": "Engines",
+          "kind": "system"
+        },
+        {
+          "id": "surface",
+          "label": "Command Center",
+          "kind": "tool"
+        }
+      ],
+      "steps": [
+        {
+          "id": "request",
+          "lane": "you",
+          "label": "Run /new <kind>",
+          "to": [
+            "scaffold"
+          ]
+        },
+        {
+          "id": "scaffold",
+          "lane": "engines",
+          "label": "Scaffold file",
+          "detail": "new-entity.mjs · born valid",
+          "to": [
+            "edit"
+          ]
+        },
+        {
+          "id": "edit",
+          "lane": "you",
+          "label": "Edit title · status · links",
+          "to": [
+            "guard"
+          ]
+        },
+        {
+          "id": "guard",
+          "lane": "engines",
+          "label": "Guard the save",
+          "detail": "PreToolUse · blocks contract breaks",
+          "to": [
+            "validate"
+          ]
+        },
+        {
+          "id": "validate",
+          "lane": "engines",
+          "label": "Validate the graph",
+          "detail": "validate.mjs",
+          "to": [
+            "render"
+          ]
+        },
+        {
+          "id": "render",
+          "lane": "engines",
+          "label": "Emit JSON contract",
+          "detail": "render-hub.mjs · graph + hub",
+          "to": [
+            "view"
+          ]
+        },
+        {
+          "id": "view",
+          "lane": "surface",
+          "label": "Render live",
+          "detail": "this dashboard",
+          "to": []
+        }
+      ]
     }
   },
   "runs": {
@@ -347,5 +455,8 @@
         "detail": "✅ 2026-06-25 — the live Hub renders hub.json, so render-hub emits JSON only."
       }
     ]
-  }
+  },
+  "swimlaneKinds": [
+    "workflow"
+  ]
 }

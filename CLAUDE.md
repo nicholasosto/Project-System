@@ -4,7 +4,7 @@
 
 **Project-System** is a first-principles, **project-agnostic** framework for the planning
 layer of *any* project: one contract — `ProjectEntity` — that every planning artifact
-(decision, report, pipeline, roadmap, session) derives from, plus the zero-dependency
+(decision, report, pipeline, roadmap, session, workflow) derives from, plus the zero-dependency
 tooling that validates, scaffolds, guards, and renders it. It was extracted and
 generalized from Soul-Steel-Official on 2026-06-24 (the place it was first built), and
 now lives here as its own git repo so any project space can adopt it.
@@ -38,13 +38,13 @@ A consuming project supplies a config; the framework supplies everything else.
 | `lib/md.mjs` | Zero-dep frontmatter/markdown parser (single source for all tools). |
 | `lib/contract.mjs` | The seam: resolves `{root, config}`, composes base+config into `ctx`, loads the `_project/` tree. |
 | `tools/validate.mjs` | The validator + `validateEntity` (the single check, reused by the other three). |
-| `tools/new-entity.mjs` | The scaffolder behind `/new-{decision,report,pipeline,roadmap}`. |
+| `tools/new-entity.mjs` | The scaffolder behind the single `/new <kind>` command (kind ∈ config.kinds). |
 | `tools/guard.mjs` | PreToolUse guard — blocks any `_project/` write that would break the contract. |
 | `tools/render-hub.mjs` | Emits the Command Center's JSON contract (`graph.json` + `hub.json`). **Contains the *only* line that names the kit's legacy hex-slot vocabulary** (`KIT_HEX_SLOTS`, quarantined). |
 | `tools/check-consumer-drift.mjs` | The packaging discipline: asserts each consumer mirrors the canonical contract. |
 | `project-system.config.json` | The framework's **own** config — it dogfoods on its own `_project/`. |
 | `examples/soul-steel.config.json` | A real consumer config; proves project-agnosticism by reproducing Soul-Steel's baseline. |
-| `_project/` | The framework's own planning artifacts (dogfood: decisions, report, roadmap, pipeline, session). |
+| `_project/` | The framework's own planning artifacts (dogfood: decisions, report, roadmap, pipeline, session, workflow). |
 | `previews/dashboards/` | The emitted JSON contract (`project-system-graph.json` + `project-system-hub.json`) the live Command Center renders. |
 | `docs/spec/schema.md` | The canonical spec + first-principles provenance. |
 
@@ -54,7 +54,7 @@ A consuming project supplies a config; the framework supplies everything else.
    and edit the kinds/enums/sections/registry/milestones).
 2. Run the engines against it:
    `node <path-to-framework>/tools/validate.mjs --root <project> --config <project>/project-system.config.json`.
-3. Wire the guard as a `PreToolUse` (`Write|Edit`) hook and copy the `/new-*` commands
+3. Wire the guard as a `PreToolUse` (`Write|Edit`) hook and copy the `/new` command
    (see this repo's `.claude/`).
 4. Register the project in `tools/check-consumer-drift.mjs` so the mirror stays honest.
 

@@ -20,6 +20,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { loadContract, loadEntities } from "../lib/contract.mjs";
+import { listMarkdown, parseFrontmatter } from "../lib/md.mjs";
 import { validateEntity } from "./validate.mjs";
 
 // ── KIT ADAPTER (quarantined) ────────────────────────────────────────────────
@@ -34,6 +35,34 @@ const MAX_PETALS = KIT_HEX_SLOTS.petals.length;
 
 // Neutral default accent palette (NOT domain colors); used when a kind sets no render.dot.
 const DEFAULT_DOTS = ["#44DDFF", "#D4AF37", "#7BD88F", "#B884FF", "#FF9F45", "#6BC9FF"];
+
+// Resolve a kind's accent dot — its config render.dot, else a stable palette slot by declared
+// index. SINGLE source for both the hub petal dot and the derived per-kind tone, so the two
+// can never disagree.
+function dotForKind(ctx, kind, declaredIdx) {
+  return ctx.renderMeta?.[kind]?.dot ?? DEFAULT_DOTS[declaredIdx % DEFAULT_DOTS.length];
+}
+
+// Map an accent hex to a Trembus status-tone for the app's per-kind lineage coloring. `danger`
+// is reserved for error states and is NEVER auto-assigned. The table covers the default palette
+// so a kind with no render.dot still gets a sensible tone; an unknown hex rotates deterministically.
+const HEX_TONE = {
+  "#44ddff": "info",
+  "#7bd88f": "success",
+  "#43aa8b": "success",
+  "#b884ff": "accent",
+  "#6bc9ff": "neutral",
+  "#d4af37": "warning",
+  "#ff9f45": "warning",
+};
+const TONE_ROTATION = ["info", "success", "accent", "warning", "neutral"];
+
+// A kind's tone: an explicit config render.tone wins; else derived from its accent dot.
+function toneForKind(ctx, kind, declaredIdx) {
+  const explicit = ctx.renderMeta?.[kind]?.tone;
+  if (explicit) return explicit;
+  return HEX_TONE[String(dotForKind(ctx, kind, declaredIdx)).toLowerCase()] ?? TONE_ROTATION[declaredIdx % TONE_ROTATION.length];
+}
 
 // Statuses that read as "in flight" (tile shows `current` rather than `shipped`).
 const DEFAULT_IN_FLIGHT = new Set(["proposed", "draft", "design", "qualify", "build", "active", "planned", "blocked"]);
@@ -110,6 +139,108 @@ function extractPhases(sectionText) {
   return { phases: block.value };
 }
 
+// ── CONTROL-SURFACE FACETS (Claude Code universals) ──────────────────────────
+// A hex petal is normally an entity KIND (the domain-neutral default — one petal per kind).
+// It can instead surface the project's Claude Code *control surface* — the slash commands,
+// hooks, and workflows that operate the planning loop. These are platform concepts every
+// consuming project has (the same register as the engines the Triad names), so they stay
+// domain-neutral: nothing here is a project/domain word. Each reader returns { count,
+// entries[] }; the editorial copy comes from FACET_DEFAULTS, overridable per project via
+// config.render.hex.facets.<id>.
+
+// Slash commands: .claude/commands/*.md — syntax from the filename + argument-hint, gloss
+// from the frontmatter description. Reuses the single-source md parser (no second reader).
+function readCommandsFacet(ctx) {
+  const dir = join(ctx.projectRoot, ".claude", "commands");
+  const entries = listMarkdown(dir).map((path) => {
+    const { data } = parseFrontmatter(readFileSync(path, "utf8"));
+    const name = path.split(/[/\\]/).pop().replace(/\.md$/, "");
+    const hint = data["argument-hint"] ? ` ${data["argument-hint"]}` : "";
+    return { text: `/${name}${hint}`, desc: data.description ?? "" };
+  });
+  return { count: entries.length, entries };
+}
+
+// Hooks: the PreToolUse / PostToolUse / … wiring in .claude/settings.json. Flattened to one
+// entry per command, labelled by event + matcher, with the command (env-var + quotes
+// stripped) as the gloss.
+function readHooksFacet(ctx) {
+  const path = join(ctx.projectRoot, ".claude", "settings.json");
+  const entries = [];
+  if (existsSync(path)) {
+    let settings = {};
+    try {
+      settings = JSON.parse(readFileSync(path, "utf8"));
+    } catch {
+      settings = {};
+    }
+    for (const [event, groups] of Object.entries(settings.hooks ?? {})) {
+      for (const group of Array.isArray(groups) ? groups : []) {
+        for (const hook of Array.isArray(group.hooks) ? group.hooks : []) {
+          const cmd = String(hook.command ?? "")
+            .replace(/\$CLAUDE_PROJECT_DIR\//g, "")
+            .replace(/"/g, "")
+            .trim();
+          entries.push({
+            text: `${event}${group.matcher ? ` · ${group.matcher}` : ""}`,
+            desc: cmd || hook.type || "",
+          });
+        }
+      }
+    }
+  }
+  return { count: entries.length, entries };
+}
+
+// Workflows: the swimlane definitions the Command Center can replay — the framework's
+// built-in authoring loop plus every entity that declared a `## Workflow` block. Mirrors the
+// app's WORKFLOWS assembly so the tile count equals what the Workflows tab enumerates. The
+// built-in list is overridable via config.render.hex.facets.workflows.builtins.
+function readWorkflowsFacet(ctx, model) {
+  // The authoring loop now lives as a `workflow` entity (_project/workflows/), so the facet
+  // counts purely from entity `## Workflow` blocks — any kind's, per decision 0004 — with no
+  // hardcoded built-in. A project may still inject extra built-ins via config if it wants.
+  const builtins = ctx.render?.hex?.facets?.workflows?.builtins ?? [];
+  const entityWfs = Object.entries(model.workflows ?? {}).map(([id, w]) => ({
+    text: w.title ?? id,
+    desc: `entity · ${id}`,
+    status: "entity",
+  }));
+  const entries = [...builtins.map((b) => ({ status: "built-in", ...b })), ...entityWfs];
+  return { count: entries.length, entries };
+}
+
+const FACET_READERS = { commands: readCommandsFacet, hooks: readHooksFacet, workflows: readWorkflowsFacet };
+
+// Neutral editorial defaults per facet; a project overrides any field via
+// config.render.hex.facets.<id>. dot colors echo the tiles these typically replace.
+const FACET_DEFAULTS = {
+  commands: {
+    tag: "Control surface",
+    name: "Commands",
+    sub: "slash commands",
+    dot: "#5a6478",
+    note: "The project's slash commands (.claude/commands/) — the unified /new <kind> scaffolder + friends. Each writes valid frontmatter and self-validates. The syntax + a one-line gloss of every command is listed here.",
+    sources: [".claude/commands/"],
+  },
+  workflows: {
+    tag: "Control surface",
+    name: "Workflows",
+    sub: "swimlane definitions",
+    dot: "#B884FF",
+    note: "Operating workflows the Command Center replays as swimlanes — the framework's built-in authoring loop plus any entity that declares a ## Workflow block.",
+    sources: ["apps/command-center/src/workflows.ts", "_project/ (## Workflow blocks)"],
+  },
+  hooks: {
+    tag: "Control surface",
+    name: "Hooks",
+    sub: "PreToolUse guard",
+    dot: "#FF9F45",
+    note: "Claude Code hooks wired for this project (.claude/settings.json). The PreToolUse guard blocks any _project/ write that would break the contract — the contract's enforcement, at save time. No user hooks added beyond it yet.",
+    sources: [".claude/settings.json"],
+  },
+};
+
 export function buildModel(ctx) {
   const entities = loadEntities(ctx);
   const issues = entities.flatMap((e) => validateEntity(e, ctx));
@@ -121,7 +252,10 @@ export function buildModel(ctx) {
   const migrated = entities.filter((e) => e.hasFrontmatter).length;
 
   const byKind = {};
-  for (const kind of ctx.kinds) byKind[kind] = { total: 0, byStatus: {}, ids: [] };
+  // `tone` is derived per kind (from its accent dot) so the app needs no hardcoded kind→tone map.
+  ctx.kinds.forEach((kind, i) => {
+    byKind[kind] = { total: 0, byStatus: {}, ids: [], tone: toneForKind(ctx, kind, i) };
+  });
   for (const e of entities) {
     const b = (byKind[e.kind] ??= { total: 0, byStatus: {}, ids: [] });
     b.total += 1;
@@ -194,7 +328,7 @@ export function buildModel(ctx) {
     phases[e.id] = found.phases;
   }
 
-  return { entities: entities.length, migrated, counts, nodes, byKind, edges, edgesByRel, workflows, runs, phases };
+  return { entities: entities.length, migrated, counts, nodes, byKind, edges, edgesByRel, workflows, runs, phases, swimlaneKinds: ctx.swimlaneKinds ?? [] };
 }
 
 function hubContract(ctx, model) {
@@ -208,21 +342,9 @@ function hubContract(ctx, model) {
   const folderByKind = ctx.folderByKind;
   const edgesTouching = (kind) => edges.filter((e) => e.fromKind === kind || e.target.startsWith(`${folderByKind[kind]}/`)).length;
 
-  // Auto-place: center, then one petal per kind, then a tooling petal — in declared order.
-  // The petal slot is assigned from the kit's opaque slot list; the framework never names it.
-  const placements = [];
-  let petalIdx = 0;
-  const overflow = [];
-  for (const kind of kindsWithEntities) {
-    if (petalIdx >= MAX_PETALS - 1) { overflow.push(kind); continue; } // reserve last slot for tooling
-    placements.push({ kind, pos: KIT_HEX_SLOTS.petals[petalIdx] });
-    petalIdx += 1;
-  }
-  const toolingPos = KIT_HEX_SLOTS.petals[Math.min(petalIdx, MAX_PETALS - 1)];
-  if (overflow.length) {
-    console.warn(`! hub view holds ${MAX_PETALS} petals; ${overflow.length} kind(s) overflow and are summarized, not tiled: ${overflow.join(", ")}`);
-  }
-
+  // The center is always slot 0; the 6 petals are either entity KINDS or control-surface
+  // FACETS. `config.render.hex.petals` declares a curated layout in slot order; absent it,
+  // we auto-place one petal per kind-with-entities + a tooling petal (the original behavior).
   const domains = [
     {
       id: "contract",
@@ -240,37 +362,83 @@ function hubContract(ctx, model) {
     },
   ];
 
-  placements.forEach(({ kind, pos }, i) => {
-    const b = byKind[kind];
+  // Build one entity-kind petal (the domain-neutral default). `dotIdx` only feeds the fallback
+  // accent palette when a kind sets no render.dot.
+  const kindPetal = (kind, dotIdx, pos) => {
+    const b = byKind[kind] ?? { total: 0, byStatus: {}, ids: [] };
     const meta = ctx.renderMeta[kind] ?? {};
-    const petalKind = Object.keys(b.byStatus).some((s) => inFlight.has(s)) ? "current" : "shipped";
-    domains.push({
+    return {
       id: kind,
       pos,
-      kind: petalKind,
+      kind: Object.keys(b.byStatus).some((s) => inFlight.has(s)) ? "current" : "shipped",
       tag: meta.tag ?? `${cap(kind)}s`,
       name: meta.name ?? `${cap(kind)} log`,
       sub: meta.sub ?? `${folderByKind[kind]}/ · per-kind status enum`,
       status: `${b.total} · ${statusSummary(b.byStatus)}`,
-      dot: meta.dot ?? DEFAULT_DOTS[i % DEFAULT_DOTS.length],
+      dot: dotForKind(ctx, kind, dotIdx),
       note: `${b.total} ${kind} ${b.total === 1 ? "entity" : "entities"} — status over the per-kind enum (${statusSummary(b.byStatus)}). ${edgesTouching(kind)} typed link${edgesTouching(kind) === 1 ? "" : "s"} touch this kind.`,
       sources: [`_project/${folderByKind[kind]}/`],
-    });
-  });
+    };
+  };
 
-  domains.push({
-    id: "tooling",
-    pos: toolingPos,
-    kind: "shipped",
-    tag: "Tooling",
-    name: "Triad",
-    sub: "validator · scaffolder · guard",
-    status: `${counts.error} errors · prose↔fm ${ctx.proseSeverity}`,
-    dot: "#5a6478",
-    note:
-      "Three zero-dependency engines, all reading the one contract via lib/contract.mjs (no check re-implemented): the validator (per-kind enums, link resolution, prose↔frontmatter), the scaffolder behind /new-<kind>, and the PreToolUse guard that blocks any _project/ write that would break the contract.",
-    sources: ["tools/validate.mjs", "tools/new-entity.mjs", "tools/guard.mjs"],
-  });
+  // Build one control-surface petal (commands / workflows / hooks). The reader supplies the
+  // live count + detail `entries[]`; FACET_DEFAULTS supplies copy, overridable via config.
+  const facetPetal = (facetId, pos) => {
+    const read = FACET_READERS[facetId];
+    const base = { ...(FACET_DEFAULTS[facetId] ?? { tag: "Control surface", name: cap(facetId) }), ...(render.hex?.facets?.[facetId] ?? {}) };
+    const { count, entries } = read ? read(ctx, model) : { count: 0, entries: [] };
+    const { builtins, ...copy } = base; // `builtins` is reader config, not a display field
+    return {
+      id: facetId,
+      pos,
+      kind: count > 0 ? "shipped" : "current",
+      tag: copy.tag,
+      name: copy.name,
+      sub: copy.sub ?? "",
+      status: copy.status ?? `${count} · ${copy.sub ?? copy.name.toLowerCase()}`,
+      dot: copy.dot ?? "#5a6478",
+      note: copy.note ?? "",
+      entries,
+      sources: copy.sources ?? [`.claude/${facetId}`],
+    };
+  };
+
+  if (Array.isArray(render.hex?.petals)) {
+    render.hex.petals.forEach((petal, i) => {
+      const pos = KIT_HEX_SLOTS.petals[i];
+      if (!pos) {
+        console.warn(`! hub view holds ${MAX_PETALS} petals; petal #${i + 1} (${petal.facet ?? petal.kind}) overflows and is dropped`);
+        return;
+      }
+      if (petal.facet) domains.push(facetPetal(petal.facet, pos));
+      else if (petal.kind) domains.push(kindPetal(petal.kind, i, pos));
+    });
+  } else {
+    // Auto-place: one petal per kind-with-entities, then a tooling petal — in declared order.
+    let petalIdx = 0;
+    const overflow = [];
+    for (const kind of kindsWithEntities) {
+      if (petalIdx >= MAX_PETALS - 1) { overflow.push(kind); continue; } // reserve last slot for tooling
+      domains.push(kindPetal(kind, petalIdx, KIT_HEX_SLOTS.petals[petalIdx]));
+      petalIdx += 1;
+    }
+    if (overflow.length) {
+      console.warn(`! hub view holds ${MAX_PETALS} petals; ${overflow.length} kind(s) overflow and are summarized, not tiled: ${overflow.join(", ")}`);
+    }
+    domains.push({
+      id: "tooling",
+      pos: KIT_HEX_SLOTS.petals[Math.min(petalIdx, MAX_PETALS - 1)],
+      kind: "shipped",
+      tag: "Tooling",
+      name: "Triad",
+      sub: "validator · scaffolder · guard",
+      status: `${counts.error} errors · prose↔fm ${ctx.proseSeverity}`,
+      dot: "#5a6478",
+      note:
+        "Three zero-dependency engines, all reading the one contract via lib/contract.mjs (no check re-implemented): the validator (per-kind enums, link resolution, prose↔frontmatter), the scaffolder behind /new <kind>, and the PreToolUse guard that blocks any _project/ write that would break the contract.",
+      sources: ["tools/validate.mjs", "tools/new-entity.mjs", "tools/guard.mjs"],
+    });
+  }
 
   // Model-derived defaults; any can be overridden by config.render passthrough below.
   const derived = {
@@ -313,6 +481,7 @@ function hubContract(ctx, model) {
     if (render.ribbonTotal) derived.ribbonTotal = render.ribbonTotal;
   }
   if (render.paths) derived.paths = render.paths;
+  if (render.nav) derived.nav = render.nav; // optional editorial nav; app falls back to deriveNav()
   return derived;
 }
 

@@ -47,7 +47,20 @@
       "filename": "date-slug",
       "requiredSections": ["Goal", "Success Criteria", "Source References", "Decisions", "Outputs", "Blockers", "Next Action", "Handoff Notes"],
       "render": { "dot": "#D4AF37", "tag": "Sessions", "name": "Work log", "sub": "reference shape · 8 sections" }
+    },
+    "workflow": {
+      "folder": "workflows",
+      "status": ["draft", "active", "deprecated"],
+      "initialStatus": "draft",
+      "filename": "slug",
+      "carriesSwimlanes": true,
+      "requiredSections": ["Workflow"],
+      "scaffoldSections": ["Purpose", "Workflow"],
+      "render": { "dot": "#B884FF", "tag": "Workflows", "name": "Swimlanes", "sub": "lanes × steps · replayable process" }
     }
+  },
+  "sectionHints": {
+    "Workflow": "```json\n{\n  \"lanes\": [\n    { \"id\": \"you\", \"label\": \"You\", \"kind\": \"human\" },\n    { \"id\": \"system\", \"label\": \"System\", \"kind\": \"system\" }\n  ],\n  \"steps\": [\n    { \"id\": \"start\", \"lane\": \"you\", \"label\": \"<trigger>\", \"to\": [\"work\"] },\n    { \"id\": \"work\", \"lane\": \"system\", \"label\": \"<step>\", \"to\": [] }\n  ]\n}\n```"
   },
   "tagRegistry": {
     "priority": { "type": "enum", "values": ["high", "medium", "low"] },
@@ -68,14 +81,23 @@
   "milestones": [],
   "proseStatusEnforcement": { "rollout": "error" },
   "render": {
+    "hex": {
+      "petals": [
+        { "kind": "decision" },
+        { "kind": "report" },
+        { "facet": "workflows" },
+        { "facet": "hooks" },
+        { "kind": "session" },
+        { "facet": "commands" }
+      ]
+    },
     "runsWindow": 25,
     "brand": "Project System",
     "code": "project-system.entity-graph",
     "tone": "#D4AF37",
     "tagline": "first-principles planning contract",
-    "taglineNote": "1 shape · 5 kinds · derived renderers",
     "centerName": "ProjectEntity",
-    "sub": "Every _project/ artifact is one ProjectEntity — Identity · State · Relation, reduced from five per-kind interfaces to three primitives. The center is the contract; each petal is an entity kind; the last slot is the tooling it feeds. Project-agnostic: the kinds, enums, and copy all come from a per-project config.",
+    "sub": "Every _project/ artifact is one ProjectEntity — Identity · State · Relation, reduced from five per-kind interfaces to three primitives. The center is the contract; the petals mix entity kinds (decisions · reports · sessions) with the project's Claude Code control surface (workflows · hooks · commands). Project-agnostic: the kinds, enums, layout, and copy all come from a per-project config.",
     "strategy": "One contract, three primitives, many disposable renderers — the planning layer reduced the way a UI reduces to State and Relation. A good reduction deletes fields; this one dropped five interfaces to three.",
     "banner": {
       "text": "Self-sustaining: new files are born valid, invalid writes are blocked at save time — for any project that supplies a config.",

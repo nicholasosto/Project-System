@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { Badge, Brief, Card, EmptyState, Hub, Meter, Stat, Table, Tabs, Timeline } from '@trembus/ui';
-import type { BriefContract, TimelineContract, TimelineTone } from '@trembus/ui';
+import type { BriefContract, SectionKind, TimelineContract, TimelineTone } from '@trembus/ui';
 import {
   domainById,
   entities,
   entitiesOfKinds,
   hub,
   hubData,
+  kinds,
   phasesByEntity,
+  prettify,
   ribbon,
   ribbonTitle,
   ribbonTotal,
   scope,
   strategy,
+  swimlaneKinds,
 } from './contract';
 import type { Phase } from './contract';
 import { WorkflowConsole } from './WorkflowConsole';
@@ -83,15 +86,48 @@ function phaseTimeline(title: string, phases: Phase[]): TimelineContract {
   };
 }
 
-// The areas the command center navigates. Overview is the hub landing; Progress is the
-// development board; the rest list one or more kinds. The old Graph/Lineage view is retired
-// (the plumbing — buildGraphContract + @trembus/viz — stays in place for an easy revival).
-const AREAS = [
-  { value: 'overview', label: 'Overview' },
-  { value: 'progress', label: 'Progress' },
-  { value: 'decisions', label: 'Decisions', kinds: ['decision'] },
-  { value: 'workflows', label: 'Workflows', kinds: ['pipeline'] },
-] as const;
+type NavEntry = { value: string; label: string; panel?: 'overview' | 'progress' | 'workflows'; kinds?: string[] };
+
+// The two editorial seams: which kinds the bespoke panels already surface, so they don't ALSO
+// get an auto-tab. Adding a new kind never edits these — it just gets its own tab (or a config
+// `render.nav` line places it elsewhere). The Overview hub composes everything, so it consumes none.
+const PROGRESS_KINDS = ['roadmap', 'report', 'session'];
+const WORKFLOW_TABLE_KINDS = ['pipeline']; // the "Build plans" table inside the Workflows panel
+
+// Default nav when config sets no `render.nav`: Overview + Progress, an auto-tab per kind not
+// shown by a special panel (declared order), then Workflows iff any swimlane exists. The old
+// Graph/Lineage view is retired (buildGraphContract + @trembus/viz stay for an easy revival).
+function deriveNav(): NavEntry[] {
+  const consumed = new Set([...PROGRESS_KINDS, ...WORKFLOW_TABLE_KINDS, ...swimlaneKinds]);
+  const nav: NavEntry[] = [
+    { value: 'overview', label: 'Overview', panel: 'overview' },
+    { value: 'progress', label: 'Progress', panel: 'progress' },
+  ];
+  for (const k of kinds) {
+    if (!consumed.has(k)) nav.push({ value: k, label: `${prettify(k)}s`, kinds: [k] });
+  }
+  if (WORKFLOWS.length || swimlaneKinds.length) {
+    nav.push({ value: 'workflows', label: 'Workflows', panel: 'workflows' });
+  }
+  return nav;
+}
+
+// Config-provided `render.nav` (rare) → NavEntry[]; absent → undefined (fall back to deriveNav).
+function normalizeNav(raw: unknown): NavEntry[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  return raw.map((e, i) => {
+    const entry = e as { panel?: NavEntry['panel']; label?: string; kinds?: string[] };
+    if (entry.panel) return { value: entry.panel, label: entry.label ?? prettify(entry.panel), panel: entry.panel };
+    const ks = Array.isArray(entry.kinds) ? entry.kinds : [];
+    return {
+      value: entry.label ?? (ks.join('-') || `tab-${i}`),
+      label: entry.label ?? (ks[0] ? `${prettify(ks[0])}s` : `Tab ${i + 1}`),
+      kinds: ks,
+    };
+  });
+}
+
+const AREAS: NavEntry[] = normalizeNav(hub.nav) ?? deriveNav();
 
 function AreaTable({ kinds, empty }: { kinds: string[]; empty: string }) {
   const rows = entitiesOfKinds(...kinds);
@@ -130,14 +166,23 @@ function AreaTable({ kinds, empty }: { kinds: string[]; empty: string }) {
   );
 }
 
+// Section kind per control-surface facet — all three render each item's `desc` as a gloss.
+const FACET_SECTION: Record<string, SectionKind> = {
+  commands: 'commands',
+  hooks: 'rules',
+  workflows: 'artifacts',
+};
+
 // Selecting a hub tile reveals that tile's detail in the right-side drawer (not below the grid).
-// The selected id is the domain id — the entity kind for petals, or 'contract'/'tooling' for the
-// center + tooling slot. This projects the selection into a Trembus BriefContract: kind tiles list
-// their entities via an `artifacts` section; the center/tooling slots carry no entity list, so they
-// fall back to the domain's note + `reference` sources (the same data the Hub's own inspector used).
+// The selected id is the domain id — an entity kind for kind-petals, a facet id (commands /
+// workflows / hooks) for control-surface petals, or 'contract' for the center. This projects the
+// selection into a Trembus BriefContract: kind tiles list their entities via an `artifacts`
+// section; facet tiles list their `entries` (syntax + gloss); the center carries neither, so it
+// falls back to the domain's note + `reference` sources (the data the Hub's inspector once used).
 function hexBrief(id: string): BriefContract {
   const domain = domainById.get(id);
   const rows = entitiesOfKinds(id);
+  const entries = domain?.entries ?? [];
   const sections: NonNullable<BriefContract['sections']> = [];
 
   if (rows.length) {
@@ -146,6 +191,13 @@ function hexBrief(id: string): BriefContract {
       heading: 'Planning artifacts',
       kind: 'artifacts',
       items: rows.map((e) => ({ text: e.title, status: e.status, ref: e.updated })),
+    });
+  } else if (entries.length) {
+    sections.push({
+      id: 'entries',
+      heading: domain?.name ?? 'Details',
+      kind: FACET_SECTION[id] ?? 'reference',
+      items: entries.map((e) => ({ text: e.text, desc: e.desc, status: e.status, ref: e.ref })),
     });
   } else if (domain?.sources?.length) {
     sections.push({
@@ -165,6 +217,7 @@ function hexBrief(id: string): BriefContract {
     meta: [
       ...(domain?.status ? [{ label: 'state', value: domain.status }] : []),
       ...(rows.length ? [{ label: 'entities', value: rows.length }] : []),
+      ...(entries.length ? [{ label: 'count', value: entries.length }] : []),
     ],
     sections,
   };
@@ -275,8 +328,80 @@ function ProgressBoard() {
 export function App() {
   const [tab, setTab] = useState('overview');
   const [hubSel, setHubSel] = useState<string | undefined>(undefined);
-  const [wfId, setWfId] = useState<string>(WORKFLOWS[0].id);
+  const [wfId, setWfId] = useState<string>(WORKFLOWS[0]?.id ?? '');
   const activeWorkflow = WORKFLOWS.find((w) => w.id === wfId) ?? WORKFLOWS[0];
+
+  // The three bespoke panels (compose multiple kinds + non-kind data — not auto-generatable).
+  const overviewBody = (
+    <div className="cc-overview">
+      <div className="cc-overview__hub">
+        <Hub data={hubData} selectedId={hubSel} onSelect={setHubSel} />
+      </div>
+      <aside className="cc-detailpanel" data-open={Boolean(hubSel)} aria-label="Entity details">
+        <div className="cc-detailpanel__inner">
+          {hubSel ? (
+            <Card className="cc-detailpanel__card">
+              <button
+                type="button"
+                className="cc-detailpanel__close"
+                onClick={() => setHubSel(undefined)}
+                aria-label="Close details"
+              >
+                ✕
+              </button>
+              <Brief data={hexBrief(hubSel)} />
+            </Card>
+          ) : null}
+        </div>
+      </aside>
+    </div>
+  );
+
+  const workflowsBody = (
+    <>
+      {WORKFLOWS.length > 1 && (
+        <div className="cc-wf-picker" aria-label="Choose a workflow">
+          {WORKFLOWS.map((w) => (
+            <button
+              key={w.id}
+              type="button"
+              className="cc-wf-picker__btn"
+              aria-pressed={w.id === wfId}
+              data-active={w.id === wfId}
+              onClick={() => setWfId(w.id)}
+            >
+              {w.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {activeWorkflow ? (
+        <WorkflowConsole
+          key={activeWorkflow.id}
+          workflow={activeWorkflow.contract}
+          runs={activeWorkflow.runs}
+          runsTotal={activeWorkflow.runsTotal}
+        />
+      ) : (
+        <EmptyState
+          title="No workflows yet"
+          description="No entity declares a ## Workflow block. Scaffold one with /new workflow."
+        />
+      )}
+      <section className="cc-section">
+        <h3 className="cc-section-title">Build plans</h3>
+        <AreaTable kinds={WORKFLOW_TABLE_KINDS} empty="No pipelines defined yet." />
+      </section>
+    </>
+  );
+
+  // Dispatch a nav entry to its panel body: a bespoke panel, or a generic per-kind table.
+  const renderPanel = (area: NavEntry) => {
+    if (area.panel === 'overview') return overviewBody;
+    if (area.panel === 'progress') return <ProgressBoard />;
+    if (area.panel === 'workflows') return workflowsBody;
+    return <AreaTable kinds={area.kinds ?? []} empty={`No ${area.label.toLowerCase()} yet.`} />;
+  };
 
   return (
     <div className="tcl-root cc-app">
@@ -293,67 +418,15 @@ export function App() {
           ))}
         </Tabs.List>
 
-        <Tabs.Panel value="overview" className="cc-panel cc-panel--hub">
-          <div className="cc-overview">
-            <div className="cc-overview__hub">
-              <Hub data={hubData} selectedId={hubSel} onSelect={setHubSel} />
-            </div>
-            <aside className="cc-detailpanel" data-open={Boolean(hubSel)} aria-label="Entity details">
-              <div className="cc-detailpanel__inner">
-                {hubSel ? (
-                  <Card className="cc-detailpanel__card">
-                    <button
-                      type="button"
-                      className="cc-detailpanel__close"
-                      onClick={() => setHubSel(undefined)}
-                      aria-label="Close details"
-                    >
-                      ✕
-                    </button>
-                    <Brief data={hexBrief(hubSel)} />
-                  </Card>
-                ) : null}
-              </div>
-            </aside>
-          </div>
-        </Tabs.Panel>
-
-        <Tabs.Panel value="progress" className="cc-panel">
-          <ProgressBoard />
-        </Tabs.Panel>
-
-        <Tabs.Panel value="decisions" className="cc-panel">
-          <AreaTable kinds={['decision']} empty="No decisions recorded yet." />
-        </Tabs.Panel>
-
-        <Tabs.Panel value="workflows" className="cc-panel">
-          {WORKFLOWS.length > 1 && (
-            <div className="cc-wf-picker" aria-label="Choose a workflow">
-              {WORKFLOWS.map((w) => (
-                <button
-                  key={w.id}
-                  type="button"
-                  className="cc-wf-picker__btn"
-                  aria-pressed={w.id === wfId}
-                  data-active={w.id === wfId}
-                  onClick={() => setWfId(w.id)}
-                >
-                  {w.label}
-                </button>
-              ))}
-            </div>
-          )}
-          <WorkflowConsole
-            key={activeWorkflow.id}
-            workflow={activeWorkflow.contract}
-            runs={activeWorkflow.runs}
-            runsTotal={activeWorkflow.runsTotal}
-          />
-          <section className="cc-section">
-            <h3 className="cc-section-title">Build plans</h3>
-            <AreaTable kinds={['pipeline']} empty="No pipelines defined yet." />
-          </section>
-        </Tabs.Panel>
+        {AREAS.map((area) => (
+          <Tabs.Panel
+            key={area.value}
+            value={area.value}
+            className={area.panel === 'overview' ? 'cc-panel cc-panel--hub' : 'cc-panel'}
+          >
+            {renderPanel(area)}
+          </Tabs.Panel>
+        ))}
       </Tabs>
     </div>
   );

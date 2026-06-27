@@ -19,8 +19,8 @@
 //     --dry-run            print the file instead of writing it
 //     --self-test          assert a scaffold of every kind validates clean
 
-import { existsSync, readdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseFrontmatter, parseSections } from "../lib/md.mjs";
 import {
@@ -189,22 +189,24 @@ function syntheticCtx() {
     pipeline: ["Context", "Build plan", "Exit criteria"],
     roadmap: ["Context", "Plan", "Open questions"],
     session: ["Goal", "Success Criteria", "Source References", "Decisions", "Outputs", "Blockers", "Next Action", "Handoff Notes"],
+    workflow: ["Purpose", "Workflow"],
   };
-  const folderByKind = { decision: "decisions", report: "reports", pipeline: "pipeline", roadmap: "roadmap", session: "sessions" };
+  const folderByKind = { decision: "decisions", report: "reports", pipeline: "pipeline", roadmap: "roadmap", session: "sessions", workflow: "workflows" };
   const statusEnums = {
     decision: new Set(["proposed", "accepted", "superseded", "rejected"]),
     report: new Set(["draft", "complete"]),
     pipeline: new Set(["design", "qualify", "build", "ship", "archive", "shelved"]),
     roadmap: new Set(["proposed", "active", "superseded", "complete"]),
     session: new Set(["planned", "active", "blocked", "completed", "shelved"]),
+    workflow: new Set(["draft", "active", "deprecated"]),
   };
-  const initialStatus = { decision: "proposed", report: "draft", pipeline: "design", roadmap: "proposed", session: "planned" };
-  const filename = { decision: "serial", report: "date-slug", session: "date-slug", pipeline: "slug", roadmap: "slug" };
+  const initialStatus = { decision: "proposed", report: "draft", pipeline: "design", roadmap: "proposed", session: "planned", workflow: "draft" };
+  const filename = { decision: "serial", report: "date-slug", session: "date-slug", pipeline: "slug", roadmap: "slug", workflow: "slug" };
   const filenameScheme = Object.fromEntries(Object.entries(filename).map(([k, v]) => [k, { scheme: v, pad: 4 }]));
   return {
     project: "synthetic",
     projectRoot: join(process.cwd(), ".ps-self-test-nonexistent"),
-    kinds: ["decision", "report", "pipeline", "roadmap", "session"],
+    kinds: ["decision", "report", "pipeline", "roadmap", "session", "workflow"],
     folderByKind,
     kindByFolder: Object.fromEntries(Object.entries(folderByKind).map(([k, v]) => [v, k])),
     statusEnums,
@@ -303,6 +305,7 @@ function main() {
     return;
   }
 
+  mkdirSync(dirname(result.path), { recursive: true }); // a brand-new kind's folder may not exist yet
   writeFileSync(result.path, result.content);
   const warns = result.issues.filter((i) => i.severity === "warning");
   console.log(`created ${result.relPath}  (validated: 0 errors${warns.length ? `, ${warns.length} warnings` : ""})`);

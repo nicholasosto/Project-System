@@ -12,6 +12,8 @@ export interface KindBucket {
   total: number;
   byStatus: Record<string, number>;
   ids: string[];
+  /** Lineage tone for this kind's entities, derived by render-hub from the kind's accent dot. */
+  tone?: LineageTone;
 }
 // Per-entity record — the navigable detail the aggregate byKind buckets can't express.
 export interface RawNode {
@@ -42,6 +44,8 @@ export interface RawGraph {
   workflows?: Record<string, unknown>;
   runs?: Record<string, unknown>;
   phases?: Record<string, unknown>;
+  /** Kinds whose entities ARE workflows (config `carriesSwimlanes`). Drives the workflow picker. */
+  swimlaneKinds?: string[];
 }
 export interface RawHub {
   brand: string;
@@ -54,14 +58,12 @@ export interface RawHub {
 const graph = rawGraph as unknown as RawGraph;
 const hub = rawHub as unknown as RawHub;
 
-// One distinct tone per kind; `danger` stays reserved for error states.
-const KIND_TONE: Record<string, LineageTone> = {
-  decision: 'info',
-  report: 'success',
-  pipeline: 'accent',
-  roadmap: 'neutral',
-  session: 'warning',
-};
+// Per-kind lineage tone, DERIVED from the emitted contract (render-hub maps each kind's accent
+// dot → a tone). No hardcoded kind names — adding a kind needs no edit here. `danger` stays
+// reserved for error states; `neutral` is the defensive fallback for an older contract.
+const toneByKind: Record<string, LineageTone> = Object.fromEntries(
+  Object.entries(graph.byKind ?? {}).map(([k, b]) => [k, b.tone ?? 'neutral']),
+);
 
 // Slug → readable label: drop a leading serial (0001-) or ISO date (2026-06-24-), then de-kebab.
 export function prettify(id: string): string {
@@ -102,7 +104,7 @@ function toRecord(n: RawNode): EntityRecord {
     status: n.status ?? '—',
     updated: n.updated ?? '—',
     file: n.file ?? '',
-    tone: KIND_TONE[n.kind] ?? 'neutral',
+    tone: toneByKind[n.kind] ?? 'neutral',
   };
 }
 
@@ -110,6 +112,9 @@ export const entities: EntityRecord[] = rawNodes(graph).map(toRecord);
 
 // Declared-order kind list (decision, report, pipeline, …), straight from byKind.
 export const kinds: string[] = Object.keys(graph.byKind ?? {});
+
+// Kinds whose entities ARE workflows (config `carriesSwimlanes`) — leads the workflow picker.
+export const swimlaneKinds: string[] = graph.swimlaneKinds ?? [];
 
 export function entitiesOfKinds(...wanted: string[]): EntityRecord[] {
   const set = new Set(wanted);
@@ -136,7 +141,7 @@ export function buildGraphContract(g: RawGraph = graph, h: RawHub = hub): BuildR
       label: n.title ?? prettify(n.id),
       kind: n.kind,
       sub: n.status ?? n.kind,
-      tone: KIND_TONE[n.kind] ?? 'neutral',
+      tone: toneByKind[n.kind] ?? 'neutral',
     };
   });
 
@@ -198,6 +203,14 @@ export interface ScopeItem {
   value: string;
 }
 export type DomainSource = string | { label: string; href?: string };
+// A detail row for a control-surface facet tile (commands / workflows / hooks). Mirrors the
+// `entries[]` render-hub emits for facet domains; maps onto a Brief item (text + gloss + chip).
+export interface HubDomainEntry {
+  text: string;
+  desc?: string;
+  status?: string;
+  ref?: string;
+}
 export interface HubDomainRec {
   id: string;
   kind: string;
@@ -208,6 +221,8 @@ export interface HubDomainRec {
   dot?: string;
   note?: string;
   sources?: DomainSource[];
+  /** Control-surface facets (commands/workflows/hooks) carry their detail rows here. */
+  entries?: HubDomainEntry[];
 }
 
 // Per-entity development phases emitted from a `## Phases` block (a roadmap's structured plan),

@@ -23,6 +23,12 @@
       "minProperties": 1,
       "additionalProperties": { "$ref": "#/$defs/kind" }
     },
+    "sectionHints": {
+      "description": "Optional per-section authoring hints (section name -> placeholder text the scaffolder drops into a new entity's body). Overrides the scaffolder's built-in hints; useful for sections whose starter content is structured (e.g. a `## Workflow` swimlane stub).",
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "default": {}
+    },
     "tagRegistry": {
       "description": "Known tag keys. Known keys have their VALUES validated; unknown keys are allowed but surfaced (info). Keys that shadow a primitive are rejected by the base schema.",
       "type": "object",
@@ -62,7 +68,7 @@
       "default": { "rollout": "warn" }
     },
     "render": {
-      "description": "Optional. Drives the hub dashboard renderer. Entirely project-agnostic: a brand string, accent tone, and editorial copy. Kinds are auto-placed into the hub's hex slots in declared order; the slot-naming is an internal adapter concern, never surfaced here.",
+      "description": "Optional. Drives the hub dashboard renderer. Entirely project-agnostic: a brand string, accent tone, and editorial copy. By default kinds are auto-placed into the hub's hex slots in declared order; `hex` overrides that with a curated layout. The slot-naming is an internal adapter concern, never surfaced here.",
       "type": "object",
       "additionalProperties": true,
       "properties": {
@@ -70,7 +76,44 @@
         "code": { "type": "string" },
         "tagline": { "type": "string" },
         "tone": { "type": "string", "description": "Accent hex, default #D4AF37." },
-        "centerName": { "type": "string", "description": "Label for the center tile (the contract). Default 'ProjectEntity'." }
+        "centerName": { "type": "string", "description": "Label for the center tile (the contract). Default 'ProjectEntity'." },
+        "hex": {
+          "type": "object",
+          "description": "Optional curated hex layout. Absent → auto-place one petal per kind-with-entities + a tooling petal. Present → place the declared petals in slot order.",
+          "additionalProperties": false,
+          "properties": {
+            "petals": {
+              "type": "array",
+              "description": "Up to 6 petals in slot order. Each is either an entity-kind tile (`kind`) or a Claude Code control-surface tile (`facet`: commands · workflows · hooks), counted and detailed live by render-hub.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": { "type": "string", "description": "An entity kind name (must exist in config.kinds)." },
+                  "facet": { "type": "string", "enum": ["commands", "workflows", "hooks"], "description": "A control-surface facet read from the project's .claude/." }
+                }
+              }
+            },
+            "facets": {
+              "type": "object",
+              "description": "Optional per-facet editorial overrides (tag/name/sub/dot/note/sources). `workflows.builtins` declares built-in workflow entries counted alongside entity ## Workflow blocks.",
+              "additionalProperties": true
+            }
+          }
+        },
+        "nav": {
+          "type": "array",
+          "description": "Optional curated nav/tab bar. Absent → the app derives one: Overview + Progress, an auto-tab per kind not shown by a special panel, then Workflows if any swimlane exists. Each entry is either a built-in panel or a generic table over one or more kinds.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "panel": { "type": "string", "enum": ["overview", "progress", "workflows"], "description": "A built-in bespoke panel the app renders itself." },
+              "label": { "type": "string", "description": "Tab label for a generic entity-table tab." },
+              "kinds": { "type": "array", "items": { "type": "string" }, "description": "Kinds listed in this generic table tab." }
+            }
+          }
+        }
       }
     }
   },
@@ -117,12 +160,18 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "carriesSwimlanes": {
+          "description": "True when entities of this kind ARE workflows — their `## Workflow` swimlane is the entity's reason to exist (e.g. the 'workflow' kind). The Command Center leads its workflow picker with these; other kinds' inline `## Workflow` blocks follow. Default false.",
+          "type": "boolean",
+          "default": false
+        },
         "render": {
           "description": "Optional render metadata for this kind's hub tile: accent dot color and human labels. NO slot/position — the renderer auto-places kinds in declared order.",
           "type": "object",
           "additionalProperties": false,
           "properties": {
             "dot": { "type": "string", "description": "Accent hex for the tile dot." },
+            "tone": { "type": "string", "description": "Optional explicit lineage tone for this kind's entities (accent|info|success|warning|neutral). Escape hatch — by default the tone is derived from `dot`. `danger` is reserved for errors." },
             "tag": { "type": "string", "description": "Short eyebrow label." },
             "name": { "type": "string", "description": "Tile name." },
             "sub": { "type": "string", "description": "One-line subtitle." }

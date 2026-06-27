@@ -30,8 +30,9 @@ integrity: id-uniqueness, `nodes[]`↔`byKind` agreement, edge resolution) are w
 Top-level keys (all always present): `generatedBy`, `project`, `folderByKind`
 (`kind → folder` map), `entities` (number), `migrated` (number), `counts`
 `{error,warning,info}`, `nodes`, `byKind`, `edges`, `edgesByRel`, `workflows`
-(`id → swimlane contract`), `runs` (`id → windowed run history`), and `phases`
-(`id → phase list`) — each `{}` when none.
+(`id → swimlane contract`), `runs` (`id → windowed run history`), `phases`
+(`id → phase list`) — each `{}` when none — and `swimlaneKinds` (`string[]`: kinds whose
+entities ARE workflows, from config `carriesSwimlanes`; `[]` when none).
 
 ### `nodes[]` — the per-entity records
 
@@ -51,7 +52,8 @@ link straight back to the markdown.
 ### `byKind` — the per-kind aggregate
 
 `byKind` is an **object keyed by kind name**; every configured kind is seeded even at zero
-count. Each bucket is `{ total: number, byStatus: Record<status,count>, ids: string[] }`:
+count. Each bucket is `{ total: number, byStatus: Record<status,count>, ids: string[], tone }`
+(where `tone` is the kind's lineage color, derived from its accent dot — see below):
 
 ```json
 "decision": { "total": 3, "byStatus": { "accepted": 3 }, "ids": ["0001-…", "0002-…", "0003-…"] }
@@ -153,7 +155,9 @@ A kit view-model (the hexagonal hub), distinct from the graph. The app uses it f
 copy**, not topology. Always-present keys: `view` (`"hub"`), `brand`, `code`, `tagline`,
 `tone`, `taglineNote`, `sub`, `axis`, `updated`, `sourceLine`, `stats`, `scopeTitle`,
 `scope`, `strategy`, `domains`. Conditionally present (config-gated): `banner`, `ribbon`,
-`ribbonTitle`, `ribbonTotal`, `paths`.
+`ribbonTitle`, `ribbonTotal`, `paths`, and `nav` (an editorial tab bar — `{ panel }` for a
+built-in panel or `{ label, kinds }` for a generic table; absent → the app derives one tab per
+unconsumed kind).
 
 - `stats[]` — `{ label: string, value: number, color?: hex }` (`color` only on `errors`).
 - `scope[]` — `{ label: string, num: string, value: string }` (**`num` is a string**, even
@@ -176,7 +180,7 @@ shapes (see `@trembus/viz` `dist/index.d.ts`):
 ### Construction algorithm (implemented in `apps/command-center/src/contract.ts`)
 
 1. **Nodes** — for each record in `nodes[]`, emit
-   `{ id, label: title ?? prettify(id), kind, sub: status ?? kind, tone: KIND_TONE[kind] ?? 'neutral' }`
+   `{ id, label: title ?? prettify(id), kind, sub: status ?? kind, tone: toneByKind[kind] ?? 'neutral' }`
    (falls back to synthesizing from `byKind.ids` if an older contract has no `nodes[]`).
 2. **Edges** — for each `e` in `edges`, emit `{ from: e.from, to: e.target.split('/').pop(),
    label: e.rel }`. Drop (and count) any edge whose `from` **or** `to` does not resolve to a
@@ -184,15 +188,10 @@ shapes (see `@trembus/viz` `dist/index.d.ts`):
 3. **Chrome** — `title`/`brand`/`caption` from `hub.json`; counts/legend from
    `counts` + `edgesByRel`.
 
-`KIND_TONE` (one distinct tone per kind, `danger` reserved for error states):
-
-| kind | tone |
-|---|---|
-| decision | `info` |
-| report | `success` |
-| pipeline | `accent` |
-| roadmap | `neutral` |
-| session | `warning` |
+**Per-kind tone is data, not a hardcoded map.** Each `byKind` bucket carries a `tone`, derived by
+`render-hub` from the kind's accent (`config.kinds.<k>.render.dot`, or an explicit
+`render.tone`). The app reads `byKind.<k>.tone`, falling back to `neutral` (`danger` is reserved
+for error states and never auto-assigned). Adding a kind therefore needs no app edit for tone.
 
 ---
 

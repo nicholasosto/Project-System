@@ -208,7 +208,7 @@ why the contract must exist before the first renderer.)*
 2. **Run the validator** (`node tools/validate.mjs --root <project> --config <…>`). Files
    without frontmatter report as *pending migration* (info), so it's useful before any
    migration is complete and tracks the gap.
-3. **Wire authoring + guarding.** Copy the `/new-*` commands and add the `PreToolUse`
+3. **Wire authoring + guarding.** Copy the `/new` command and add the `PreToolUse`
    (`Write|Edit`) guard hook — a new file is conformant by construction, an invalid write
    is blocked at save time.
 4. **Render** (`node tools/render-hub.mjs`) for the model-driven hub dashboard.
