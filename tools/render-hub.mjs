@@ -253,11 +253,19 @@ export function buildModel(ctx) {
 
   const byKind = {};
   // `tone` is derived per kind (from its accent dot) so the app needs no hardcoded kind→tone map.
+  // `statusOrder` is the kind's *declared* status enum (config order) — lets a consumer categorize
+  // entities the config way instead of by first-seen. Domain-neutral: it's whatever the config lists.
   ctx.kinds.forEach((kind, i) => {
-    byKind[kind] = { total: 0, byStatus: {}, ids: [], tone: toneForKind(ctx, kind, i) };
+    byKind[kind] = {
+      total: 0,
+      byStatus: {},
+      ids: [],
+      tone: toneForKind(ctx, kind, i),
+      statusOrder: [...(ctx.statusEnums[kind] ?? [])],
+    };
   });
   for (const e of entities) {
-    const b = (byKind[e.kind] ??= { total: 0, byStatus: {}, ids: [] });
+    const b = (byKind[e.kind] ??= { total: 0, byStatus: {}, ids: [], statusOrder: [] });
     b.total += 1;
     b.ids.push(e.id);
     const st = e.fm?.status ?? "—";
@@ -353,7 +361,9 @@ function hubContract(ctx, model) {
       tag: render.centerTag ?? "Contract",
       name: render.centerName ?? "ProjectEntity",
       sub: render.centerSub ?? "3 primitives · 1 shape",
-      status: `${entities} entities · ${migrated}/${entities} conformant`,
+      // Tile chips stay short so they fit the hex's narrow content band on one line; the full prose
+      // ("N entities · M/N conformant") now lives in the drawer's ProjectEntity brief.
+      status: `${migrated}/${entities}`,
       dot: tone,
       note:
         render.centerNote ??
@@ -374,7 +384,7 @@ function hubContract(ctx, model) {
       tag: meta.tag ?? `${cap(kind)}s`,
       name: meta.name ?? `${cap(kind)} log`,
       sub: meta.sub ?? `${folderByKind[kind]}/ · per-kind status enum`,
-      status: `${b.total} · ${statusSummary(b.byStatus)}`,
+      status: `${b.total}`,
       dot: dotForKind(ctx, kind, dotIdx),
       note: `${b.total} ${kind} ${b.total === 1 ? "entity" : "entities"} — status over the per-kind enum (${statusSummary(b.byStatus)}). ${edgesTouching(kind)} typed link${edgesTouching(kind) === 1 ? "" : "s"} touch this kind.`,
       sources: [`_project/${folderByKind[kind]}/`],
@@ -395,7 +405,7 @@ function hubContract(ctx, model) {
       tag: copy.tag,
       name: copy.name,
       sub: copy.sub ?? "",
-      status: copy.status ?? `${count} · ${copy.sub ?? copy.name.toLowerCase()}`,
+      status: copy.status ?? `${count}`,
       dot: copy.dot ?? "#5a6478",
       note: copy.note ?? "",
       entries,

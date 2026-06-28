@@ -17,10 +17,11 @@ import {
   ribbonTotal,
   scope,
   setConsumer,
+  statusOrderForKind,
   strategy,
   swimlaneKinds,
 } from './contract';
-import type { Phase } from './contract';
+import type { EntityRecord, Phase } from './contract';
 import { WorkflowConsole } from './WorkflowConsole';
 import { WORKFLOWS } from './workflows';
 
@@ -185,30 +186,76 @@ const FACET_SECTION: Record<string, SectionKind> = {
 const BLOCKING_HOOK = /^(PreToolUse|UserPromptSubmit)\b/;
 const hookRole = (text: string): string => (BLOCKING_HOOK.test(text) ? 'blocking' : 'advisory');
 
+// Group a kind's entities by status, in the config's declared enum order (`statusOrder`); any
+// off-enum status (the '—' placeholder, a legacy value) is appended in first-seen order. Each
+// group is sorted newest-first. The shared spine of every categorized brief.
+function groupByStatus(kind: string, rows: EntityRecord[]): [string, EntityRecord[]][] {
+  const byStatus = new Map<string, EntityRecord[]>();
+  for (const e of rows) byStatus.set(e.status, [...(byStatus.get(e.status) ?? []), e]);
+  const declared = statusOrderForKind(kind);
+  const ordered = [
+    ...declared.filter((s) => byStatus.has(s)),
+    ...[...byStatus.keys()].filter((s) => !declared.includes(s)),
+  ];
+  return ordered.map((s) => [s, byStatus.get(s)!.slice().sort((a, b) => b.updated.localeCompare(a.updated))]);
+}
+
+// A compact, config-ordered status rollup for a kind's entities — e.g. "1 active · 1 proposed".
+const statusRollup = (kind: string, rows: EntityRecord[]): string =>
+  groupByStatus(kind, rows)
+    .map(([s, g]) => `${g.length} ${s}`)
+    .join(' · ');
+
 // Selecting a hub tile reveals that tile's detail in the right-side drawer (not below the grid).
 // The selected id is the domain id — an entity kind for kind-petals, a facet id (commands /
 // workflows / hooks) for control-surface petals, or 'contract' for the center. This projects the
-// selection into a Trembus BriefContract: kind tiles list their entities via an `artifacts`
-// section; facet tiles list their `entries`; the center carries neither, so it falls back to the
-// domain's note + `reference` sources. The eyebrow is the tile's *source path* (its most
-// identifying handle) rather than the generic "Control surface" tag three petals share; the meta
-// pills lead with a toned count, then the status rollup (or, for hooks, the blocking/advisory
-// split) — never the old triple-counted "STATE 2 · … / COUNT 2".
+// selection into a Trembus BriefContract:
+//   · the CENTER (ProjectEntity) lists every conforming entity, categorized BY KIND — one section
+//     per kind (declared order) whose `note` rolls up that kind's status spread — then its sources;
+//   · a KIND PETAL categorizes that one kind's entities BY STATUS (config enum order);
+//   · a FACET petal lists its `entries`.
+// The eyebrow is the tile's *source path* (its most identifying handle) rather than the generic
+// "Control surface" tag three petals share; the meta pills lead with a toned count, then the
+// status rollup (or, for hooks, the blocking/advisory split) — never a triple-counted "STATE 2 · …".
 function hexBrief(id: string): BriefContract {
   const domain = domainById.get(id);
   const rows = entitiesOfKinds(id);
   const entries = domain?.entries ?? [];
   const dot = domain?.dot;
   const isHooks = id === 'hooks';
+  const isCenter = domain?.kind === 'center' || id === 'contract';
   const sections: NonNullable<BriefContract['sections']> = [];
 
-  if (rows.length) {
-    sections.push({
-      id: 'artifacts',
-      heading: 'Planning artifacts',
-      kind: 'artifacts',
-      items: rows.map((e) => ({ text: e.title, status: e.status, ref: e.updated })),
-    });
+  if (isCenter) {
+    // The ProjectEntity brief: the contract made legible — the universal shape, then EVERY entity
+    // that conforms to it, categorized BY KIND in declared order. Each kind is a section whose
+    // `note` rolls up its status spread; items keep a status chip (status varies within a kind
+    // here) + the updated date. Newest first per kind.
+    for (const kind of kinds) {
+      const group = entitiesOfKinds(kind);
+      if (!group.length) continue;
+      const sorted = group.slice().sort((a, b) => b.updated.localeCompare(a.updated));
+      sections.push({
+        id: `kind-${kind}`,
+        heading: `${prettify(kind)}s`,
+        kind: 'artifacts',
+        note: statusRollup(kind, group),
+        items: sorted.map((e) => ({ text: e.title, status: e.status, ref: e.updated })),
+      });
+    }
+  } else if (rows.length) {
+    // A kind petal: categorize that one kind's entities BY STATUS — one section per status, in the
+    // config's declared enum order. The heading carries the status, so items drop their (now
+    // redundant) chip and the `note` lead-in shows that category's share of the kind.
+    for (const [status, group] of groupByStatus(id, rows)) {
+      sections.push({
+        id: `status-${status}`,
+        heading: prettify(status),
+        kind: 'artifacts',
+        note: `${group.length} of ${rows.length}`,
+        items: group.map((e) => ({ text: e.title, ref: e.updated })),
+      });
+    }
   } else if (entries.length) {
     sections.push({
       id: 'entries',
@@ -220,7 +267,11 @@ function hexBrief(id: string): BriefContract {
           : { text: e.text, desc: e.desc, status: e.status, ref: e.ref },
       ),
     });
-  } else if (domain?.sources?.length) {
+  }
+
+  // Sources: the center keeps its provenance (schema + config) as a trailing section beneath the
+  // categorized entities; any other tile falls back to sources only when it would otherwise be empty.
+  if (domain?.sources?.length && (isCenter || !sections.length)) {
     sections.push({
       id: 'sources',
       heading: 'Sources',
@@ -238,8 +289,17 @@ function hexBrief(id: string): BriefContract {
   // hooks add the derived blocking/advisory split; every other tile shows the *rollup* — the part
   // of `status` after the leading "N · ", which would otherwise just repeat the count.
   const meta: NonNullable<BriefContract['meta']> = [];
-  if (rows.length) meta.push({ label: 'entities', value: rows.length, tone: dot });
-  else if (entries.length) meta.push({ label: domain?.name?.toLowerCase() ?? 'items', value: entries.length, tone: dot });
+  if (isCenter) {
+    // Lead with the conformant whole: total entities, how many kinds carry them, then the
+    // conformance ratio (the domain status — now a short "M/N" the tile chip also shows).
+    meta.push({ label: 'entities', value: entities.length, tone: dot });
+    meta.push({ label: 'kinds', value: kinds.filter((k) => entitiesOfKinds(k).length).length });
+    if (domain?.status) meta.push({ label: 'conformant', value: domain.status });
+  } else if (rows.length) {
+    meta.push({ label: 'entities', value: rows.length, tone: dot });
+    const categories = new Set(rows.map((e) => e.status)).size;
+    if (categories > 1) meta.push({ label: 'categories', value: categories });
+  } else if (entries.length) meta.push({ label: domain?.name?.toLowerCase() ?? 'items', value: entries.length, tone: dot });
 
   if (isHooks && entries.length) {
     const blocking = entries.filter((e) => BLOCKING_HOOK.test(e.text)).length;

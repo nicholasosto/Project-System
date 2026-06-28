@@ -16,6 +16,8 @@ export interface KindBucket {
   ids: string[];
   /** Lineage tone for this kind's entities, derived by render-hub from the kind's accent dot. */
   tone?: LineageTone;
+  /** The kind's declared status enum, in config order — the category order for entity briefs. */
+  statusOrder?: string[];
 }
 // Per-entity record — the navigable detail the aggregate byKind buckets can't express.
 export interface RawNode {
@@ -158,6 +160,14 @@ export const swimlaneKinds: string[] = graph.swimlaneKinds ?? [];
 export function entitiesOfKinds(...wanted: string[]): EntityRecord[] {
   const set = new Set(wanted);
   return entities.filter((e) => set.has(e.kind));
+}
+
+// A kind's declared status enum (config order) — the category order for entity briefs. Falls back
+// to the statuses actually present (first-seen) for an older contract that predates `statusOrder`.
+export function statusOrderForKind(kind: string): string[] {
+  const bucket = graph.byKind?.[kind];
+  if (bucket?.statusOrder?.length) return bucket.statusOrder;
+  return Object.keys(bucket?.byStatus ?? {});
 }
 
 export interface BuildResult {

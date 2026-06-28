@@ -48,31 +48,62 @@
       "total": 0,
       "byStatus": {},
       "ids": [],
-      "tone": "info"
+      "tone": "info",
+      "statusOrder": [
+        "proposed",
+        "accepted",
+        "superseded",
+        "rejected"
+      ]
     },
     "report": {
       "total": 0,
       "byStatus": {},
       "ids": [],
-      "tone": "warning"
+      "tone": "warning",
+      "statusOrder": [
+        "draft",
+        "complete"
+      ]
     },
     "pipeline": {
       "total": 0,
       "byStatus": {},
       "ids": [],
-      "tone": "success"
+      "tone": "success",
+      "statusOrder": [
+        "design",
+        "qualify",
+        "build",
+        "ship",
+        "archive",
+        "shelved"
+      ]
     },
     "roadmap": {
       "total": 0,
       "byStatus": {},
       "ids": [],
-      "tone": "accent"
+      "tone": "accent",
+      "statusOrder": [
+        "proposed",
+        "active",
+        "superseded",
+        "complete"
+      ]
     },
     "session": {
       "total": 0,
       "byStatus": {},
       "ids": [],
-      "tone": "warning"
+      "tone": "warning",
+      "statusOrder": [
+        "planned",
+        "active",
+        "blocked",
+        "completed",
+        "shelved"
+      ]
     },
     "character": {
       "total": 1,
@@ -82,7 +113,13 @@
       "ids": [
         "aria-vance"
       ],
-      "tone": "info"
+      "tone": "info",
+      "statusOrder": [
+        "concept",
+        "draft",
+        "canon",
+        "retired"
+      ]
     },
     "workflow": {
       "total": 2,
@@ -93,7 +130,12 @@
         "character-creation",
         "character-onboarding"
       ],
-      "tone": "accent"
+      "tone": "accent",
+      "statusOrder": [
+        "draft",
+        "active",
+        "deprecated"
+      ]
     }
   },
   "edges": [

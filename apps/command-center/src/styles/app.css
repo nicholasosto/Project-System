@@ -86,6 +86,33 @@ body,
   display: none;
 }
 
+/* Simplify the hub banner: the ProjectEntity drawer now carries the full prose, so drop the long
+   descriptive paragraph and the redundant tag-note (the stat row already says "N entities · K
+   kinds"). Brand, code, the tagline pill, and stats stay as a tight identity header. Like the
+   tile-sub above, the copy stays in the contract — it's only hidden here. */
+.cc-overview .tcl-hub__sub,
+.cc-overview .tcl-hub__tagnote {
+  display: none;
+}
+
+/* Badges read on one line — never wrap into 2–3 stacked rows. The tagline pill and each tile's
+   status chip stay single-row. The chips are now short (a count, or the center's M/N ratio — the
+   full prose moved to the drawer), so they sit inside the hex's narrow content band without wrapping. */
+.cc-overview .tcl-hub__pill,
+.cc-overview .tcl-hub__status {
+  white-space: nowrap;
+}
+
+/* Dots: one uniform neutral grey across the flower, a green glow only on the selected tile. The Hub
+   sets each dot's hue via an inline `color` that its fill AND glow inherit (currentColor), so
+   overriding `color` (!important to beat the inline value) recolors both at once. */
+.cc-overview .tcl-hub__dot {
+  color: #5a6478 !important;
+}
+.cc-overview .tcl-hub__tile.is-selected .tcl-hub__dot {
+  color: #43aa8b !important;
+}
+
 /* Right detail drawer — collapsed to 0 width until a hex is selected, then slides open. Sticky so
    it stays in view while the (taller) hub scrolls. */
 .cc-detailpanel {

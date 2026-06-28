@@ -145,7 +145,13 @@
         "0006-workflow-as-a-first-class-kind-distinct-from-pipeline",
         "0007-derive-kind-presentation-from-the-contract"
       ],
-      "tone": "info"
+      "tone": "info",
+      "statusOrder": [
+        "proposed",
+        "accepted",
+        "superseded",
+        "rejected"
+      ]
     },
     "report": {
       "total": 1,
@@ -155,7 +161,11 @@
       "ids": [
         "2026-06-24-extract-and-generalize-the-framework-from-soul-steel"
       ],
-      "tone": "success"
+      "tone": "success",
+      "statusOrder": [
+        "draft",
+        "complete"
+      ]
     },
     "pipeline": {
       "total": 1,
@@ -165,7 +175,15 @@
       "ids": [
         "package-as-trembus-project-schema"
       ],
-      "tone": "accent"
+      "tone": "accent",
+      "statusOrder": [
+        "design",
+        "qualify",
+        "build",
+        "ship",
+        "archive",
+        "shelved"
+      ]
     },
     "roadmap": {
       "total": 2,
@@ -177,7 +195,13 @@
         "command-center",
         "migrate-soul-steel-to-consume-the-packaged-framework"
       ],
-      "tone": "neutral"
+      "tone": "neutral",
+      "statusOrder": [
+        "proposed",
+        "active",
+        "superseded",
+        "complete"
+      ]
     },
     "session": {
       "total": 2,
@@ -189,7 +213,14 @@
         "2026-06-24-extract-and-generalize-project-system-into-its-own-space",
         "2026-06-27-command-center-evolution-and-data-driven-kinds"
       ],
-      "tone": "warning"
+      "tone": "warning",
+      "statusOrder": [
+        "planned",
+        "active",
+        "blocked",
+        "completed",
+        "shelved"
+      ]
     },
     "workflow": {
       "total": 1,
@@ -199,7 +230,12 @@
       "ids": [
         "authoring-loop"
       ],
-      "tone": "accent"
+      "tone": "accent",
+      "statusOrder": [
+        "draft",
+        "active",
+        "deprecated"
+      ]
     }
   },
   "edges": [
