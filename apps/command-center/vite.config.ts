@@ -21,9 +21,15 @@ const PORT = Number(process.env.PORT) || 5175;
 // `vite dev` only, so `vite build` / `vite preview` keep reading the committed JSON — the
 // committed contract stays the source the static build reads (roadmap command-center P4).
 function liveContract(): Plugin {
-  // Watch the dogfood `_project/` AND every consumer's `examples/*/_project/`, and regenerate
-  // ALL contracts via render-all so whichever consumer is selected in the UI stays live.
-  const WATCH_DIRS = [resolve(REPO_ROOT, '_project'), resolve(REPO_ROOT, 'examples')];
+  // Watch the dogfood `_project/` AND every consumer's `examples/*/_project/`, plus the configs and
+  // base schema the Field Guide + hub chrome derive from, and regenerate ALL contracts via
+  // render-all so whichever consumer is selected in the UI stays live.
+  const WATCH_PATHS = [
+    resolve(REPO_ROOT, '_project'),
+    resolve(REPO_ROOT, 'examples'),
+    resolve(REPO_ROOT, 'schema'),
+    resolve(REPO_ROOT, 'project-system.config.json'),
+  ];
   const GENERATOR = resolve(REPO_ROOT, 'apps/command-center/scripts/render-all.mjs');
   return {
     name: 'project-system:live-contract',
@@ -54,16 +60,20 @@ function liveContract(): Plugin {
       };
 
       const onChange = (file: string) => {
-        // Any `_project/` markdown — the dogfood's or a consumer's under examples/ — triggers a
-        // full regenerate of every contract.
-        if (!warm || !file.endsWith('.md') || !file.includes('/_project/')) return;
+        // Triggers: any `_project/` markdown (the dogfood's or a consumer's under examples/), any
+        // project-system.config.json (kinds/enums/sections — the Field Guide + hub derive from it),
+        // or any schema/*.json (the base contract the guide's concept nodes derive from).
+        const isProjectMd = file.endsWith('.md') && file.includes('/_project/');
+        const isConfig = file.endsWith('project-system.config.json');
+        const isSchema = file.endsWith('.json') && file.includes('/schema/');
+        if (!warm || !(isProjectMd || isConfig || isSchema)) return;
         if (debounce) clearTimeout(debounce);
         debounce = setTimeout(regenerate, 120);
       };
 
-      for (const dir of WATCH_DIRS) server.watcher.add(dir);
+      for (const path of WATCH_PATHS) server.watcher.add(path);
       for (const ev of ['add', 'change', 'unlink'] as const) server.watcher.on(ev, onChange);
-      log('watching _project/ + examples/*/_project/ — edits regenerate all dashboard contracts');
+      log('watching _project/ + examples/ + configs + schema/ — edits regenerate all dashboard contracts');
     },
   };
 }

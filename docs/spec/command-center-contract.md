@@ -1,7 +1,8 @@
 # Command-Center input contract
 
 > **Status:** frozen-for-v1 (2026-06-24) · enriched 2026-06-25 (per-entity `nodes[]` +
-> `folderByKind`; P0 gaps closed) · realizes roadmap `command-center` **P0**.
+> `folderByKind`; P0 gaps closed) · enriched 2026-06-28 (`guide` tree — the Field Guide) ·
+> realizes roadmap `command-center` **P0**.
 >
 > This is the seam between the zero-dep framework-core and the `apps/command-center/`
 > render island. The framework emits two JSON artifacts; the app consumes **only** these.
@@ -31,8 +32,9 @@ Top-level keys (all always present): `generatedBy`, `project`, `folderByKind`
 (`kind → folder` map), `entities` (number), `migrated` (number), `counts`
 `{error,warning,info}`, `nodes`, `byKind`, `edges`, `edgesByRel`, `workflows`
 (`id → swimlane contract`), `runs` (`id → windowed run history`), `phases`
-(`id → phase list`) — each `{}` when none — and `swimlaneKinds` (`string[]`: kinds whose
-entities ARE workflows, from config `carriesSwimlanes`; `[]` when none).
+(`id → phase list`) — each `{}` when none — `swimlaneKinds` (`string[]`: kinds whose
+entities ARE workflows, from config `carriesSwimlanes`; `[]` when none) — and `guide` (the
+Field Guide tree; see below).
 
 ### `nodes[]` — the per-entity records
 
@@ -146,6 +148,43 @@ passes the array straight through under `phases`, keyed by **entity id**:
 The shape is open; a typical record is `{ id?, label, status?, detail? }`. Domain-neutral: the
 engine invents no phase semantics — `status` words are the project's own, mapped to tones by the
 consumer (the Command Center renders each list as a `@trembus/ui` `Timeline`).
+
+### `guide` — the Field Guide tree
+
+A `{ generatedBy, version, root }` object — a hierarchical, self-serve reference to how the system
+is structured and named, built by `buildGuide(ctx)` and rendered by the Command Center as an
+expandable folder tree (the **Field Guide** tab + an Overview hex tile). `root` is a single node;
+every node has the shape:
+
+```json
+{ "id": "project/decision", "label": "decisions/", "path": "_project/decisions",
+  "nodeType": "kind-folder", "origin": "derived",
+  "brief": "Holds entities of kind \"decision\". …",
+  "facts": [ { "label": "filename scheme", "value": "serial · 4-digit" },
+             { "label": "status enum", "value": ["proposed","accepted","superseded","rejected"] } ],
+  "children": [ { "id": "project/decision/example", "label": "0001-example-title.md",
+                  "nodeType": "kind-file", "origin": "derived", "brief": "…" } ] }
+```
+
+- `id` — **unique within the tree** (`verify-contract.mjs` asserts it); the UI uses it as the
+  React key, the selection id, and the expansion key.
+- `nodeType` ∈ `root | folder | file | kind-folder | kind-file | concept` (open — an unknown type
+  degrades to a plain row).
+- `origin` ∈ `authored | derived` — provenance. **Authored** nodes are the fixed framework anatomy
+  (the vendored `schema/ · lib/ · tools/` core, the two hooks), identical for every consumer and
+  sourced from `tools/guide-anatomy.mjs`. **Derived** nodes are generated from `ctx` (the config +
+  base schema): the `_project/` subtree is one `kind-folder` per configured kind, with `facts`
+  (filename scheme, status enum, initial status, required/scaffold sections, swimlane-carrying)
+  pulled straight from the config; the `concept/primitives` and `concept/rels` facts come from the
+  base schema's field sets and the config's `relTargetKinds`.
+- `facts` — `{ label, value: string | string[] }[]`, the structured conventions the UI renders as
+  meta pills + a "Conventions" section.
+- Every `kind-folder` node's `kind` fact is a configured kind (it agrees with `byKind` —
+  `verify-contract.mjs` asserts it).
+
+Domain-neutral: no kind/folder/status is hard-coded in the engine. Two consumers with different
+configs therefore emit different `_project/` subtrees while their authored `core/` subtree is
+byte-identical — the proof of project-agnosticism.
 
 ---
 

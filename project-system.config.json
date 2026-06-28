@@ -84,7 +84,7 @@
     "hex": {
       "petals": [
         { "facet": "hooks" },
-        {},
+        { "facet": "guide" },
         { "facet": "commands" },
         {},
         { "facet": "workflows" }
@@ -98,6 +98,9 @@
         },
         "workflows": {
           "note": "Operating workflows the Command Center replays as swimlanes — the authoring loop plus any entity that declares a ## Workflow block."
+        },
+        "guide": {
+          "note": "The Field Guide — a self-serve map of how this system is structured and named. The framework anatomy (schema/ · lib/ · tools/ · hooks) is authored; the _project/ surface and naming conventions are derived live from this config, so the guide can't drift. Open the Field Guide tab for the full expandable tree."
         }
       }
     },

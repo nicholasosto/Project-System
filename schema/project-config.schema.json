@@ -89,13 +89,13 @@
           "properties": {
             "petals": {
               "type": "array",
-              "description": "Up to 6 petals in slot order. Each is either an entity-kind tile (`kind`) or a Claude Code control-surface tile (`facet`: commands · workflows · hooks), counted and detailed live by render-hub.",
+              "description": "Up to 6 petals in slot order. Each is either an entity-kind tile (`kind`) or a Claude Code control-surface tile (`facet`: commands · workflows · hooks · guide), counted and detailed live by render-hub.",
               "items": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
                   "kind": { "type": "string", "description": "An entity kind name (must exist in config.kinds)." },
-                  "facet": { "type": "string", "enum": ["commands", "workflows", "hooks"], "description": "A control-surface facet read from the project's .claude/." }
+                  "facet": { "type": "string", "enum": ["commands", "workflows", "hooks", "guide"], "description": "A control-surface facet: commands/workflows/hooks read from the project's .claude/; guide is the framework & naming reference derived from the config + base schema." }
                 }
               }
             },
@@ -113,7 +113,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "panel": { "type": "string", "enum": ["overview", "progress", "workflows"], "description": "A built-in bespoke panel the app renders itself." },
+              "panel": { "type": "string", "enum": ["overview", "progress", "workflows", "guide"], "description": "A built-in bespoke panel the app renders itself." },
               "label": { "type": "string", "description": "Tab label for a generic entity-table tab." },
               "kinds": { "type": "array", "items": { "type": "string" }, "description": "Kinds listed in this generic table tab." }
             }

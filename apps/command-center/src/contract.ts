@@ -50,6 +50,35 @@ export interface RawGraph {
   phases?: Record<string, unknown>;
   /** Kinds whose entities ARE workflows (config `carriesSwimlanes`). Drives the workflow picker. */
   swimlaneKinds?: string[];
+  /** The Field Guide tree (framework anatomy + config-derived naming conventions). Optional: an
+   *  older contract or a consumer that predates the field omits it; the app degrades gracefully. */
+  guide?: GuideContract;
+}
+
+// ── Field Guide (framework & naming reference) ──
+// A tree the app renders as an expandable folder explorer; clicking a node shows its brief.
+// The framework anatomy (schema/·lib/·tools/·hooks) is authored; the _project/ surface and the
+// rel/primitive concepts are derived by render-hub from the project's config + base schema.
+export interface GuideFact {
+  label: string;
+  value: string | string[];
+}
+export interface GuideNode {
+  id: string;
+  label: string;
+  path?: string | null;
+  /** root | folder | file | kind-folder | kind-file | concept (open — unknown degrades sanely). */
+  nodeType: string;
+  /** authored (framework anatomy) | derived (from this project's config). */
+  origin?: string;
+  brief?: string;
+  facts?: GuideFact[];
+  children?: GuideNode[];
+}
+export interface GuideContract {
+  generatedBy: string;
+  version: number;
+  root: GuideNode;
 }
 export interface RawHub {
   brand: string;
@@ -298,5 +327,24 @@ export const domains: HubDomainRec[] = (hub.domains as HubDomainRec[]) ?? [];
 // Selected hub tile id → its domain record (id is the entity kind for petals; 'contract'/'tooling'
 // for the center + tooling slot). Powers the hex details panel.
 export const domainById: Map<string, HubDomainRec> = new Map(domains.map((d) => [d.id, d]));
+
+// ── Field Guide accessors ──
+// `guideRoot` is the whole tree's root (its brief intros the system); `guide` is the forest the
+// tree renders (the root's children — core / _project / concepts). `hasGuide` gates the nav tab +
+// hex tile so a contract without the payload simply omits the feature. `guideIndex` maps every
+// node id → node for selection lookups. Defensive `?? null/[]` mirrors the workflows?/phases?
+// accessors above — an older contract degrades, never throws.
+export const guideRoot: GuideNode | null = (graph.guide?.root as GuideNode) ?? null;
+export const guide: GuideNode[] = guideRoot?.children ?? [];
+export const hasGuide: boolean = guide.length > 0;
+
+function indexGuide(nodes: GuideNode[], map = new Map<string, GuideNode>()): Map<string, GuideNode> {
+  for (const n of nodes) {
+    map.set(n.id, n);
+    if (n.children?.length) indexGuide(n.children, map);
+  }
+  return map;
+}
+export const guideIndex: Map<string, GuideNode> = guideRoot ? indexGuide([guideRoot]) : new Map();
 
 export { graph, hub };

@@ -7,6 +7,10 @@ import {
   domainById,
   entities,
   entitiesOfKinds,
+  guide,
+  guideIndex,
+  guideRoot,
+  hasGuide,
   hub,
   hubData,
   kinds,
@@ -21,7 +25,8 @@ import {
   strategy,
   swimlaneKinds,
 } from './contract';
-import type { EntityRecord, Phase } from './contract';
+import type { EntityRecord, GuideNode, Phase } from './contract';
+import { ConventionTree } from './ConventionTree';
 import { WorkflowConsole } from './WorkflowConsole';
 import { WORKFLOWS } from './workflows';
 
@@ -90,7 +95,7 @@ function phaseTimeline(title: string, phases: Phase[]): TimelineContract {
   };
 }
 
-type NavEntry = { value: string; label: string; panel?: 'overview' | 'progress' | 'workflows'; kinds?: string[] };
+type NavEntry = { value: string; label: string; panel?: 'overview' | 'progress' | 'workflows' | 'guide'; kinds?: string[] };
 
 // The two editorial seams: which kinds the bespoke panels already surface, so they don't ALSO
 // get an auto-tab. Adding a new kind never edits these — it just gets its own tab (or a config
@@ -113,6 +118,9 @@ function deriveNav(): NavEntry[] {
   if (WORKFLOWS.length || swimlaneKinds.length) {
     nav.push({ value: 'workflows', label: 'Workflows', panel: 'workflows' });
   }
+  // The Field Guide tab appears only when the contract carries a guide payload, so a consumer
+  // (or older contract) without it never gets an empty tab.
+  if (hasGuide) nav.push({ value: 'guide', label: 'Field Guide', panel: 'guide' });
   return nav;
 }
 
@@ -322,6 +330,66 @@ function hexBrief(id: string): BriefContract {
   };
 }
 
+// Field Guide: project a selected tree node into a Brief. The meta pills carry the node's place
+// in the hierarchy (type · authored-vs-derived source · child count); a "Conventions" section
+// lists its facts (filename scheme, status enum, sections, rel rules), and a "Contains" section
+// lists its children so the brief doubles as a map one level down. Reuses the same <Brief> the
+// hex drawer uses — same styling, no new component.
+const GUIDE_TYPE_LABEL: Record<string, string> = {
+  root: 'Overview',
+  folder: 'Folder',
+  file: 'File',
+  'kind-folder': 'Entity kind',
+  'kind-file': 'Example file',
+  concept: 'Concept',
+};
+const GUIDE_TYPE_BLURB: Record<string, string> = {
+  root: 'The framework, top to bottom.',
+  folder: 'A directory in the framework core.',
+  file: 'A file in the framework core.',
+  'kind-folder': 'A _project/ folder holding one entity kind, named and derived from this project’s config.',
+  'kind-file': 'A representative filename for this kind — not a live entity.',
+  concept: 'A core concept of the contract.',
+};
+const factText = (v: string | string[]): string => (Array.isArray(v) ? v.join(' · ') : v);
+
+function guideBrief(node: GuideNode): BriefContract {
+  const meta: NonNullable<BriefContract['meta']> = [
+    { label: 'type', value: GUIDE_TYPE_LABEL[node.nodeType] ?? node.nodeType },
+  ];
+  if (node.origin) meta.push({ label: 'source', value: node.origin });
+  if (node.children?.length) meta.push({ label: 'contains', value: node.children.length });
+
+  const sections: NonNullable<BriefContract['sections']> = [];
+  if (node.facts?.length) {
+    sections.push({
+      id: 'conventions',
+      heading: 'Conventions',
+      kind: 'reference',
+      items: node.facts.map((f) => ({ text: f.label, ref: factText(f.value) })),
+    });
+  }
+  if (node.children?.length) {
+    sections.push({
+      id: 'contains',
+      heading: node.nodeType === 'concept' ? 'Related' : 'Contains',
+      kind: 'artifacts',
+      note: `${node.children.length} ${node.children.length === 1 ? 'entry' : 'entries'}`,
+      items: node.children.map((c) => ({ text: c.label, desc: c.brief, ref: c.path ?? undefined })),
+    });
+  }
+
+  return {
+    view: 'brief',
+    kind: 'spec',
+    id: node.path ?? node.id,
+    title: node.label,
+    summary: node.brief ?? GUIDE_TYPE_BLURB[node.nodeType],
+    meta,
+    sections,
+  };
+}
+
 // The development board (in the slot the Graph view used to hold). It visualizes progress from
 // data the contract already emits: the milestone `ribbon` (a Brief of phases + a stacked Meter),
 // the coverage `scope` (Stat tiles), and the planning artifacts (roadmaps / reports / sessions).
@@ -430,6 +498,19 @@ export function App() {
   const [wfId, setWfId] = useState<string>(WORKFLOWS[0]?.id ?? '');
   const activeWorkflow = WORKFLOWS.find((w) => w.id === wfId) ?? WORKFLOWS[0];
 
+  // Field Guide: selected node + expansion set (top-level forest expanded by default so the
+  // structure shows on open). Selection drives the right-pane brief.
+  const [guideSel, setGuideSel] = useState<string | undefined>(undefined);
+  const [guideOpen, setGuideOpen] = useState<Set<string>>(() => new Set(guide.map((n) => n.id)));
+  const toggleGuide = (id: string) =>
+    setGuideOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const selectedGuideNode = guideSel ? guideIndex.get(guideSel) : undefined;
+
   // The three bespoke panels (compose multiple kinds + non-kind data — not auto-generatable).
   const overviewBody = (
     <div className="cc-overview">
@@ -449,6 +530,11 @@ export function App() {
                 ✕
               </button>
               <Brief data={hexBrief(hubSel)} />
+              {hubSel === 'guide' && (
+                <button type="button" className="cc-guide__cta" onClick={() => setTab('guide')}>
+                  Open Field Guide →
+                </button>
+              )}
             </Card>
           ) : null}
         </div>
@@ -494,11 +580,46 @@ export function App() {
     </>
   );
 
+  // Field Guide: an expandable convention tree on the left, the selected node's brief on the right
+  // — a docs explorer. Degrades to an EmptyState if the contract carries no guide payload.
+  const guideBody = hasGuide ? (
+    <div className="cc-guide">
+      <aside className="cc-guide__tree" aria-label="Field guide navigation">
+        {guideRoot?.brief ? <p className="cc-guide__intro">{guideRoot.brief}</p> : null}
+        <ConventionTree
+          nodes={guide}
+          selectedId={guideSel}
+          onSelect={setGuideSel}
+          expanded={guideOpen}
+          onToggle={toggleGuide}
+        />
+      </aside>
+      <section className="cc-guide__detail">
+        {selectedGuideNode ? (
+          <Card className="cc-detailpanel__card">
+            <Brief data={guideBrief(selectedGuideNode)} />
+          </Card>
+        ) : (
+          <EmptyState
+            title="Pick a node"
+            description="Select a folder, file, or concept to read its purpose and naming conventions."
+          />
+        )}
+      </section>
+    </div>
+  ) : (
+    <EmptyState
+      title="No field guide"
+      description="This project's contract doesn't include a conventions guide yet."
+    />
+  );
+
   // Dispatch a nav entry to its panel body: a bespoke panel, or a generic per-kind table.
   const renderPanel = (area: NavEntry) => {
     if (area.panel === 'overview') return overviewBody;
     if (area.panel === 'progress') return <ProgressBoard />;
     if (area.panel === 'workflows') return workflowsBody;
+    if (area.panel === 'guide') return guideBody;
     return <AreaTable kinds={area.kinds ?? []} empty={`No ${area.label.toLowerCase()} yet.`} />;
   };
 

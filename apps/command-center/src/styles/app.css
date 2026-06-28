@@ -160,19 +160,20 @@ body,
   background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.06));
 }
 
-/* ── Detail-drawer Brief — tune @trembus/ui's <Brief> for reading at drawer width. Scoped to the
-   drawer so the Progress board's Brief is untouched. We restyle the slots the component exposes
-   (tcl-brief__*) rather than fork it: a readable lead, toned meta chips, hairline-separated
-   sections, and list rows that align the mono command/date pointer + role chip hard-right. ── */
+/* ── Card Brief — tune @trembus/ui's <Brief> for reading inside a detail card. Scoped to
+   .cc-detailpanel__card, shared by the Overview hex drawer AND the Field Guide detail pane (both
+   wrap the Brief in that card), so the Progress board's Brief is untouched. We restyle the slots
+   the component exposes (tcl-brief__*) rather than fork it: a readable lead, toned meta chips,
+   hairline-separated sections, and list rows that align the mono command/date pointer + chip right. ── */
 
 /* Eyebrow now carries the source path (e.g. .claude/settings.json) — let it break, not truncate. */
-.cc-detailpanel .tcl-brief__id {
+.cc-detailpanel__card .tcl-brief__id {
   font-size: 0.72rem;
   word-break: break-word;
 }
 
 /* The summary is a one-line lead now, not a wall — give it a comfortable measure + leading. */
-.cc-detailpanel .tcl-brief__summary {
+.cc-detailpanel__card .tcl-brief__summary {
   font-size: 0.86rem;
   line-height: 1.55;
   color: var(--tcl-text-dim, rgba(255, 255, 255, 0.72));
@@ -180,38 +181,38 @@ body,
 
 /* Meta pills: the component sets border + text color from each pill's `tone` inline; we add a faint
    tone-matched fill, pill radius, and a small-caps label so the counts scan as chips. */
-.cc-detailpanel .tcl-brief__meta {
+.cc-detailpanel__card .tcl-brief__meta {
   gap: 0.4rem;
   margin-top: 0.6rem;
 }
-.cc-detailpanel .tcl-brief__metapill {
+.cc-detailpanel__card .tcl-brief__metapill {
   align-items: baseline;
   padding: 0.18rem 0.55rem;
   border-radius: var(--tcl-radius-full, 9999px);
   background: color-mix(in srgb, currentColor 12%, transparent);
   font-size: 0.72rem;
 }
-.cc-detailpanel .tcl-brief__metalabel {
+.cc-detailpanel__card .tcl-brief__metalabel {
   text-transform: uppercase;
   letter-spacing: 0.07em;
   opacity: 0.8;
   margin-right: 0.32rem;
 }
-.cc-detailpanel .tcl-brief__metavalue {
+.cc-detailpanel__card .tcl-brief__metavalue {
   font-weight: 600;
 }
 
 /* Sections: separate with a hairline; the heading carries the meaning, so hide the redundant
    kind tag (the component prints REFERENCE / ARTIFACTS beside the heading). */
-.cc-detailpanel .tcl-brief__section {
+.cc-detailpanel__card .tcl-brief__section {
   margin-top: 1.05rem;
   padding-top: 0.85rem;
   border-top: 1px solid var(--tcl-border, rgba(255, 255, 255, 0.1));
 }
-.cc-detailpanel .tcl-brief__section-kind {
+.cc-detailpanel__card .tcl-brief__section-kind {
   display: none;
 }
-.cc-detailpanel .tcl-brief__section-h {
+.cc-detailpanel__card .tcl-brief__section-h {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -220,7 +221,7 @@ body,
 
 /* List rows (hooks · planning artifacts · sources): one row = bold label (left), with the mono
    command/date pointer + role chip pushed hard-right. */
-.cc-detailpanel .tcl-brief__ref {
+.cc-detailpanel__card .tcl-brief__ref {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
@@ -228,10 +229,10 @@ body,
   padding: 0.45rem 0;
   border-bottom: 1px solid var(--tcl-border, rgba(255, 255, 255, 0.06));
 }
-.cc-detailpanel .tcl-brief__ref:last-child {
+.cc-detailpanel__card .tcl-brief__ref:last-child {
   border-bottom: none;
 }
-.cc-detailpanel .tcl-brief__ref-main {
+.cc-detailpanel__card .tcl-brief__ref-main {
   flex: 1 1 8rem;
   min-width: 0;
   font-weight: 600;
@@ -239,7 +240,7 @@ body,
 }
 /* Role chip sits right after the label (order 1); the mono command trails (order 2) so a long
    command wraps to its own line while the role stays beside the event. */
-.cc-detailpanel .tcl-brief__status {
+.cc-detailpanel__card .tcl-brief__status {
   order: 1;
   font-size: 0.64rem;
   text-transform: uppercase;
@@ -250,8 +251,8 @@ body,
   color: var(--tcl-text-dim, rgba(255, 255, 255, 0.72));
 }
 /* The mono command/path pointer (the ref renders as <code class="tcl-brief__chip">). */
-.cc-detailpanel .tcl-brief__chip,
-.cc-detailpanel .tcl-brief__code {
+.cc-detailpanel__card .tcl-brief__chip,
+.cc-detailpanel__card .tcl-brief__code {
   order: 2;
   font-size: 0.72rem;
   color: var(--tcl-text-dim, rgba(255, 255, 255, 0.62));
@@ -275,6 +276,160 @@ body,
   }
   .cc-detailpanel__inner {
     width: 100%;
+  }
+}
+
+/* ── Field Guide: an expandable convention tree (left) beside the selected node's brief (right) —
+   a docs explorer. The brief reuses .cc-detailpanel__card so it inherits the tuned Brief styling. ── */
+.cc-guide {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 76rem;
+  margin: 0 auto;
+}
+
+.cc-guide__tree {
+  flex: 0 0 20rem;
+  min-width: 0;
+  align-self: stretch;
+  position: sticky;
+  top: 0.25rem;
+  max-height: calc(100vh - 1rem);
+  overflow: auto;
+}
+
+.cc-guide__intro {
+  margin: 0 0 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.62));
+}
+
+.cc-guide__detail {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Tree rows: caret · icon · label · fact-count, indented by --depth (one rem per level). */
+.cc-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cc-tree__node {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  padding-left: calc(0.4rem + var(--depth, 0) * 1rem);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.84rem;
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.72));
+  outline: none;
+}
+
+.cc-tree__node:hover {
+  background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.05));
+}
+
+.cc-tree__node[data-selected='true'] {
+  color: var(--tcl-text, #fff);
+  background: color-mix(in srgb, var(--tcl-accent, #d4af37) 14%, transparent);
+}
+
+.cc-tree__node:focus-visible {
+  outline: 2px solid var(--tcl-accent, #d4af37);
+  outline-offset: -2px;
+}
+
+.cc-tree__caret {
+  flex: 0 0 auto;
+  width: 0.85rem;
+  text-align: center;
+  color: var(--tcl-text-faint, rgba(255, 255, 255, 0.45));
+  transition: transform var(--tcl-dur-fast, 0.12s) ease;
+}
+.cc-tree__caret::before {
+  content: '▸';
+  font-size: 0.7rem;
+}
+.cc-tree__node[data-leaf='true'] .cc-tree__caret::before {
+  content: '';
+}
+.cc-tree__caret[data-open='true'] {
+  transform: rotate(90deg);
+}
+
+/* Monochrome type marks — folders read by bold label + caret; files/concepts get a faint glyph. */
+.cc-tree__icon {
+  flex: 0 0 auto;
+  width: 0.7rem;
+  text-align: center;
+  opacity: 0.55;
+}
+.cc-tree__icon[data-type='file']::before,
+.cc-tree__icon[data-type='kind-file']::before {
+  content: '·';
+}
+.cc-tree__icon[data-type='concept']::before {
+  content: '◇';
+  font-size: 0.62rem;
+}
+
+.cc-tree__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cc-tree__node[data-type='folder'] .cc-tree__label,
+.cc-tree__node[data-type='kind-folder'] .cc-tree__label,
+.cc-tree__node[data-type='root'] .cc-tree__label {
+  font-weight: 600;
+  color: var(--tcl-text, rgba(255, 255, 255, 0.92));
+}
+
+.cc-tree__count {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-size: 0.66rem;
+  opacity: 0.5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* The deep-link button from the Overview hex tile into the Field Guide tab. */
+.cc-guide__cta {
+  display: inline-block;
+  margin-top: 0.9rem;
+  padding: 0.35rem 0.8rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--tcl-text, inherit);
+  background: transparent;
+  border: 1px solid var(--tcl-accent, #d4af37);
+  border-radius: var(--tcl-radius-full, 9999px);
+  cursor: pointer;
+}
+.cc-guide__cta:hover {
+  background: color-mix(in srgb, var(--tcl-accent, #d4af37) 16%, transparent);
+}
+
+/* Stack on narrow viewports — tree above, brief below. */
+@media (max-width: 60rem) {
+  .cc-guide {
+    flex-direction: column;
+  }
+  .cc-guide__tree {
+    flex-basis: auto;
+    width: 100%;
+    position: static;
+    max-height: none;
   }
 }
 

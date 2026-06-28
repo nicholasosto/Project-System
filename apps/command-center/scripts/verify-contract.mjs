@@ -68,6 +68,30 @@ function verifyGraph(path, label) {
     }
   }
 
+  // Field Guide (optional): tree node ids must be globally unique within the tree, and every
+  // kind-folder must name a configured kind (it agrees with byKind — the guide's derived kinds
+  // match the rest of the contract). Skipped silently for a contract that predates the payload.
+  if (g.guide && typeof g.guide === 'object' && g.guide.root) {
+    const seen = new Set();
+    const kindFolderKinds = [];
+    const walk = (n) => {
+      if (!n || typeof n !== 'object') return;
+      if (typeof n.id !== 'string') die(`${label}: guide node missing a string id: ${JSON.stringify(n)}`);
+      if (seen.has(n.id)) die(`${label}: duplicate guide node id "${n.id}" (tree ids must be unique)`);
+      seen.add(n.id);
+      if (n.nodeType === 'kind-folder') {
+        const kindFact = Array.isArray(n.facts) ? n.facts.find((f) => f && f.label === 'kind') : null;
+        if (kindFact) kindFolderKinds.push(kindFact.value);
+      }
+      for (const c of Array.isArray(n.children) ? n.children : []) walk(c);
+    };
+    walk(g.guide.root);
+    const byKindKeys = new Set(Object.keys(g.byKind));
+    const orphan = kindFolderKinds.filter((k) => !byKindKeys.has(k));
+    if (orphan.length) die(`${label}: guide kind-folder(s) name kinds absent from byKind: ${orphan.join(', ')}`);
+    console.log(`[verify-contract] ${label}: guide ok — ${seen.size} nodes · ${kindFolderKinds.length} kind-folders`);
+  }
+
   // Resolve each edge target to a node id. `from` is a bare id; `target` is `<folder>/<id>`.
   const dangling = [];
   for (const e of g.edges) {

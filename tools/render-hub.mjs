@@ -22,6 +22,7 @@ import { pathToFileURL } from "node:url";
 import { loadContract, loadEntities } from "../lib/contract.mjs";
 import { listMarkdown, parseFrontmatter } from "../lib/md.mjs";
 import { validateEntity } from "./validate.mjs";
+import { GUIDE_ANATOMY } from "./guide-anatomy.mjs";
 
 // ── KIT ADAPTER (quarantined) ────────────────────────────────────────────────
 // The visual-grammar kit's hub view hard-codes its 7 hex-slot names after Soul-Steel's
@@ -210,7 +211,25 @@ function readWorkflowsFacet(ctx, model) {
   return { count: entries.length, entries };
 }
 
-const FACET_READERS = { commands: readCommandsFacet, hooks: readHooksFacet, workflows: readWorkflowsFacet };
+// Field Guide: the framework & naming reference. The tile is a summary — one row per _project/
+// kind folder (derived from config) plus the three core anchors — that previews what the full
+// guide tree (built by buildGuide, emitted into graph.json) holds. Domain-neutral: every kind row
+// comes from ctx, no kind/folder/status literal here.
+function readGuideFacet(ctx) {
+  const entries = ctx.kinds.map((kind) => ({
+    text: `_project/${ctx.folderByKind[kind]}/`,
+    desc: `kind "${kind}" · ${schemeLabel(ctx.filenameScheme[kind])} · status: ${[...ctx.statusEnums[kind]].join(" · ")}`,
+    status: "kind",
+  }));
+  entries.push(
+    { text: "schema/", desc: "the universal contract + the config meta-schema", status: "core" },
+    { text: "lib/", desc: "the md parser + the contract seam (loadContract)", status: "core" },
+    { text: "tools/", desc: "validator · scaffolder · guard · renderer", status: "core" },
+  );
+  return { count: ctx.kinds.length, entries };
+}
+
+const FACET_READERS = { commands: readCommandsFacet, hooks: readHooksFacet, workflows: readWorkflowsFacet, guide: readGuideFacet };
 
 // Neutral editorial defaults per facet; a project overrides any field via
 // config.render.hex.facets.<id>. dot colors echo the tiles these typically replace.
@@ -239,7 +258,140 @@ const FACET_DEFAULTS = {
     note: "Claude Code hooks wired for this project (.claude/settings.json): a blocking PreToolUse(Write|Edit) guard that rejects any _project/ write breaking the contract — enforcement at save time — and an advisory SessionStart summary (validate.mjs --summary) that surfaces the planning surface's health when a session opens. Rendering is not a hook; it's the Command Center's Vite dev plugin.",
     sources: [".claude/settings.json"],
   },
+  guide: {
+    tag: "Reference",
+    name: "Field Guide",
+    sub: "framework & naming guide",
+    dot: "#6BC9FF",
+    note: "A self-serve map of how this planning system is structured and named: the framework anatomy (schema/ · lib/ · tools/ · the two hooks · the vendored core), the three primitives, and the relation vocabulary — plus, derived live from this project's config, one folder per entity kind with its filename scheme, status enum, and conventional sections. Open the Field Guide tab for the full expandable tree.",
+    sources: ["schema/project-entity.base.schema.json", "tools/guide-anatomy.mjs", "project-system.config.json"],
+  },
 };
+
+// ── FIELD GUIDE (the Command Center's framework & naming reference) ───────────
+// A tree the UI renders as an expandable folder explorer. The framework anatomy is AUTHORED
+// (guide-anatomy.mjs) and identical for every consumer; the _project/ surface and the
+// rel/primitive concepts are DERIVED from ctx, so adding a kind to a config makes it appear here
+// automatically — the guide can't drift. Node shape:
+//   { id, label, path?, nodeType, origin, brief, facts?: [{label,value}], children? }
+
+// A human label for a kind's filename scheme.
+function schemeLabel(fs) {
+  if (fs?.scheme === "serial") return `serial · ${fs.pad ?? 4}-digit`;
+  if (fs?.scheme === "date-slug") return "date-slug · <date>-<slug>";
+  return "slug";
+}
+
+// A representative filename synthesized from the scheme (not a live entity) — the example leaf.
+function exampleName(fs) {
+  if (fs?.scheme === "serial") return `${"0".repeat(Math.max(0, (fs.pad ?? 4) - 1))}1-example-title.md`;
+  if (fs?.scheme === "date-slug") return `${todayISO()}-example-title.md`;
+  return "example-title.md";
+}
+
+// One kind-folder node, fully derived from ctx — no kind/folder/status literal appears in code.
+function kindFolderNode(ctx, kind) {
+  const folder = ctx.folderByKind[kind];
+  const fs = ctx.filenameScheme[kind];
+  const statuses = [...(ctx.statusEnums[kind] ?? [])];
+  const required = ctx.requiredSections[kind] ?? [];
+  const scaffold = ctx.scaffoldSections[kind] ?? required;
+  const facts = [
+    { label: "kind", value: kind },
+    { label: "folder", value: `_project/${folder}/` },
+    { label: "filename scheme", value: schemeLabel(fs) },
+    { label: "status enum", value: statuses },
+    { label: "initial status", value: ctx.initialStatus[kind] },
+  ];
+  if (required.length) facts.push({ label: "required sections", value: required });
+  if (scaffold.length) facts.push({ label: "scaffold sections", value: scaffold });
+  if (ctx.swimlaneKinds.includes(kind)) facts.push({ label: "carries swimlanes", value: "yes" });
+  return {
+    id: `project/${kind}`,
+    label: `${folder}/`,
+    path: `_project/${folder}`,
+    nodeType: "kind-folder",
+    origin: "derived",
+    brief:
+      `Holds entities of kind "${kind}". kind is derived from this folder, id from each filename. ` +
+      `Files are named by the ${schemeLabel(fs)} scheme; a freshly scaffolded file is born ` +
+      `"${ctx.initialStatus[kind]}" and its status ranges over the per-kind enum below.`,
+    facts,
+    children: [
+      {
+        id: `project/${kind}/example`,
+        label: exampleName(fs),
+        path: null,
+        nodeType: "kind-file",
+        origin: "derived",
+        brief:
+          `A representative filename for a ${kind} (synthesized from the ${schemeLabel(fs)} scheme) — ` +
+          `not a live entity. The filename stem becomes the entity id.`,
+      },
+    ],
+  };
+}
+
+function deriveProjectSubtree(ctx) {
+  return {
+    id: "project",
+    label: "_project/ — planning surface",
+    path: "_project",
+    nodeType: "folder",
+    origin: "derived",
+    brief: GUIDE_ANATOMY.projectBrief,
+    children: ctx.kinds.map((k) => kindFolderNode(ctx, k)),
+  };
+}
+
+function derivePrimitivesNode(ctx) {
+  return {
+    id: "concept/primitives",
+    label: "The three primitives",
+    path: null,
+    nodeType: "concept",
+    origin: "derived",
+    brief: GUIDE_ANATOMY.primitivesBrief,
+    facts: [
+      { label: "authored", value: [...ctx.authoredFields] },
+      { label: "derived", value: [...ctx.derivedFields] },
+    ],
+  };
+}
+
+// rel target rule → a readable arrow. Array → list of kinds; "marker"/"external"/"any" pass through.
+function relTargetLabel(v) {
+  return Array.isArray(v) ? `→ ${v.join(" · ")}` : `→ ${v}`;
+}
+
+function deriveRelsNode(ctx) {
+  return {
+    id: "concept/rels",
+    label: "Relation vocabulary",
+    path: null,
+    nodeType: "concept",
+    origin: "derived",
+    brief: GUIDE_ANATOMY.relsBrief,
+    facts: [...ctx.relEnum].map((rel) => ({ label: rel, value: relTargetLabel(ctx.relTargetKinds[rel] ?? "any") })),
+  };
+}
+
+// The whole guide: authored framework anatomy + the derived planning surface + derived concepts.
+export function buildGuide(ctx) {
+  return {
+    generatedBy: "tools/render-hub.mjs:buildGuide",
+    version: 1,
+    root: {
+      id: "root",
+      label: cap(ctx.project),
+      path: ".",
+      nodeType: "root",
+      origin: "authored",
+      brief: GUIDE_ANATOMY.rootBrief,
+      children: [GUIDE_ANATOMY.coreNode, deriveProjectSubtree(ctx), derivePrimitivesNode(ctx), deriveRelsNode(ctx)],
+    },
+  };
+}
 
 export function buildModel(ctx) {
   const entities = loadEntities(ctx);
@@ -336,7 +488,7 @@ export function buildModel(ctx) {
     phases[e.id] = found.phases;
   }
 
-  return { entities: entities.length, migrated, counts, nodes, byKind, edges, edgesByRel, workflows, runs, phases, swimlaneKinds: ctx.swimlaneKinds ?? [] };
+  return { entities: entities.length, migrated, counts, nodes, byKind, edges, edgesByRel, workflows, runs, phases, swimlaneKinds: ctx.swimlaneKinds ?? [], guide: buildGuide(ctx) };
 }
 
 function hubContract(ctx, model) {
