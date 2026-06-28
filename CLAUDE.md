@@ -53,11 +53,16 @@ A consuming project supplies a config; the framework supplies everything else.
 
 1. **Vendor** this framework verbatim into a reserved `.project-system/` at the project root
    (`schema/`, `lib/`, `tools/`). Never edit or rename a file inside it — updating = re-copy the folder.
-2. **Author** `project-system.config.json` at the project root (copy `examples/soul-steel.config.json`
-   and edit the kinds/enums/sections/registry/milestones). This is the *only* project-specific file you write.
-3. **Copy** `templates/consumer/.claude/` into the project (`settings.json` + `commands/new.md`). Don't edit
-   it — the wiring is domain-neutral and identical for every consumer: a blocking `PreToolUse` guard plus an
-   advisory `SessionStart` health summary, both pointing at `.project-system/tools/…` via `$CLAUDE_PROJECT_DIR`.
+2. **Author** `project-system.config.json` at the project root — the *only* project-specific file you write.
+   Prefer the generator over hand-copying: `node .project-system/tools/init-config.mjs --preset standard
+   --project <slug>` writes a valid starter config (the canonical six kinds), or pipe a `--spec` to add/override
+   kinds. It proves the config loads through `lib/contract.mjs` before writing, so it's born valid. The bundled
+   `setup-project-system` skill runs the naming-convention interview and drives this tool. (You can still copy
+   `examples/soul-steel.config.json` and edit by hand if you prefer.)
+3. **Copy** `templates/consumer/.claude/` into the project (`settings.json` + `commands/new.md` +
+   `skills/setup-project-system/`). Don't edit it — the wiring is domain-neutral and identical for every
+   consumer: a blocking `PreToolUse` guard plus an advisory `SessionStart` health summary, both pointing at
+   `.project-system/tools/…` via `$CLAUDE_PROJECT_DIR`.
 4. **Register** the project in `tools/check-consumer-drift.mjs` (add `schema`/`root`/`config`, plus a
    `claudeDir` to opt into the hook-parity axis) so the mirror — schema, validator, **and** hooks — stays honest.
 5. **Verify:** `node .project-system/tools/check-consumer-drift.mjs` (or `npm test` from the framework).

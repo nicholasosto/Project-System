@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash(node tools/init-config.mjs:*)",
       "Bash(node tools/new-entity.mjs:*)",
       "Bash(node tools/validate.mjs:*)",
       "Bash(node tools/render-hub.mjs:*)",

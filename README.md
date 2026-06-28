@@ -40,10 +40,13 @@ node tools/render-hub.mjs     # regenerate the Command Center's JSON contract (g
 # 1. vendor the framework verbatim into a reserved .project-system/ (never edit/rename inside it)
 cp -R schema lib tools /path/to/my-project/.project-system/
 
-# 2. author the ONLY project-specific file: the config
-cp examples/soul-steel.config.json /path/to/my-project/project-system.config.json   # then edit kinds/enums/sections
+# 2. generate the ONLY project-specific file: the config (born valid — proven to load before writing)
+cd /path/to/my-project
+node .project-system/tools/init-config.mjs --preset standard --project my-project
+#    …or pipe a --spec to add/override kinds; or let the bundled `setup-project-system` skill
+#    run the naming-convention interview and drive the tool. (Hand-copying an example still works too.)
 
-# 3. copy the hook + command wiring (identical for every consumer — don't edit it)
+# 3. copy the hook + command + skill wiring (identical for every consumer — don't edit it)
 cp -R templates/consumer/.claude /path/to/my-project/.claude
 
 # 4. register the project (with claudeDir) in tools/check-consumer-drift.mjs, then verify
@@ -53,7 +56,8 @@ node /path/to/my-project/.project-system/tools/check-consumer-drift.mjs
 The `.claude/` template wires two hooks: a **blocking** `PreToolUse(Write|Edit)` guard that rejects any
 `_project/` write breaking the contract, and an **advisory** `SessionStart` summary
 (`validate.mjs --summary`) that surfaces the planning surface's health at session open. The single generic
-`/new <kind>` command is canonical (no per-kind commands to maintain). The drift check's hook-parity axis
+`/new <kind>` command is canonical (no per-kind commands to maintain), and the `setup-project-system` skill
+guides choosing a project's naming conventions and generating its config. The drift check's hook-parity axis
 fails if a consumer renames a vendored tool or forks the wiring — so "copy the template" actually sticks.
 
 ## Packaging

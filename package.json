@@ -5,19 +5,21 @@
   "type": "module",
   "description": "First-principles, project-agnostic planning-artifact framework: one ProjectEntity contract (Identity · State · Relation), with a config-driven validator / scaffolder / guard / hub renderer. Zero runtime dependencies.",
   "bin": {
+    "project-init": "tools/init-config.mjs",
     "project-validate": "tools/validate.mjs",
     "project-new": "tools/new-entity.mjs",
     "project-guard": "tools/guard.mjs",
     "project-render": "tools/render-hub.mjs"
   },
   "scripts": {
+    "init": "node tools/init-config.mjs",
     "validate": "node tools/validate.mjs",
     "new": "node tools/new-entity.mjs",
     "render": "node tools/render-hub.mjs",
     "render:all": "node apps/command-center/scripts/render-all.mjs",
     "check-drift": "node tools/check-consumer-drift.mjs",
     "check-zero-deps": "node tools/check-zero-deps.mjs",
-    "test": "node tools/validate.mjs --self-test && node tools/new-entity.mjs --self-test && node tools/guard.mjs --self-test && node tools/check-consumer-drift.mjs --self-test && node tools/check-zero-deps.mjs --self-test && node tools/check-zero-deps.mjs && node tools/check-consumer-drift.mjs --demos-only && node tools/render-hub.mjs --check && node apps/command-center/scripts/verify-contract.mjs"
+    "test": "node tools/init-config.mjs --self-test && node tools/validate.mjs --self-test && node tools/new-entity.mjs --self-test && node tools/guard.mjs --self-test && node tools/check-consumer-drift.mjs --self-test && node tools/check-zero-deps.mjs --self-test && node tools/check-zero-deps.mjs && node tools/check-consumer-drift.mjs --demos-only && node tools/render-hub.mjs --check && node apps/command-center/scripts/verify-contract.mjs"
   },
   "engines": { "node": ">=18" },
   "files": ["lib", "tools", "schema", "examples"],
