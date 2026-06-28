@@ -37,15 +37,17 @@ A consuming project supplies a config; the framework supplies everything else.
 | `schema/project-config.schema.json` | Meta-schema: validates a project's `project-system.config.json`. |
 | `lib/md.mjs` | Zero-dep frontmatter/markdown parser (single source for all tools). |
 | `lib/contract.mjs` | The seam: resolves `{root, config}`, composes base+config into `ctx`, loads the `_project/` tree. |
-| `tools/validate.mjs` | The validator + `validateEntity` (the single check, reused by the other three). |
-| `tools/new-entity.mjs` | The scaffolder behind the single `/new <kind>` command (kind ∈ config.kinds). |
+| `tools/validate.mjs` | The validator + `validateEntity` (the single check, reused by every other engine). |
+| `tools/new-entity.mjs` | The scaffolder behind the single `/new <kind>` command (kind ∈ config.kinds); `--tag key=value` sets registered tags. |
+| `tools/init-config.mjs` | Generates a born-valid `project-system.config.json` from a spec/`--preset` (proven to load via `lib/contract.mjs` before writing); the engine behind the consumer `setup-project-system` skill. |
 | `tools/guard.mjs` | PreToolUse guard — blocks any `_project/` write that would break the contract. |
-| `tools/render-hub.mjs` | Emits the Command Center's JSON contract (`graph.json` + `hub.json`). **Contains the *only* line that names the kit's legacy hex-slot vocabulary** (`KIT_HEX_SLOTS`, quarantined). |
+| `tools/render-hub.mjs` | Emits the Command Center's JSON contract (`graph.json` + `hub.json`) — incl. the `guide` tree (Field Guide) and per-entity `tags`. **Contains the *only* line that names the kit's legacy hex-slot vocabulary** (`KIT_HEX_SLOTS`, quarantined). |
+| `tools/guide-anatomy.mjs` | Authored gloss data for the Field Guide's framework-anatomy nodes (`schema/`·`lib/`·`tools/`·hooks); the derived `_project/` + concept nodes come from the config. |
 | `tools/check-consumer-drift.mjs` | The packaging discipline: asserts each consumer mirrors the canonical contract. |
 | `project-system.config.json` | The framework's **own** config — it dogfoods on its own `_project/`. |
 | `examples/soul-steel.config.json` | A real consumer config; proves project-agnosticism by reproducing Soul-Steel's baseline (the byte-faithful mirror the drift check runs against the live Soul-Steel project). |
 | `examples/soul-steel-demo/` | A **demo/fixture consumer** (config declares `"demo": true`) — NOT dogfood. A *fictional* Soul-Steel that adds `character` + `workflow` domain kinds the core has never seen; the test bed for consumer-shaped `/new`, validate, and drift. Its `_project/` is fixture data, not real planning. |
-| `_project/` | The framework's own planning artifacts — **the dogfood, the only real planning surface in this repo** (decisions, report, roadmap, pipeline, session, workflow). Contrast `examples/*/_project/`, which is fixture data. |
+| `_project/` | The framework's own planning artifacts — **the dogfood, the only real planning surface in this repo** (decisions, report, roadmap, pipeline, session, workflow, feature). Contrast `examples/*/_project/`, which is fixture data. |
 | `previews/dashboards/` | The emitted JSON contract (`project-system-graph.json` + `project-system-hub.json`) the live Command Center renders. |
 | `docs/spec/schema.md` | The canonical spec + first-principles provenance. |
 

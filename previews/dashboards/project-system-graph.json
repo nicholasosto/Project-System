@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 24,
-  "migrated": 24,
+  "entities": 29,
+  "migrated": 29,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -73,6 +73,46 @@
       "status": "accepted",
       "updated": "2026-06-27",
       "file": "_project/decisions/0007-derive-kind-presentation-from-the-contract.md"
+    },
+    {
+      "id": "0008-field-guide-derived-from-config",
+      "kind": "decision",
+      "title": "Derive the Field Guide from the config, not authored prose",
+      "status": "accepted",
+      "updated": "2026-06-28",
+      "file": "_project/decisions/0008-field-guide-derived-from-config.md"
+    },
+    {
+      "id": "0009-born-valid-config-generator",
+      "kind": "decision",
+      "title": "Generate consumer configs with a born-valid init tool and setup skill",
+      "status": "accepted",
+      "updated": "2026-06-28",
+      "file": "_project/decisions/0009-born-valid-config-generator.md"
+    },
+    {
+      "id": "0010-feature-kind-roadmap",
+      "kind": "decision",
+      "title": "Model the roadmap as a feature kind tiered by tag",
+      "status": "accepted",
+      "updated": "2026-06-28",
+      "file": "_project/decisions/0010-feature-kind-roadmap.md"
+    },
+    {
+      "id": "0011-register-a-brain",
+      "kind": "decision",
+      "title": "Register a brain via a read-only config pointer",
+      "status": "proposed",
+      "updated": "2026-06-28",
+      "file": "_project/decisions/0011-register-a-brain.md"
+    },
+    {
+      "id": "0012-managed-project-vault",
+      "kind": "decision",
+      "title": "Manage a per-project context vault as a scoped KOS instance",
+      "status": "proposed",
+      "updated": "2026-06-28",
+      "file": "_project/decisions/0012-managed-project-vault.md"
     },
     {
       "id": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
@@ -253,9 +293,10 @@
   ],
   "byKind": {
     "decision": {
-      "total": 7,
+      "total": 12,
       "byStatus": {
-        "accepted": 7
+        "accepted": 10,
+        "proposed": 2
       },
       "ids": [
         "0001-home-the-project-system-framework-in-its-own-space",
@@ -264,7 +305,12 @@
         "0004-pipeline-entities-carry-a-structured-workflow-block",
         "0005-window-run-history-in-the-contract-sidecar-at-scale",
         "0006-workflow-as-a-first-class-kind-distinct-from-pipeline",
-        "0007-derive-kind-presentation-from-the-contract"
+        "0007-derive-kind-presentation-from-the-contract",
+        "0008-field-guide-derived-from-config",
+        "0009-born-valid-config-generator",
+        "0010-feature-kind-roadmap",
+        "0011-register-a-brain",
+        "0012-managed-project-vault"
       ],
       "tone": "info",
       "statusOrder": [
