@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Badge, Brief, Card, EmptyState, Hub, Meter, Table, Tabs, Timeline } from '@trembus/ui';
-import type { BriefContract, SectionKind, TimelineContract, TimelineTone } from '@trembus/ui';
+import { Badge, Brief, Card, EmptyState, FolderTree, Hub, Meter, Table, Tabs, Timeline } from '@trembus/ui';
+import type { BriefContract, FolderNode, SectionKind, TimelineContract, TimelineTone } from '@trembus/ui';
 import {
   activeConsumer,
   consumerOptions,
@@ -25,7 +25,6 @@ import {
   swimlaneKinds,
 } from './contract';
 import type { EntityRecord, GuideNode, Phase } from './contract';
-import { ConventionTree } from './ConventionTree';
 import { WorkflowConsole } from './WorkflowConsole';
 import { WORKFLOWS } from './workflows';
 
@@ -352,6 +351,18 @@ const GUIDE_TYPE_BLURB: Record<string, string> = {
 };
 const factText = (v: string | string[]): string => (Array.isArray(v) ? v.join(' · ') : v);
 
+// Adapt the guide tree to @trembus/ui's <FolderTree> shape (id · label · children). FolderTree
+// infers folder-vs-file from the presence of children and supplies icons/keyboard/filter; the
+// rest of a GuideNode (brief/facts) is looked up by id via `guideIndex` when a node is selected.
+function toFolderNodes(nodes: GuideNode[]): FolderNode[] {
+  return nodes.map((n) => ({
+    id: n.id,
+    label: n.label,
+    children: n.children?.length ? toFolderNodes(n.children) : undefined,
+  }));
+}
+const guideForest: FolderNode[] = toFolderNodes(guide);
+
 function guideBrief(node: GuideNode): BriefContract {
   const meta: NonNullable<BriefContract['meta']> = [
     { label: 'type', value: GUIDE_TYPE_LABEL[node.nodeType] ?? node.nodeType },
@@ -534,17 +545,9 @@ export function App() {
   const [wfId, setWfId] = useState<string>(WORKFLOWS[0]?.id ?? '');
   const activeWorkflow = WORKFLOWS.find((w) => w.id === wfId) ?? WORKFLOWS[0];
 
-  // Field Guide: selected node + expansion set (top-level forest expanded by default so the
-  // structure shows on open). Selection drives the right-pane brief.
+  // Field Guide: selected node drives the right-pane brief. FolderTree owns its own expansion
+  // (uncontrolled, the top-level forest open by default); we just track the selection.
   const [guideSel, setGuideSel] = useState<string | undefined>(undefined);
-  const [guideOpen, setGuideOpen] = useState<Set<string>>(() => new Set(guide.map((n) => n.id)));
-  const toggleGuide = (id: string) =>
-    setGuideOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
   const selectedGuideNode = guideSel ? guideIndex.get(guideSel) : undefined;
 
   // The three bespoke panels (compose multiple kinds + non-kind data — not auto-generatable).
@@ -622,12 +625,13 @@ export function App() {
     <div className="cc-guide">
       <aside className="cc-guide__tree" aria-label="Field guide navigation">
         {guideRoot?.brief ? <p className="cc-guide__intro">{guideRoot.brief}</p> : null}
-        <ConventionTree
-          nodes={guide}
+        <FolderTree
+          data={guideForest}
+          label="Framework & naming conventions"
+          defaultExpandedIds={guide.map((n) => n.id)}
           selectedId={guideSel}
-          onSelect={setGuideSel}
-          expanded={guideOpen}
-          onToggle={toggleGuide}
+          onSelect={(id) => setGuideSel(id)}
+          filter
         />
       </aside>
       <section className="cc-guide__detail">

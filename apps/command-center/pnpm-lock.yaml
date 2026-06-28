@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@trembus/ui':
-        specifier: ^0.1.0
-        version: 0.1.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^0.2.0
+        version: 0.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@trembus/viz':
-        specifier: ^0.1.0
-        version: 0.1.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^0.3.0
+        version: 0.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react:
         specifier: ^19.0.0
         version: 19.2.7
@@ -453,15 +453,15 @@ packages:
       jest-axe:
         optional: true
 
-  '@trembus/ui@0.1.0':
-    resolution: {integrity: sha512-nLY4+EGTM3nsN25HjulJLuoohbLTLKsrik13jD9rXyk0Q/Xd1PVcz1RmH2hiWZLboFJAofHY3GAAs52twIVxow==}
+  '@trembus/ui@0.2.0':
+    resolution: {integrity: sha512-wOu09Ih1YolepTsMVyDI2Y9UUlC1P5OpIM2yuBLNtvRTPQbJSHcXdArRye3s3qdrNGVcnIgyFCeMYvZvGiUycw==}
     engines: {node: '>=20'}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@trembus/viz@0.1.0':
-    resolution: {integrity: sha512-WAlsmK+RDkAFVdPP99S3+CcaDUjaH9mNU2uQxuKDt7+gYuUJ44zPyXUV5E2loXmPzH2m8S/u04mu735zYNwJYQ==}
+  '@trembus/viz@0.3.0':
+    resolution: {integrity: sha512-vmqKobjNzg1WQvsssBoE9ZAbBLrz4++fRv7Q7RymXhAcVD/DceeE3FYBUnZqKDeNTi0+HoUme1kwMGi5TIa5mg==}
     engines: {node: '>=20'}
     peerDependencies:
       react: ^19.0.0
@@ -986,7 +986,7 @@ snapshots:
 
   '@trembus/tokens@0.1.0': {}
 
-  '@trembus/ui@0.1.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@trembus/ui@0.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@trembus/tokens': 0.1.0
       react: 19.2.7
@@ -994,7 +994,7 @@ snapshots:
     transitivePeerDependencies:
       - jest-axe
 
-  '@trembus/viz@0.1.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@trembus/viz@0.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@dagrejs/dagre': 3.0.0
       '@trembus/tokens': 0.1.0
