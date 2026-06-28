@@ -27,6 +27,8 @@ export interface RawNode {
   status: string | null;
   updated: string | null;
   file: string;
+  /** The entity's tag map (omitted when none) — lets a view filter/group by a facet, e.g. tier. */
+  tags?: Record<string, string>;
 }
 export interface RawEdge {
   from: string;
@@ -164,6 +166,8 @@ export interface EntityRecord {
   updated: string;
   file: string;
   tone: LineageTone;
+  /** The entity's tag map (empty when none) — e.g. `tags.tier` = required | optional. */
+  tags: Record<string, string>;
 }
 
 function toRecord(n: RawNode): EntityRecord {
@@ -175,6 +179,7 @@ function toRecord(n: RawNode): EntityRecord {
     updated: n.updated ?? '—',
     file: n.file ?? '',
     tone: toneByKind[n.kind] ?? 'neutral',
+    tags: n.tags ?? {},
   };
 }
 

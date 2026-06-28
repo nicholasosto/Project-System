@@ -97,13 +97,17 @@ function stemFor(ctx, kind, slug, date) {
   }
 }
 
-function buildContent(ctx, { kind, title, status, date, scope, links }) {
+function buildContent(ctx, { kind, title, status, date, scope, tags, links }) {
   const fm = [`title: ${JSON.stringify(title)}`, `status: ${status}`, `updated: ${date}`];
   if (links?.length) {
     fm.push("links:");
     for (const l of links) fm.push(`  - { rel: ${l.rel}, target: ${l.target} }`);
   }
-  if (scope) fm.push(`tags: { scope: ${scope} }`);
+  // Tags: --scope (shorthand) first, then any --tag key=value pairs, as one inline map.
+  const tagPairs = [];
+  if (scope) tagPairs.push(`scope: ${scope}`);
+  for (const t of tags ?? []) tagPairs.push(`${t.key}: ${t.val}`);
+  if (tagPairs.length) fm.push(`tags: { ${tagPairs.join(", ")} }`);
 
   // The prose status header stays as narrative; its leading word matches `status` so the
   // prose<->frontmatter rule is satisfied by construction. Uniform across kinds (cosmetic).
@@ -131,7 +135,7 @@ function entityFor(ctx, kind, stem, content) {
 }
 
 function parseArgs(rest) {
-  const opts = { links: [] };
+  const opts = { links: [], tags: [] };
   const positional = [];
   for (let i = 0; i < rest.length; i += 1) {
     const a = rest[i];
@@ -141,7 +145,11 @@ function parseArgs(rest) {
     else if (a === "--slug") opts.slug = rest[++i];
     else if (a === "--date") opts.date = rest[++i];
     else if (a === "--scope") opts.scope = rest[++i];
-    else if (a === "--link") {
+    else if (a === "--tag") {
+      const raw = rest[++i] ?? "";
+      const idx = raw.indexOf("=");
+      if (idx > 0) opts.tags.push({ key: raw.slice(0, idx), val: raw.slice(idx + 1) });
+    } else if (a === "--link") {
       const raw = rest[++i] ?? "";
       const idx = raw.indexOf(":");
       if (idx > 0) opts.links.push({ rel: raw.slice(0, idx), target: raw.slice(idx + 1) });
@@ -175,7 +183,7 @@ function scaffold(opts, ctx) {
   const relPath = `_project/${ctx.folderByKind[kind]}/${stem}.md`;
   if (existsSync(path)) throw new Error(`refusing to overwrite existing file: ${relPath}`);
 
-  const content = buildContent(ctx, { kind, title: opts.title, status, date, scope: opts.scope, links: opts.links });
+  const content = buildContent(ctx, { kind, title: opts.title, status, date, scope: opts.scope, tags: opts.tags, links: opts.links });
   const issues = validateEntity(entityFor(ctx, kind, stem, content), ctx);
   const errors = issues.filter((i) => i.severity === "error");
   return { path, relPath, content, issues, errors, stem };
@@ -218,6 +226,7 @@ function syntheticCtx() {
     sectionHints: {},
     relEnum: new Set(loadBaseSchema().$defs.rel.enum),
     relTargetKinds: { "superseded-by": ["decision"], milestone: "marker", references: "any" },
+    tagRegistry: { tier: { type: "enum", values: ["required", "optional"] } },
     knownMilestones: new Set(["M5"]),
     milestonePattern: /^M\d+$/,
     proseSeverity: "error",
@@ -260,6 +269,17 @@ function selfTest() {
     () => scaffold({ kind: "decision", title: "X", links: [{ rel: "superseded-by", target: "decisions/nope" }] }, ctx).errors.some((i) => /dangling/.test(i.message)),
   ]);
   cases.push(["serial stem is zero-padded", () => /^0*\d+-/.test(stemFor(ctx, "decision", "x", "2026-01-01"))]);
+  cases.push([
+    "--tag with a valid enum value → 0 errors + emitted in frontmatter",
+    () => {
+      const r = scaffold({ kind: "decision", title: "X", tags: [{ key: "tier", val: "required" }], links: [] }, ctx);
+      return r.errors.length === 0 && /tags:\s*{[^}]*tier:\s*required/.test(r.content);
+    },
+  ]);
+  cases.push([
+    "--tag with an off-enum value is caught as an error",
+    () => scaffold({ kind: "decision", title: "X", tags: [{ key: "tier", val: "bogus" }], links: [] }, ctx).errors.some((i) => /tier/.test(i.message)),
+  ]);
 
   for (const [name, fn] of cases) {
     let ok = false;

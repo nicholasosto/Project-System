@@ -113,7 +113,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "panel": { "type": "string", "enum": ["overview", "progress", "workflows", "guide"], "description": "A built-in bespoke panel the app renders itself." },
+              "panel": { "type": "string", "enum": ["overview", "roadmap", "workflows", "guide"], "description": "A built-in bespoke panel the app renders itself." },
               "label": { "type": "string", "description": "Tab label for a generic entity-table tab." },
               "kinds": { "type": "array", "items": { "type": "string" }, "description": "Kinds listed in this generic table tab." }
             }

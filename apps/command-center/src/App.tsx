@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, Brief, Card, EmptyState, Hub, Meter, Stat, Table, Tabs, Timeline } from '@trembus/ui';
+import { Badge, Brief, Card, EmptyState, Hub, Meter, Table, Tabs, Timeline } from '@trembus/ui';
 import type { BriefContract, SectionKind, TimelineContract, TimelineTone } from '@trembus/ui';
 import {
   activeConsumer,
@@ -19,7 +19,6 @@ import {
   ribbon,
   ribbonTitle,
   ribbonTotal,
-  scope,
   setConsumer,
   statusOrderForKind,
   strategy,
@@ -95,22 +94,22 @@ function phaseTimeline(title: string, phases: Phase[]): TimelineContract {
   };
 }
 
-type NavEntry = { value: string; label: string; panel?: 'overview' | 'progress' | 'workflows' | 'guide'; kinds?: string[] };
+type NavEntry = { value: string; label: string; panel?: 'overview' | 'roadmap' | 'workflows' | 'guide'; kinds?: string[] };
 
-// The two editorial seams: which kinds the bespoke panels already surface, so they don't ALSO
-// get an auto-tab. Adding a new kind never edits these — it just gets its own tab (or a config
+// The editorial seams: which kinds the bespoke panels already surface, so they don't ALSO get an
+// auto-tab. Adding a new kind never edits these — it just gets its own tab (or a config
 // `render.nav` line places it elsewhere). The Overview hub composes everything, so it consumes none.
-const PROGRESS_KINDS = ['roadmap', 'report', 'session'];
+const ROADMAP_KINDS = ['feature', 'roadmap', 'report', 'session']; // the Roadmap panel surfaces these
 const WORKFLOW_TABLE_KINDS = ['pipeline']; // the "Build plans" table inside the Workflows panel
 
-// Default nav when config sets no `render.nav`: Overview + Progress, an auto-tab per kind not
+// Default nav when config sets no `render.nav`: Overview + Roadmap, an auto-tab per kind not
 // shown by a special panel (declared order), then Workflows iff any swimlane exists. The old
 // Graph/Lineage view is retired (buildGraphContract + @trembus/viz stay for an easy revival).
 function deriveNav(): NavEntry[] {
-  const consumed = new Set([...PROGRESS_KINDS, ...WORKFLOW_TABLE_KINDS, ...swimlaneKinds]);
+  const consumed = new Set([...ROADMAP_KINDS, ...WORKFLOW_TABLE_KINDS, ...swimlaneKinds]);
   const nav: NavEntry[] = [
     { value: 'overview', label: 'Overview', panel: 'overview' },
-    { value: 'progress', label: 'Progress', panel: 'progress' },
+    { value: 'roadmap', label: 'Roadmap', panel: 'roadmap' },
   ];
   for (const k of kinds) {
     if (!consumed.has(k)) nav.push({ value: k, label: `${prettify(k)}s`, kinds: [k] });
@@ -390,10 +389,52 @@ function guideBrief(node: GuideNode): BriefContract {
   };
 }
 
-// The development board (in the slot the Graph view used to hold). It visualizes progress from
-// data the contract already emits: the milestone `ribbon` (a Brief of phases + a stacked Meter),
-// the coverage `scope` (Stat tiles), and the planning artifacts (roadmaps / reports / sessions).
-function ProgressBoard() {
+// The feature catalog — the heart of the Roadmap. Reads `feature` entities (config-driven, so a
+// project without that kind simply shows nothing) and groups them by availability: Available now,
+// then Planned, each ordered required-before-optional. `tags.tier` carries required/optional;
+// `status` carries available/planned. Both come straight from the contract's nodes[] — derived,
+// never hand-authored here.
+const TIER_RANK: Record<string, number> = { required: 0, optional: 1 };
+
+function FeatureCatalog() {
+  const feats = entitiesOfKinds('feature');
+  if (!feats.length) return null;
+  const byTier = (a: EntityRecord, b: EntityRecord) =>
+    (TIER_RANK[a.tags.tier] ?? 2) - (TIER_RANK[b.tags.tier] ?? 2) || a.title.localeCompare(b.title);
+  const groups = [
+    { key: 'available', title: 'Available now', tone: '#43AA8B', rows: feats.filter((f) => f.status === 'available').sort(byTier) },
+    { key: 'planned', title: 'Planned', tone: '#D4AF37', rows: feats.filter((f) => f.status === 'planned').sort(byTier) },
+    { key: 'other', title: 'Other', tone: '#6B7280', rows: feats.filter((f) => f.status !== 'available' && f.status !== 'planned').sort(byTier) },
+  ].filter((g) => g.rows.length);
+
+  return (
+    <section className="cc-section">
+      <h3 className="cc-section-title">Features</h3>
+      <div className="cc-featcatalog">
+        {groups.map((g) => (
+          <div key={g.key} className="cc-feat-group">
+            <header className="cc-feat-group__head">
+              <span className="cc-feat-group__title" style={{ color: g.tone }}>{g.title}</span>
+              <span className="cc-feat-group__count">{g.rows.length}</span>
+            </header>
+            {g.rows.map((f) => (
+              <div key={f.id} className="cc-feat-row">
+                <span className="cc-feat-dot" style={{ background: g.tone }} aria-hidden />
+                <span className="cc-feat-name">{f.title}</span>
+                <span className="cc-feat-tier" data-tier={f.tags.tier ?? 'none'}>{f.tags.tier ?? '—'}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// The Roadmap board (repurposed from the old Progress view — the big Stat tiles are gone). Leads
+// with the feature catalog, then the milestone `ribbon` (a stacked Meter + a Brief⇄Timeline
+// switcher), then the planning-artifacts table (roadmaps / reports / sessions).
+function RoadmapBoard() {
   // The detail card swaps between two takes on the same plan: the Brief (milestone narrative)
   // and the Timeline (roadmap phases). The Meter above stays put as the at-a-glance ratio.
   const [view, setView] = useState<'brief' | 'timeline'>('brief');
@@ -434,12 +475,7 @@ function ProgressBoard() {
 
   return (
     <div className="cc-progress">
-      <section className="cc-progress__stats">
-        <Stat label="Milestones" value={`${shipped}/${total}`} target={ribbonTotal} tone="success" />
-        {scope.slice(0, 4).map((s) => (
-          <Stat key={s.label} label={s.label} value={s.num} target={s.value} tone="neutral" />
-        ))}
-      </section>
+      <FeatureCatalog />
 
       <section className="cc-section">
         <h3 className="cc-section-title">Milestone progress</h3>
@@ -617,7 +653,7 @@ export function App() {
   // Dispatch a nav entry to its panel body: a bespoke panel, or a generic per-kind table.
   const renderPanel = (area: NavEntry) => {
     if (area.panel === 'overview') return overviewBody;
-    if (area.panel === 'progress') return <ProgressBoard />;
+    if (area.panel === 'roadmap') return <RoadmapBoard />;
     if (area.panel === 'workflows') return workflowsBody;
     if (area.panel === 'guide') return guideBody;
     return <AreaTable kinds={area.kinds ?? []} empty={`No ${area.label.toLowerCase()} yet.`} />;

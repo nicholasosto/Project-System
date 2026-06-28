@@ -435,14 +435,20 @@ export function buildModel(ctx) {
 
   // Flat per-entity records — the navigable surface (title/status/updated/file) that the
   // aggregate `byKind` buckets can't express. Authored fields only; kind & id stay derived.
-  const nodes = entities.map((e) => ({
-    id: e.id,
-    kind: e.kind,
-    title: e.fm?.title ?? null,
-    status: e.fm?.status ?? null,
-    updated: e.fm?.updated ?? null,
-    file: e.file,
-  }));
+  // `tags` is the entity's tag map (omitted when none) — lets a view filter/group by a facet
+  // (e.g. a roadmap by tags.tier) without re-reading _project/.
+  const nodes = entities.map((e) => {
+    const node = {
+      id: e.id,
+      kind: e.kind,
+      title: e.fm?.title ?? null,
+      status: e.fm?.status ?? null,
+      updated: e.fm?.updated ?? null,
+      file: e.file,
+    };
+    if (e.fm?.tags && typeof e.fm.tags === "object" && Object.keys(e.fm.tags).length) node.tags = e.fm.tags;
+    return node;
+  });
 
   // Optional structured workflows: any entity may declare a swimlane in a `## <section>` body
   // (a fenced json block). Keyed by entity id; the Command Center renders each as a Swimlane.

@@ -440,10 +440,68 @@ body,
   gap: 1.75rem;
 }
 
-.cc-progress__stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 0.85rem;
+/* ── Feature catalog (the Roadmap lead): availability groups of bordered feature rows, each with a
+   status dot + a required/optional tier pill. Dense rows, not cards (CDS density). ── */
+.cc-featcatalog {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.cc-feat-group {
+  background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--tcl-border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  overflow: hidden;
+}
+.cc-feat-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+}
+.cc-feat-group__title {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.cc-feat-group__count {
+  font-size: 0.72rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.55));
+}
+.cc-feat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--tcl-border, rgba(255, 255, 255, 0.06));
+}
+.cc-feat-dot {
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+}
+.cc-feat-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.88rem;
+  color: var(--tcl-text, rgba(255, 255, 255, 0.92));
+}
+.cc-feat-tier {
+  flex: 0 0 auto;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--tcl-radius-full, 9999px);
+}
+.cc-feat-tier[data-tier='required'] {
+  color: var(--tcl-text, #fff);
+  background: color-mix(in srgb, #6bc9ff 22%, transparent);
+}
+.cc-feat-tier[data-tier='optional'] {
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.62));
+  border: 1px solid var(--tcl-border, rgba(255, 255, 255, 0.16));
 }
 
 /* Switcher card — Brief ⇄ Timeline over the same plan, behind a tab strip. */

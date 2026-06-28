@@ -57,6 +57,15 @@
       "requiredSections": ["Workflow"],
       "scaffoldSections": ["Purpose", "Workflow"],
       "render": { "dot": "#B884FF", "tag": "Workflows", "name": "Swimlanes", "sub": "lanes × steps · replayable process" }
+    },
+    "feature": {
+      "folder": "features",
+      "status": ["planned", "available", "deprecated"],
+      "initialStatus": "planned",
+      "filename": "slug",
+      "requiredSections": ["Summary"],
+      "scaffoldSections": ["Summary", "Why it matters", "Notes"],
+      "render": { "dot": "#43AA8B", "tag": "Features", "name": "Capability catalog", "sub": "planned → available · required/optional" }
     }
   },
   "sectionHints": {
@@ -66,7 +75,8 @@
     "priority": { "type": "enum", "values": ["high", "medium", "low"] },
     "agent": { "type": "enum", "values": ["neutral", "codex", "claude", "human"] },
     "scope": { "type": "string", "lintAgainst": ["framework", "tooling", "docs", "packaging"], "unknownAllowed": true },
-    "horizon": { "type": "enum", "values": ["milestone", "phase", "cross-domain"] }
+    "horizon": { "type": "enum", "values": ["milestone", "phase", "cross-domain"] },
+    "tier": { "type": "enum", "values": ["required", "optional"] }
   },
   "relTargetKinds": {
     "supersedes": ["decision", "roadmap"],

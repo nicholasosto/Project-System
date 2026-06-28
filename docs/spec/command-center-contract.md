@@ -49,7 +49,9 @@ Field Guide tree; see below).
 
 `title`/`status`/`updated` are `null` when the entity omits them. `kind` and `id` stay
 loader-derived (from folder + filename); `file` is the repo-relative source path, so the UI can
-link straight back to the markdown.
+link straight back to the markdown. A node also carries `tags` (the entity's tag map) **when it has
+any** — omitted otherwise — so a view can filter/group by a facet without re-reading `_project/`
+(e.g. the Roadmap groups `feature` nodes by `tags.tier` = required | optional).
 
 ### `byKind` — the per-kind aggregate
 
@@ -247,8 +249,9 @@ The four P0 gaps were closed by the contract enrichment (2026-06-25):
 4. ✅ **`--check` covers `graph.json`.** `render-hub.mjs --check` now diffs both files, and
    `--check` + `verify-contract.mjs` are wired into `npm test`.
 
-Remaining/optional: per-entity `links` and body sections are still not emitted (the app derives
-links from the top-level `edges[]`); add them to `nodes[]` if a richer detail view needs them.
+Per-entity `tags` are now emitted on `nodes[]` (added 2026-06-28 for the Roadmap's required/optional
+tiering). Remaining/optional: per-entity `links` and body sections are still not emitted (the app
+derives links from the top-level `edges[]`); add them to `nodes[]` if a richer detail view needs them.
 
 Re-verify any contract change with `node tools/render-hub.mjs --check && node
 apps/command-center/scripts/verify-contract.mjs` (both run in `npm test`).

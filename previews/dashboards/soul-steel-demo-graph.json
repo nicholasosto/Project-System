@@ -32,7 +32,10 @@
       "title": "Character creation",
       "status": "draft",
       "updated": "2026-06-27",
-      "file": "_project/workflows/character-creation.md"
+      "file": "_project/workflows/character-creation.md",
+      "tags": {
+        "scope": "ip-wide"
+      }
     },
     {
       "id": "character-onboarding",

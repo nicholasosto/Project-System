@@ -7,10 +7,11 @@
     "pipeline": "pipeline",
     "roadmap": "roadmap",
     "session": "sessions",
-    "workflow": "workflows"
+    "workflow": "workflows",
+    "feature": "features"
   },
-  "entities": 14,
-  "migrated": 14,
+  "entities": 24,
+  "migrated": 24,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -128,6 +129,126 @@
       "status": "active",
       "updated": "2026-06-27",
       "file": "_project/workflows/authoring-loop.md"
+    },
+    {
+      "id": "brain-registration",
+      "kind": "feature",
+      "title": "Brain registration",
+      "status": "planned",
+      "updated": "2026-06-28",
+      "file": "_project/features/brain-registration.md",
+      "tags": {
+        "scope": "framework",
+        "tier": "optional"
+      }
+    },
+    {
+      "id": "command-center-dashboard",
+      "kind": "feature",
+      "title": "Command Center dashboard",
+      "status": "available",
+      "updated": "2026-06-28",
+      "file": "_project/features/command-center-dashboard.md",
+      "tags": {
+        "scope": "tooling",
+        "tier": "optional"
+      }
+    },
+    {
+      "id": "feature-roadmap",
+      "kind": "feature",
+      "title": "Feature roadmap",
+      "status": "planned",
+      "updated": "2026-06-28",
+      "file": "_project/features/feature-roadmap.md",
+      "tags": {
+        "scope": "tooling",
+        "tier": "optional"
+      }
+    },
+    {
+      "id": "field-guide-reference",
+      "kind": "feature",
+      "title": "Field Guide reference",
+      "status": "available",
+      "updated": "2026-06-28",
+      "file": "_project/features/field-guide-reference.md",
+      "tags": {
+        "scope": "docs",
+        "tier": "optional"
+      }
+    },
+    {
+      "id": "init-config-and-setup",
+      "kind": "feature",
+      "title": "init-config and setup skill",
+      "status": "available",
+      "updated": "2026-06-28",
+      "file": "_project/features/init-config-and-setup.md",
+      "tags": {
+        "scope": "tooling",
+        "tier": "optional"
+      }
+    },
+    {
+      "id": "managed-project-vault",
+      "kind": "feature",
+      "title": "Managed project-vault",
+      "status": "planned",
+      "updated": "2026-06-28",
+      "file": "_project/features/managed-project-vault.md",
+      "tags": {
+        "scope": "framework",
+        "tier": "optional"
+      }
+    },
+    {
+      "id": "new-scaffolder",
+      "kind": "feature",
+      "title": "/new scaffolder",
+      "status": "available",
+      "updated": "2026-06-28",
+      "file": "_project/features/new-scaffolder.md",
+      "tags": {
+        "scope": "tooling",
+        "tier": "required"
+      }
+    },
+    {
+      "id": "projectentity-contract",
+      "kind": "feature",
+      "title": "ProjectEntity contract",
+      "status": "available",
+      "updated": "2026-06-28",
+      "file": "_project/features/projectentity-contract.md",
+      "tags": {
+        "scope": "framework",
+        "tier": "required"
+      }
+    },
+    {
+      "id": "publish-project-schema",
+      "kind": "feature",
+      "title": "Publish @trembus/project-schema",
+      "status": "planned",
+      "updated": "2026-06-28",
+      "file": "_project/features/publish-project-schema.md",
+      "tags": {
+        "scope": "packaging",
+        "tier": "required"
+      }
+    },
+    {
+      "id": "validator-and-guard",
+      "kind": "feature",
+      "title": "Validator and save-time guard",
+      "status": "available",
+      "updated": "2026-06-28",
+      "file": "_project/features/validator-and-guard.md",
+      "tags": {
+        "scope": "tooling",
+        "tier": "required"
+      }
     }
   ],
   "byKind": {
@@ -234,6 +355,31 @@
       "statusOrder": [
         "draft",
         "active",
+        "deprecated"
+      ]
+    },
+    "feature": {
+      "total": 10,
+      "byStatus": {
+        "planned": 4,
+        "available": 6
+      },
+      "ids": [
+        "brain-registration",
+        "command-center-dashboard",
+        "feature-roadmap",
+        "field-guide-reference",
+        "init-config-and-setup",
+        "managed-project-vault",
+        "new-scaffolder",
+        "projectentity-contract",
+        "publish-project-schema",
+        "validator-and-guard"
+      ],
+      "tone": "success",
+      "statusOrder": [
+        "planned",
+        "available",
         "deprecated"
       ]
     }
@@ -1107,6 +1253,64 @@
                   "nodeType": "kind-file",
                   "origin": "derived",
                   "brief": "A representative filename for a workflow (synthesized from the slug scheme) — not a live entity. The filename stem becomes the entity id."
+                }
+              ]
+            },
+            {
+              "id": "project/feature",
+              "label": "features/",
+              "path": "_project/features",
+              "nodeType": "kind-folder",
+              "origin": "derived",
+              "brief": "Holds entities of kind \"feature\". kind is derived from this folder, id from each filename. Files are named by the slug scheme; a freshly scaffolded file is born \"planned\" and its status ranges over the per-kind enum below.",
+              "facts": [
+                {
+                  "label": "kind",
+                  "value": "feature"
+                },
+                {
+                  "label": "folder",
+                  "value": "_project/features/"
+                },
+                {
+                  "label": "filename scheme",
+                  "value": "slug"
+                },
+                {
+                  "label": "status enum",
+                  "value": [
+                    "planned",
+                    "available",
+                    "deprecated"
+                  ]
+                },
+                {
+                  "label": "initial status",
+                  "value": "planned"
+                },
+                {
+                  "label": "required sections",
+                  "value": [
+                    "Summary"
+                  ]
+                },
+                {
+                  "label": "scaffold sections",
+                  "value": [
+                    "Summary",
+                    "Why it matters",
+                    "Notes"
+                  ]
+                }
+              ],
+              "children": [
+                {
+                  "id": "project/feature/example",
+                  "label": "example-title.md",
+                  "path": null,
+                  "nodeType": "kind-file",
+                  "origin": "derived",
+                  "brief": "A representative filename for a feature (synthesized from the slug scheme) — not a live entity. The filename stem becomes the entity id."
                 }
               ]
             }
