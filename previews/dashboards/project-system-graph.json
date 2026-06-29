@@ -178,7 +178,7 @@
       "id": "migrate-soul-steel-command-center",
       "kind": "pipeline",
       "title": "Migrate the Soul-Steel-Official command center onto the framework",
-      "status": "design",
+      "status": "qualify",
       "updated": "2026-06-29",
       "file": "_project/pipeline/migrate-soul-steel-command-center.md",
       "excerpt": "The contract de-fork ([[migrate-soul-steel-official]]) treated SS's dashboard as out of scope. This pipeline pulls the command center into scope (excepting the asset explorer) and migrates the planning-derived surfaces…"
@@ -472,8 +472,9 @@
     "pipeline": {
       "total": 3,
       "byStatus": {
-        "design": 2,
-        "build": 1
+        "qualify": 1,
+        "build": 1,
+        "design": 1
       },
       "ids": [
         "migrate-soul-steel-command-center",

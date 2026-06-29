@@ -1,6 +1,6 @@
 ---
 title: "Migrate the Soul-Steel-Official command center onto the framework"
-status: design
+status: qualify
 updated: 2026-06-29
 links:
   - { rel: predecessor, target: pipeline/migrate-soul-steel-official }
@@ -9,7 +9,21 @@ links:
 
 # Migrate the Soul-Steel-Official command center onto the framework
 
-> **Status:** design (2026-06-29)
+> **Status:** qualify (2026-06-29)
+
+**Progress (2026-06-29):** Started on the SS `migrate/project-system-defork` branch (per the branch
+decision). **Bridge proven:** the kit `build.mjs --manifest` rebuilds the composite
+`soul-steel-command-center.html` **byte-identical** (115 KB) from the current contracts on the de-forked
+branch — the regeneration toolchain works. Findings that refine the plan: the **live composite is two
+views — Hub + Decisions** (`plan-board` is *dormant* per the manifest `_note`, deferred for a redesign);
+the **decision-tree contract is current** (5 ADRs 0001–0005, all accepted — matches `_project/decisions/`),
+so low drift; the **hub contract is the stale one** — `status.md` was touched 2026-06-20, four days after
+the hub's 2026-06-15 regen. So the high-value re-sourcing is the **hub** (regenerate from current
+`status.md` + CLAUDE.md). The method is `render-status-board`-style regeneration (source markdown →
+contract → kit) — the contracts stay *curated*, but reproducibly from the source of truth, not hand-drift.
+**Next:** regenerate the hub contract from `status.md`; rebuild + verify the composite; wire the runner's
+"rebuild command center" task to the kit/skill method; delete the orphaned stale `project-system*` fork
+output; refresh the Atlas card.
 
 ## Context
 
