@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 32,
-  "migrated": 32,
+  "entities": 33,
+  "migrated": 33,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -129,6 +129,17 @@
       "status": "complete",
       "updated": "2026-06-24",
       "file": "_project/reports/2026-06-24-extract-and-generalize-the-framework-from-soul-steel.md"
+    },
+    {
+      "id": "2026-06-29-framework-review-load-bearing-surfaces-test-packaging-bootst",
+      "kind": "report",
+      "title": "Framework review — load-bearing surfaces, test/packaging/bootstrap assurance, and future",
+      "status": "draft",
+      "updated": "2026-06-29",
+      "file": "_project/reports/2026-06-29-framework-review-load-bearing-surfaces-test-packaging-bootst.md",
+      "tags": {
+        "scope": "framework"
+      }
     },
     {
       "id": "package-as-trembus-project-schema",
@@ -346,12 +357,14 @@
       ]
     },
     "report": {
-      "total": 1,
+      "total": 2,
       "byStatus": {
-        "complete": 1
+        "complete": 1,
+        "draft": 1
       },
       "ids": [
-        "2026-06-24-extract-and-generalize-the-framework-from-soul-steel"
+        "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
+        "2026-06-29-framework-review-load-bearing-surfaces-test-packaging-bootst"
       ],
       "tone": "success",
       "statusOrder": [
