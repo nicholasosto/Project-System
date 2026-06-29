@@ -19,7 +19,7 @@
     "render:all": "node apps/command-center/scripts/render-all.mjs",
     "check-drift": "node tools/check-consumer-drift.mjs",
     "check-zero-deps": "node tools/check-zero-deps.mjs",
-    "test": "node lib/swimlane.mjs --self-test && node tools/init-config.mjs --self-test && node tools/validate.mjs --self-test && node tools/new-entity.mjs --self-test && node tools/guard.mjs --self-test && node tools/check-consumer-drift.mjs --self-test && node tools/check-zero-deps.mjs --self-test && node tools/check-zero-deps.mjs && node tools/check-consumer-drift.mjs --demos-only && node tools/render-hub.mjs --check && node apps/command-center/scripts/verify-contract.mjs"
+    "test": "node lib/md.mjs --self-test && node lib/swimlane.mjs --self-test && node tools/init-config.mjs --self-test && node tools/validate.mjs --self-test && node tools/new-entity.mjs --self-test && node tools/guard.mjs --self-test && node tools/check-consumer-drift.mjs --self-test && node tools/check-zero-deps.mjs --self-test && node tools/check-zero-deps.mjs && node tools/check-consumer-drift.mjs --demos-only && node tools/render-hub.mjs --check && node apps/command-center/scripts/verify-contract.mjs"
   },
   "engines": { "node": ">=18" },
   "files": ["lib", "tools", "schema", "examples"],
