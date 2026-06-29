@@ -1,6 +1,6 @@
 ---
 title: "Migrate the Soul-Steel-Official command center onto the framework"
-status: qualify
+status: build
 updated: 2026-06-29
 links:
   - { rel: predecessor, target: pipeline/migrate-soul-steel-official }
@@ -9,7 +9,7 @@ links:
 
 # Migrate the Soul-Steel-Official command center onto the framework
 
-> **Status:** qualify (2026-06-29)
+> **Status:** build (2026-06-29)
 
 **Progress (2026-06-29):** Started on the SS `migrate/project-system-defork` branch (per the branch
 decision). **Bridge proven:** the kit `build.mjs --manifest` rebuilds the composite
@@ -27,9 +27,14 @@ contract → kit) — the contracts stay *curated*, but reproducibly from the so
 Scrip"); the curated 6-domain hex map / scope / strategy preserved. Composite rebuilt via the kit and
 **screenshot-verified**; the manifest `_note` now documents contracts as *regenerated from source markdown*,
 not hand-edited. (Surgical 10-line diff, cross-checked against `status.md` for completeness.)
-**Remaining:** wire the runner's "rebuild command center" task to the regeneration method; delete the
-orphaned stale `project-system*` fork output + refresh the Atlas card; (optional) revive the dormant
-plan-board; then cut over with the de-fork branch merge.
+**Cleanup DONE (2026-06-29, SS branch commit `d1f3b5c`):** the runner was already correct (RUN_TASKS
+`rebuild-composer` → `build.mjs --manifest …command-center.manifest.json` — the regeneration method);
+the orphaned stale `project-system*.{json,html}` fork output is deleted; the Atlas (`previews/index.html`)
+was regenerated via `build-atlas.mjs` — the dead "Project System" card is gone (5 dashboards, no stray
+warnings) and the render-status-board-generated **Command Center** card is the live entry; the dashboards
+README index was updated to match. **Remaining:** (optional) revive the dormant `plan-board`; then cut
+over via the de-fork branch merge into SS `main`. The decision-tree view was left as-is — it's current
+(5 ADRs match `_project/decisions/`) and now governed by the regenerate-from-source convention.
 
 ## Context
 
