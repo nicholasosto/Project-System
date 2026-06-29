@@ -1,0 +1,155 @@
+{
+  "$schema": "../../schema/project-config.schema.json",
+  "project": "soul-steel",
+  "kinds": {
+    "decision": {
+      "folder": "decisions",
+      "status": [
+        "proposed",
+        "accepted",
+        "superseded",
+        "rejected"
+      ],
+      "initialStatus": "proposed",
+      "filename": "serial",
+      "serialPad": 4,
+      "requiredSections": [
+        "Context"
+      ],
+      "scaffoldSections": [
+        "Context",
+        "Decision",
+        "Consequences",
+        "Options considered",
+        "Cites",
+        "Re-open if"
+      ]
+    },
+    "report": {
+      "folder": "reports",
+      "status": [
+        "draft",
+        "complete"
+      ],
+      "initialStatus": "draft",
+      "filename": "date-slug"
+    },
+    "pipeline": {
+      "folder": "delivery",
+      "status": [
+        "design",
+        "qualify",
+        "build",
+        "ship",
+        "shelved"
+      ],
+      "initialStatus": "design",
+      "filename": "slug"
+    },
+    "roadmap": {
+      "folder": "roadmap",
+      "status": [
+        "proposed",
+        "active",
+        "superseded",
+        "complete"
+      ],
+      "initialStatus": "proposed",
+      "filename": "slug",
+      "requiredSections": [
+        "Context"
+      ]
+    },
+    "session": {
+      "folder": "journal",
+      "status": [
+        "planned",
+        "active",
+        "blocked",
+        "completed",
+        "shelved"
+      ],
+      "initialStatus": "planned",
+      "filename": "date-slug",
+      "requiredSections": [
+        "Goal",
+        "Success Criteria",
+        "Source References",
+        "Decisions",
+        "Outputs",
+        "Blockers",
+        "Next Action",
+        "Handoff Notes"
+      ]
+    }
+  },
+  "tagRegistry": {
+    "priority": {
+      "type": "enum",
+      "values": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "agent": {
+      "type": "enum",
+      "values": [
+        "neutral",
+        "claude",
+        "human"
+      ]
+    },
+    "scope": {
+      "type": "string",
+      "lintAgainst": [
+        "steel-city",
+        "ip-wide",
+        "tooling"
+      ],
+      "unknownAllowed": true
+    },
+    "horizon": {
+      "type": "enum",
+      "values": [
+        "milestone",
+        "phase",
+        "cross-domain"
+      ]
+    }
+  },
+  "relTargetKinds": {
+    "supersedes": [
+      "decision",
+      "roadmap"
+    ],
+    "superseded-by": [
+      "decision",
+      "roadmap"
+    ],
+    "predecessor": [
+      "pipeline",
+      "report"
+    ],
+    "successor": [
+      "pipeline",
+      "report"
+    ],
+    "decided-in": [
+      "decision"
+    ],
+    "milestone": "marker",
+    "implements": "external",
+    "references": "any"
+  },
+  "milestones": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5"
+  ],
+  "proseStatusEnforcement": {
+    "rollout": "warn"
+  }
+}
