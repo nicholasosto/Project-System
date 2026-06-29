@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 30,
-  "migrated": 30,
+  "entities": 32,
+  "migrated": 32,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -115,6 +115,14 @@
       "file": "_project/decisions/0012-managed-project-vault.md"
     },
     {
+      "id": "0013-validate-the-swimlane-body-and-let-steps-reference-the-graph",
+      "kind": "decision",
+      "title": "Validate the swimlane body and let steps reference the graph",
+      "status": "accepted",
+      "updated": "2026-06-29",
+      "file": "_project/decisions/0013-validate-the-swimlane-body-and-let-steps-reference-the-graph.md"
+    },
+    {
       "id": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
       "kind": "report",
       "title": "Extract and generalize the framework from Soul-Steel",
@@ -161,6 +169,14 @@
       "status": "completed",
       "updated": "2026-06-27",
       "file": "_project/sessions/2026-06-27-command-center-evolution-and-data-driven-kinds.md"
+    },
+    {
+      "id": "2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a",
+      "kind": "session",
+      "title": "Enhance workflows — validate the swimlane body, step guidance, and graph links",
+      "status": "completed",
+      "updated": "2026-06-29",
+      "file": "_project/sessions/2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a.md"
     },
     {
       "id": "authoring-loop",
@@ -301,9 +317,9 @@
   ],
   "byKind": {
     "decision": {
-      "total": 12,
+      "total": 13,
       "byStatus": {
-        "accepted": 10,
+        "accepted": 11,
         "proposed": 2
       },
       "ids": [
@@ -318,7 +334,8 @@
         "0009-born-valid-config-generator",
         "0010-feature-kind-roadmap",
         "0011-register-a-brain",
-        "0012-managed-project-vault"
+        "0012-managed-project-vault",
+        "0013-validate-the-swimlane-body-and-let-steps-reference-the-graph"
       ],
       "tone": "info",
       "statusOrder": [
@@ -379,14 +396,15 @@
       ]
     },
     "session": {
-      "total": 2,
+      "total": 3,
       "byStatus": {
         "active": 1,
-        "completed": 1
+        "completed": 2
       },
       "ids": [
         "2026-06-24-extract-and-generalize-project-system-into-its-own-space",
-        "2026-06-27-command-center-evolution-and-data-driven-kinds"
+        "2026-06-27-command-center-evolution-and-data-driven-kinds",
+        "2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a"
       ],
       "tone": "warning",
       "statusOrder": [
@@ -454,6 +472,18 @@
       "target": "roadmap/command-center"
     },
     {
+      "from": "0013-validate-the-swimlane-body-and-let-steps-reference-the-graph",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "decisions/0004-pipeline-entities-carry-a-structured-workflow-block"
+    },
+    {
+      "from": "0013-validate-the-swimlane-body-and-let-steps-reference-the-graph",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline"
+    },
+    {
       "from": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
       "fromKind": "report",
       "rel": "decided-in",
@@ -502,6 +532,24 @@
       "target": "roadmap/command-center"
     },
     {
+      "from": "2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a",
+      "fromKind": "session",
+      "rel": "references",
+      "target": "decisions/0013-validate-the-swimlane-body-and-let-steps-reference-the-graph"
+    },
+    {
+      "from": "2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a",
+      "fromKind": "session",
+      "rel": "references",
+      "target": "workflows/authoring-loop"
+    },
+    {
+      "from": "2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a",
+      "fromKind": "session",
+      "rel": "references",
+      "target": "workflows/instantiate-a-new-project-system-project"
+    },
+    {
       "from": "instantiate-a-new-project-system-project",
       "fromKind": "workflow",
       "rel": "references",
@@ -521,7 +569,7 @@
     }
   ],
   "edgesByRel": {
-    "references": 12,
+    "references": 17,
     "decided-in": 1
   },
   "workflows": {
