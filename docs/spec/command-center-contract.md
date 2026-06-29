@@ -88,8 +88,8 @@ consumer can also resolve precisely via `kind = folderByKind[folder]` without as
 ### `workflows` — optional structured swimlanes
 
 An entity MAY declare a workflow by putting a single fenced ` ```json ` block — a Trembus
-swimlane contract (`{ lanes[], steps[] }`) — inside a `## Workflow` body section (the section
-name is config-driven via `render.workflowSection`). `buildModel()` extracts each into
+swimlane contract (`{ caption?, lanes[], steps[] }`) — inside a `## Workflow` body section (the
+section name is config-driven via `render.workflowSection`). `buildModel()` extracts each into
 `workflows`, an object keyed by **entity id**:
 
 ```json
@@ -97,11 +97,26 @@ name is config-driven via `render.workflowSection`). `buildModel()` extracts eac
   "package-as-trembus-project-schema": {
     "view": "swimlane", "title": "Package as trembus project-schema",
     "code": "pipeline.package-as-trembus-project-schema",
+    "caption": "How the framework reaches a third consumer.",
     "lanes": [ { "id": "framework", "label": "Framework", "kind": "system" }, … ],
-    "steps": [ { "id": "mirror", "lane": "framework", "label": "…", "status": "done", "to": ["adopt"] }, … ]
+    "steps": [ { "id": "mirror", "lane": "framework", "label": "…", "status": "done", "detail": "…", "note": "…", "to": ["adopt"] }, … ]
   }
 }
 ```
+
+**Authored swimlane shape** (the `@trembus/ui` `Swimlane` contract; `render-hub` spreads the
+authored block through verbatim, so every field below already reaches the UI):
+
+- **lane** — `{ id?, label (required), kind? }`, where `kind` ∈ `human · ai · system · tool ·
+  neutral` (tints the lane). A step references its lane by `id`, else by `label`.
+- **step** — `{ id?, lane (required), label (required), col?, status?, detail?, note?, to? }`:
+  - `status` ∈ `done · active · pending · blocked · skipped` — tints the card + status dot.
+  - `detail` — a short secondary line shown **on the card**.
+  - `note` — guidance shown **in the inspector** when the step is selected.
+  - `to` — successor step ids (draws a connector to each); `[]` marks a terminal step; omit to
+    flow to the next step in order.
+  - `col` — optional explicit 0-based column (otherwise steps flow sequentially).
+- top-level optional **`caption`** — a one-line summary rendered above the board.
 
 `title`/`code` default from the entity (overridable in the block). A malformed block is warned
 and skipped (it never appears here). The Command Center renders each as a `@trembus/ui`

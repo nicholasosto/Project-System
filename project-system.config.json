@@ -69,7 +69,7 @@
     }
   },
   "sectionHints": {
-    "Workflow": "```json\n{\n  \"lanes\": [\n    { \"id\": \"you\", \"label\": \"You\", \"kind\": \"human\" },\n    { \"id\": \"system\", \"label\": \"System\", \"kind\": \"system\" }\n  ],\n  \"steps\": [\n    { \"id\": \"start\", \"lane\": \"you\", \"label\": \"<trigger>\", \"to\": [\"work\"] },\n    { \"id\": \"work\", \"lane\": \"system\", \"label\": \"<step>\", \"to\": [] }\n  ]\n}\n```"
+    "Workflow": "<!-- lanes: who acts; kind is one of human, ai, system, tool, neutral.\n     steps: each needs a lane + label. Optional: status (done|active|pending|blocked|skipped)\n     tints the card; detail shows on the card; note shows in the inspector when the step is\n     clicked; to[] lists the next step id(s) ([] marks a terminal step). -->\n```json\n{\n  \"caption\": \"<one line: what this process reliably produces>\",\n  \"lanes\": [\n    { \"id\": \"you\", \"label\": \"You\", \"kind\": \"human\" },\n    { \"id\": \"system\", \"label\": \"System\", \"kind\": \"system\" }\n  ],\n  \"steps\": [\n    { \"id\": \"start\", \"lane\": \"you\", \"label\": \"<trigger>\", \"status\": \"done\", \"detail\": \"<shown on the card>\", \"to\": [\"work\"] },\n    { \"id\": \"work\", \"lane\": \"system\", \"label\": \"<step>\", \"status\": \"active\", \"note\": \"<shown in the inspector on click>\", \"to\": [] }\n  ]\n}\n```"
   },
   "tagRegistry": {
     "priority": { "type": "enum", "values": ["high", "medium", "low"] },

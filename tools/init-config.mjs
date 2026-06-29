@@ -41,6 +41,12 @@ const FILENAME_SCHEMES = new Set(["serial", "date-slug", "slug"]);
 // with --schema-path for a different layout (the framework's own config points at ./schema/...).
 const DEFAULT_SCHEMA_PATH = "./.project-system/schema/project-config.schema.json";
 
+// The starter `## Workflow` swimlane stub the scaffolder lays down. Mirrors the framework's own
+// project-system.config.json sectionHints.Workflow — a born-valid swimlane (referentially clean,
+// known lane kinds + statuses) that also demonstrates status/detail/note so authors discover them.
+const WORKFLOW_SECTION_HINT =
+  "<!-- lanes: who acts; kind is one of human, ai, system, tool, neutral.\n     steps: each needs a lane + label. Optional: status (done|active|pending|blocked|skipped)\n     tints the card; detail shows on the card; note shows in the inspector when the step is\n     clicked; to[] lists the next step id(s) ([] marks a terminal step). -->\n```json\n{\n  \"caption\": \"<one line: what this process reliably produces>\",\n  \"lanes\": [\n    { \"id\": \"you\", \"label\": \"You\", \"kind\": \"human\" },\n    { \"id\": \"system\", \"label\": \"System\", \"kind\": \"system\" }\n  ],\n  \"steps\": [\n    { \"id\": \"start\", \"lane\": \"you\", \"label\": \"<trigger>\", \"status\": \"done\", \"detail\": \"<shown on the card>\", \"to\": [\"work\"] },\n    { \"id\": \"work\", \"lane\": \"system\", \"label\": \"<step>\", \"status\": \"active\", \"note\": \"<shown in the inspector on click>\", \"to\": [] }\n  ]\n}\n```";
+
 // The canonical starting point — the framework's own six planning kinds, domain-neutral. A consumer
 // `extends: "standard"` then adds/overrides kinds. This is the spec form (kinds as an array) the
 // preset is merged from; nothing here is a project/domain word.
@@ -70,6 +76,8 @@ const STANDARD_PRESET = {
   },
   // A fresh consumer starts lenient on prose↔frontmatter; tighten to "error" once adopted.
   proseStatusEnforcement: { rollout: "warn" },
+  // Born-valid starter for the `## Workflow` swimlane section, surfaced by `/new workflow`.
+  sectionHints: { Workflow: WORKFLOW_SECTION_HINT },
 };
 
 const PRESETS = { standard: STANDARD_PRESET };
@@ -146,13 +154,14 @@ function buildConfig(spec, { schemaPath = DEFAULT_SCHEMA_PATH } = {}) {
   const tagRegistry = spec.tagRegistry ?? preset?.tagRegistry;
   const relTargetKinds = spec.relTargetKinds ?? preset?.relTargetKinds;
   const prose = spec.proseStatusEnforcement ?? preset?.proseStatusEnforcement;
+  const sectionHints = spec.sectionHints ?? preset?.sectionHints;
 
   // Build in the house key order ($schema first; render last).
   const cfg = { $schema: schemaPath, project };
   if (spec.projectRoot) cfg.projectRoot = spec.projectRoot;
   if (spec.demo) cfg.demo = true;
   cfg.kinds = kinds;
-  if (spec.sectionHints && Object.keys(spec.sectionHints).length) cfg.sectionHints = spec.sectionHints;
+  if (sectionHints && Object.keys(sectionHints).length) cfg.sectionHints = sectionHints;
   if (tagRegistry && Object.keys(tagRegistry).length) cfg.tagRegistry = tagRegistry;
   if (relTargetKinds && Object.keys(relTargetKinds).length) cfg.relTargetKinds = relTargetKinds;
   if (Array.isArray(spec.milestones) && spec.milestones.length) cfg.milestones = spec.milestones;

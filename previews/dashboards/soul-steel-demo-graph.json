@@ -633,7 +633,7 @@
               "children": [
                 {
                   "id": "project/report/example",
-                  "label": "2026-06-28-example-title.md",
+                  "label": "2026-06-29-example-title.md",
                   "path": null,
                   "nodeType": "kind-file",
                   "origin": "derived",
@@ -809,7 +809,7 @@
               "children": [
                 {
                   "id": "project/session/example",
-                  "label": "2026-06-28-example-title.md",
+                  "label": "2026-06-29-example-title.md",
                   "path": null,
                   "nodeType": "kind-file",
                   "origin": "derived",
