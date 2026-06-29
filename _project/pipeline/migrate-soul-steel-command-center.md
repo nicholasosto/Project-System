@@ -21,9 +21,15 @@ so low drift; the **hub contract is the stale one** — `status.md` was touched 
 the hub's 2026-06-15 regen. So the high-value re-sourcing is the **hub** (regenerate from current
 `status.md` + CLAUDE.md). The method is `render-status-board`-style regeneration (source markdown →
 contract → kit) — the contracts stay *curated*, but reproducibly from the source of truth, not hand-drift.
-**Next:** regenerate the hub contract from `status.md`; rebuild + verify the composite; wire the runner's
-"rebuild command center" task to the kit/skill method; delete the orphaned stale `project-system*` fork
-output; refresh the Atlas card.
+**Hub slice DONE (2026-06-29, SS branch commit `7cd4498`):** the hub contract is re-sourced from
+`status.md` — refreshed the time-sensitive fields (Phase-0 wiring `current`→`shipped`, shipped steps
+10→11, "Public-ready · mobile smoke = last QA gate" banner + robot domain, ribbon title/total, "per-player
+Scrip"); the curated 6-domain hex map / scope / strategy preserved. Composite rebuilt via the kit and
+**screenshot-verified**; the manifest `_note` now documents contracts as *regenerated from source markdown*,
+not hand-edited. (Surgical 10-line diff, cross-checked against `status.md` for completeness.)
+**Remaining:** wire the runner's "rebuild command center" task to the regeneration method; delete the
+orphaned stale `project-system*` fork output + refresh the Atlas card; (optional) revive the dormant
+plan-board; then cut over with the de-fork branch merge.
 
 ## Context
 
