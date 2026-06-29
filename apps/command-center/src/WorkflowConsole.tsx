@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { RunHistory, Swimlane } from '@trembus/ui';
 import type { RunRecord, SwimlaneContract } from '@trembus/ui';
+import { StepDetail } from './StepDetail';
 
 // A true on/off pill that greys out + disables when there is nothing to toggle.
 // role=switch + aria-checked keeps it accessible. (Ported from the SwimlaneRuns example.)
@@ -129,11 +130,19 @@ export function WorkflowConsole({
   const [selectedRunId, setSelectedRunId] = useState(
     () => runs.find((r) => r.status === 'failed')?.id ?? runs[0]?.id ?? '',
   );
+  // App-managed step selection drives our richer right-side drawer; the kit Swimlane keeps its own
+  // inline inspector (uncontrolled — we don't pass selectedId). Switching workflows remounts this
+  // console (App keys it by workflow id), so stepSel resets for free.
+  const [stepSel, setStepSel] = useState<string | undefined>(undefined);
 
   const runsVisible = showRuns && hasRuns;
   const selectedRun = runs.find((r) => r.id === selectedRunId) ?? runs[0];
   const swimlaneData = runsVisible && selectedRun ? applyRun(workflow, selectedRun) : workflow;
   const windowed = runsTotal > runs.length;
+  // Resolve the selection against the CURRENT data so a stale id (e.g. after a run swap) closes the
+  // drawer rather than leaking. Step ids are stable across runs (applyRun maps by id), so a valid
+  // selection survives a run change.
+  const selectedStep = swimlaneData.steps.find((s) => s.id === stepSel);
 
   return (
     <div className="cc-workflow">
@@ -149,21 +158,40 @@ export function WorkflowConsole({
         />
       </div>
 
-      {/* key by run so the diagram's own step-selection resets when the run changes */}
-      <Swimlane key={runsVisible ? selectedRunId : 'base'} data={swimlaneData} />
+      <div className="cc-workflow__layout">
+        <div className="cc-workflow__board">
+          {/* key by run so the diagram's own step-selection resets when the run changes */}
+          <Swimlane key={runsVisible ? selectedRunId : 'base'} data={swimlaneData} onSelect={setStepSel} />
 
-      {runsVisible && (
-        <RunHistory
-          data={{
-            view: 'run-history',
-            title: 'Run history',
-            caption: windowed ? `Latest ${runs.length} of ${runsTotal} runs.` : undefined,
-            runs,
-          }}
-          selectedRunId={selectedRunId}
-          onSelectRun={setSelectedRunId}
-        />
-      )}
+          {runsVisible && (
+            <RunHistory
+              data={{
+                view: 'run-history',
+                title: 'Run history',
+                caption: windowed ? `Latest ${runs.length} of ${runsTotal} runs.` : undefined,
+                runs,
+              }}
+              selectedRunId={selectedRunId}
+              onSelectRun={setSelectedRunId}
+            />
+          )}
+        </div>
+
+        {/* Richer step guidance — opens on step-select, mirrors the Overview hub's detail drawer. */}
+        <aside className="cc-detailpanel" data-open={Boolean(selectedStep)} aria-label="Step details">
+          <div className="cc-detailpanel__inner">
+            {selectedStep ? (
+              <StepDetail
+                step={selectedStep}
+                lanes={swimlaneData.lanes}
+                allSteps={swimlaneData.steps}
+                onClose={() => setStepSel(undefined)}
+                onSelectStep={setStepSel}
+              />
+            ) : null}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
