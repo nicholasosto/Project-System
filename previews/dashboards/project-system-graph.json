@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 38,
-  "migrated": 38,
+  "entities": 39,
+  "migrated": 39,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -143,6 +143,15 @@
       "updated": "2026-06-29",
       "file": "_project/decisions/0014-migration-skill-infers-config-from-existing-planning.md",
       "excerpt": "The two existing on-ramps both assume a blank slate: init-config.mjs --preset standard stamps the canonical six kinds, and the setup-project-system skill runs an interview that asks the human \"what does your project pla…"
+    },
+    {
+      "id": "0015-honor-unknownallowed-tag-lint",
+      "kind": "decision",
+      "title": "Honor unknownAllowed so a lintAgainst tag can allow unfamiliar values silently",
+      "status": "accepted",
+      "updated": "2026-06-29",
+      "file": "_project/decisions/0015-honor-unknownallowed-tag-lint.md",
+      "excerpt": "The Soul-Steel-Official migration ([[migrate-soul-steel-official]], Phase 4) surfaced a real bug: the config field unknownAllowed was dead. schema/project-config.schema.json declared it on a tagSpec (with default: true)…"
     },
     {
       "id": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
@@ -414,9 +423,9 @@
   ],
   "byKind": {
     "decision": {
-      "total": 14,
+      "total": 15,
       "byStatus": {
-        "accepted": 12,
+        "accepted": 13,
         "proposed": 2
       },
       "ids": [
@@ -433,7 +442,8 @@
         "0011-register-a-brain",
         "0012-managed-project-vault",
         "0013-validate-the-swimlane-body-and-let-steps-reference-the-graph",
-        "0014-migration-skill-infers-config-from-existing-planning"
+        "0014-migration-skill-infers-config-from-existing-planning",
+        "0015-honor-unknownallowed-tag-lint"
       ],
       "tone": "info",
       "statusOrder": [
@@ -600,6 +610,12 @@
       "target": "decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline"
     },
     {
+      "from": "0015-honor-unknownallowed-tag-lint",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "pipeline/migrate-soul-steel-official"
+    },
+    {
       "from": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
       "fromKind": "report",
       "rel": "decided-in",
@@ -739,7 +755,7 @@
     }
   ],
   "edgesByRel": {
-    "references": 25,
+    "references": 26,
     "decided-in": 1,
     "predecessor": 1,
     "successor": 2

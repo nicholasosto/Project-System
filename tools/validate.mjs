@@ -119,7 +119,7 @@ export function validateEntity(entity, ctx) {
         add("info", `unknown tag key "${key}" (allowed; promote if it recurs)`);
       } else if (reg.type === "enum" && !reg.values.includes(val)) {
         add("error", `invalid tag ${key}="${val}" (expected: ${reg.values.join(", ")})`);
-      } else if (reg.lintAgainst && !reg.lintAgainst.includes(val)) {
+      } else if (reg.lintAgainst && !reg.lintAgainst.includes(val) && !reg.unknownAllowed) {
         add("warning", `unfamiliar ${key} "${val}" (known: ${reg.lintAgainst.join(", ")}; allowed)`);
       }
     }
@@ -288,6 +288,8 @@ function selfTest() {
       ["bad date format → error", () => errs(base({ fm: { title: "T", status: "accepted", updated: "June 20" } })).some((i) => /not ISO/.test(i.message))],
       ["missing section → warning (not error)", () => { const r = validateEntity(base({ sections: {} }), ctx); return r.some((i) => i.severity === "warning" && /missing conventional section/.test(i.message)) && !r.some((i) => i.severity === "error"); }],
       ["primitive-shadowing tag → error", () => errs(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", tags: { status: "x" } } })).some((i) => /shadows a primitive/.test(i.message))],
+      ["tag outside lintAgainst with unknownAllowed → silent (no warning)", () => !validateEntity(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", tags: { scope: "gamma" } } }), ctx).some((i) => /unfamiliar scope/.test(i.message))],
+      ["tag outside lintAgainst without unknownAllowed → warning", () => { const c = { ...ctx, tagRegistry: { ...ctx.tagRegistry, scope: { type: "string", lintAgainst: ["alpha", "beta"] } } }; return validateEntity(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", tags: { scope: "gamma" } } }), c).some((i) => i.severity === "warning" && /unfamiliar scope/.test(i.message)); }],
       ["dangling link → error", () => errs(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", links: [{ rel: "superseded-by", target: "decisions/does-not-exist" }] } })).some((i) => /dangling/.test(i.message))],
       ["wrong-kind link → error", () => errs(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", links: [{ rel: "predecessor", target: "decisions/sample" }] } })).some((i) => /expected pipeline\/report/.test(i.message))],
       ["valid milestone marker → 0 errors", () => errs(base({ fm: { title: "T", status: "accepted", updated: "2026-06-20", links: [{ rel: "milestone", target: "M5" }] } })).length === 0],

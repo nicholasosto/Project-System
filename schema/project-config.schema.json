@@ -206,8 +206,8 @@
       "properties": {
         "type": { "enum": ["enum", "string"] },
         "values": { "type": "array", "items": { "type": "string" }, "description": "For type:'enum', the allowed values (invalid value => error)." },
-        "lintAgainst": { "type": "array", "items": { "type": "string" }, "description": "For type:'string', familiar values (an unfamiliar value => warning, still allowed)." },
-        "unknownAllowed": { "type": "boolean", "default": true }
+        "lintAgainst": { "type": "array", "items": { "type": "string" }, "description": "For type:'string', familiar values. An unfamiliar value warns (still allowed) unless unknownAllowed is true." },
+        "unknownAllowed": { "type": "boolean", "default": false, "description": "When true, values outside lintAgainst are allowed silently (no warning). Default: warn on unfamiliar." }
       }
     }
   }
