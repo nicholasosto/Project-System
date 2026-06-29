@@ -12,11 +12,13 @@ links:
 
 > **Status:** build (2026-06-29)
 
-**Progress:** Phase 0–1 landed on SS branch `migrate/project-system-defork` (not pushed) — framework
-vendored into `.project-system/`, root `project-system.config.json` authored (scores 100% vs the
-golden), and the vendored engines reproduce the baseline exactly (`29 files / 0 errors / 1 warning /
-9 info`). Phases 2–5 (repoint-before-delete, `.claude` rewire, content carry-forwards, rejoin the
-mirror) are pending.
+**Progress:** Phases 0–3 landed on SS branch `migrate/project-system-defork` (not pushed): framework
+vendored into `.project-system/`, root config authored (100% vs golden), the **4 forked engines +
+forked `md.mjs` deleted** (`build-planning-sessions` repointed to the vendored parser; its output
+verified byte-identical), and `.claude` rewired to the vendored engines (guard + SessionStart, generic
+`/new`, both skills; Roblox perms + plugins preserved). Vendored validate holds the baseline
+(`29/0/1/9`). **SS now consumes the framework.** Remaining: Phase 4 (content carry-forwards → 0/0/0 —
+needs the non-marker `milestone` call) and Phase 5 (drift-registry repoint + dashboard tidy).
 
 ## Context
 
