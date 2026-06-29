@@ -5,6 +5,7 @@ updated: 2026-06-29
 links:
   - { rel: references, target: roadmap/migrate-soul-steel-to-consume-the-packaged-framework }
   - { rel: references, target: decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing }
+  - { rel: successor, target: pipeline/migrate-soul-steel-command-center }
 ---
 
 # Migrate Soul-Steel-Official onto the latest framework
@@ -98,7 +99,9 @@ snapshot `previews/dashboards/` so dashboard output can be diffed later. Exit: b
    `claudeDir → SS/.claude` to turn on hook parity; point `config` at the SS-root config (keep
    `examples/soul-steel.config.json` as the separate byte-faithful demo fixture).
 2. Regenerate or delete the **stale** `previews/dashboards/project-system*.json` (forked
-   `build-project-graph` output); leave SS's custom command-center and `captures.json` untouched.
+   `build-project-graph` output); leave `captures.json` untouched. The broader command-center migration
+   (planning views → the `render-status-board` skill) is its own pipeline,
+   [[migrate-soul-steel-command-center]], and runs after this de-fork lands.
 *Exit:* full `check-consumer-drift.mjs` → soul-steel **PASS** on structural + behavioral + hooks.
 
 ## Key decisions
@@ -107,8 +110,11 @@ snapshot `previews/dashboards/` so dashboard output can be diffed later. Exit: b
   publishing `@trembus/project-schema` is deferred to a 3rd consumer per [[0002-mirror-the-contract-with-a-ci-check-before-publishing]].
 - **Direct `.project-system/tools/...` calls, no wrapper scripts** — wrappers reintroduce the
   project-local file the de-fork removes; the hook-parity axis normalizes against the vendored paths.
-- **Keep SS's custom command-center; do not adopt `apps/command-center`.** Dashboard modernization is a
-  separate future axis; only the stale `project-system*.json` fork output is in scope here.
+- **Command center migrated separately** in [[migrate-soul-steel-command-center]] — planning views
+  (hub · decision-tree · plan-board) re-sourced from validated `_project/` via the `render-status-board`
+  skill, keeping SS's kit + look; asset explorer (and code-topology / briefs) stay out of scope. This
+  de-fork does **not** adopt `apps/command-center`; it only removes the stale `project-system*.json`
+  fork output (Phase 5).
 - **Defer the modern `workflow` (0006) and `feature` (0010) kinds.** SS authors none, and adding them
   would diverge from the 5-kind drift baseline; adoption is a deliberate later step that updates the
   vendored config and the golden together.

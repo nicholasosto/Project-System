@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 35,
-  "migrated": 35,
+  "entities": 36,
+  "migrated": 36,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -164,6 +164,15 @@
         "scope": "framework"
       },
       "excerpt": "What shipped"
+    },
+    {
+      "id": "migrate-soul-steel-command-center",
+      "kind": "pipeline",
+      "title": "Migrate the Soul-Steel-Official command center onto the framework",
+      "status": "design",
+      "updated": "2026-06-29",
+      "file": "_project/pipeline/migrate-soul-steel-command-center.md",
+      "excerpt": "The contract de-fork ([[migrate-soul-steel-official]]) treated SS's dashboard as out of scope. This pipeline pulls the command center into scope (excepting the asset explorer) and migrates the planning-derived surfaces…"
     },
     {
       "id": "migrate-soul-steel-official",
@@ -425,11 +434,12 @@
       ]
     },
     "pipeline": {
-      "total": 2,
+      "total": 3,
       "byStatus": {
-        "design": 2
+        "design": 3
       },
       "ids": [
+        "migrate-soul-steel-command-center",
         "migrate-soul-steel-official",
         "package-as-trembus-project-schema"
       ],
@@ -573,6 +583,18 @@
       "target": "sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space"
     },
     {
+      "from": "migrate-soul-steel-command-center",
+      "fromKind": "pipeline",
+      "rel": "predecessor",
+      "target": "pipeline/migrate-soul-steel-official"
+    },
+    {
+      "from": "migrate-soul-steel-command-center",
+      "fromKind": "pipeline",
+      "rel": "references",
+      "target": "roadmap/migrate-soul-steel-to-consume-the-packaged-framework"
+    },
+    {
       "from": "migrate-soul-steel-official",
       "fromKind": "pipeline",
       "rel": "references",
@@ -583,6 +605,12 @@
       "fromKind": "pipeline",
       "rel": "references",
       "target": "decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing"
+    },
+    {
+      "from": "migrate-soul-steel-official",
+      "fromKind": "pipeline",
+      "rel": "successor",
+      "target": "pipeline/migrate-soul-steel-command-center"
     },
     {
       "from": "command-center",
@@ -664,9 +692,10 @@
     }
   ],
   "edgesByRel": {
-    "references": 21,
+    "references": 22,
     "decided-in": 1,
-    "successor": 1
+    "predecessor": 1,
+    "successor": 2
   },
   "workflows": {
     "package-as-trembus-project-schema": {
