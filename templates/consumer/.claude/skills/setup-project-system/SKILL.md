@@ -3,9 +3,12 @@ name: setup-project-system
 description: >-
   Set up or evolve a project's planning conventions for project-system — choosing the entity
   kinds, their folders, status enums, filename schemes, and body sections, then generating a
-  valid project-system.config.json. Use when adopting the framework in a new project, when the
-  user asks "what kinds/conventions should my project have", or when adding/renaming a kind.
-allowed-tools: Bash(node .project-system/tools/init-config.mjs:*), Bash(node .project-system/tools/validate.mjs:*), Bash(node .project-system/tools/new-entity.mjs:*), Read, Write
+  valid project-system.config.json. Use when adopting the framework in a GREENFIELD project (no
+  existing planning to mine), when the user asks "what kinds/conventions should my project have",
+  or when deliberately adding/renaming a single kind by hand. If the project ALREADY has planning
+  material (docs, ADRs, a roadmap) to import, use migrate-project-space instead — it infers the
+  config and an initial entity set from that evidence.
+allowed-tools: Bash(node .project-system/tools/init-config.mjs:*), Bash(node .project-system/tools/validate.mjs:*), Bash(node .project-system/tools/new-entity.mjs:*), Read, Edit
 ---
 
 # Set up project-system planning conventions

@@ -59,10 +59,12 @@ A consuming project supplies a config; the framework supplies everything else.
    Prefer the generator over hand-copying: `node .project-system/tools/init-config.mjs --preset standard
    --project <slug>` writes a valid starter config (the canonical six kinds), or pipe a `--spec` to add/override
    kinds. It proves the config loads through `lib/contract.mjs` before writing, so it's born valid. The bundled
-   `setup-project-system` skill runs the naming-convention interview and drives this tool. (You can still copy
-   `examples/soul-steel.config.json` and edit by hand if you prefer.)
+   `setup-project-system` skill runs the naming-convention interview and drives this tool for a **greenfield**
+   project; for a project that **already has planning material** (docs, ADRs, a roadmap), the
+   `migrate-project-space` skill instead *infers* the config + an initial entity set from that evidence and feeds
+   the same generator. (You can still copy `examples/soul-steel.config.json` and edit by hand if you prefer.)
 3. **Copy** `templates/consumer/.claude/` into the project (`settings.json` + `commands/new.md` +
-   `skills/setup-project-system/`). Don't edit it — the wiring is domain-neutral and identical for every
+   `skills/`). Don't edit it — the wiring is domain-neutral and identical for every
    consumer: a blocking `PreToolUse` guard plus an advisory `SessionStart` health summary, both pointing at
    `.project-system/tools/…` via `$CLAUDE_PROJECT_DIR`.
 4. **Register** the project in `tools/check-consumer-drift.mjs` (add `schema`/`root`/`config`, plus a

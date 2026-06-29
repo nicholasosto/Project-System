@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 33,
-  "migrated": 33,
+  "entities": 34,
+  "migrated": 34,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -121,6 +121,14 @@
       "status": "accepted",
       "updated": "2026-06-29",
       "file": "_project/decisions/0013-validate-the-swimlane-body-and-let-steps-reference-the-graph.md"
+    },
+    {
+      "id": "0014-migration-skill-infers-config-from-existing-planning",
+      "kind": "decision",
+      "title": "Adopt existing projects by inference with a migration skill",
+      "status": "accepted",
+      "updated": "2026-06-29",
+      "file": "_project/decisions/0014-migration-skill-infers-config-from-existing-planning.md"
     },
     {
       "id": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
@@ -328,9 +336,9 @@
   ],
   "byKind": {
     "decision": {
-      "total": 13,
+      "total": 14,
       "byStatus": {
-        "accepted": 11,
+        "accepted": 12,
         "proposed": 2
       },
       "ids": [
@@ -346,7 +354,8 @@
         "0010-feature-kind-roadmap",
         "0011-register-a-brain",
         "0012-managed-project-vault",
-        "0013-validate-the-swimlane-body-and-let-steps-reference-the-graph"
+        "0013-validate-the-swimlane-body-and-let-steps-reference-the-graph",
+        "0014-migration-skill-infers-config-from-existing-planning"
       ],
       "tone": "info",
       "statusOrder": [
@@ -497,6 +506,18 @@
       "target": "decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline"
     },
     {
+      "from": "0014-migration-skill-infers-config-from-existing-planning",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "decisions/0009-born-valid-config-generator"
+    },
+    {
+      "from": "0014-migration-skill-infers-config-from-existing-planning",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline"
+    },
+    {
       "from": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
       "fromKind": "report",
       "rel": "decided-in",
@@ -582,7 +603,7 @@
     }
   ],
   "edgesByRel": {
-    "references": 17,
+    "references": 19,
     "decided-in": 1
   },
   "workflows": {
