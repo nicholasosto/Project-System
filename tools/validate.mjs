@@ -28,6 +28,7 @@ import {
   loadEntities,
   readProjectArgs,
 } from "../lib/contract.mjs";
+import { validateSwimlane } from "../lib/swimlane.mjs";
 
 // Pull the leading status word out of a prose "**Status:** …" header, normalized.
 function proseStatusWord(fullText) {
@@ -143,6 +144,21 @@ export function validateEntity(entity, ctx) {
     }
   }
 
+  // Swimlane body — only for kinds that ARE workflows (config carriesSwimlanes). This is the
+  // one kind-aware check, and it reads a config-derived list, so the engine stays domain-neutral.
+  // entity.workflow was parsed once at load (lib/contract.mjs): null | { value } | { error }.
+  if (ctx.swimlaneKinds?.includes(entity.kind) && ctx.swimlaneSeverity && ctx.swimlaneSeverity !== "off") {
+    const wf = entity.workflow;
+    if (wf?.error) {
+      add(ctx.swimlaneSeverity, `workflow block is not valid JSON: ${wf.error}`);
+    } else if (wf && wf.value !== undefined) {
+      for (const issue of validateSwimlane(wf.value, { laneKinds: ctx.swimlaneLaneKinds, severity: ctx.swimlaneSeverity })) {
+        add(issue.severity, issue.path ? `workflow ${issue.path}: ${issue.message}` : `workflow: ${issue.message}`);
+      }
+    }
+    // wf == null (no block) → nothing here; a required-but-missing Workflow section already warns.
+  }
+
   return issues;
 }
 
@@ -206,15 +222,20 @@ function syntheticCtx(projectRoot) {
   return {
     project: "synthetic",
     projectRoot,
-    kinds: ["decision", "pipeline", "report"],
-    folderByKind: { decision: "decisions", pipeline: "pipeline", report: "reports" },
-    kindByFolder: { decisions: "decision", pipeline: "pipeline", reports: "report" },
+    kinds: ["decision", "pipeline", "report", "workflow"],
+    folderByKind: { decision: "decisions", pipeline: "pipeline", report: "reports", workflow: "workflows" },
+    kindByFolder: { decisions: "decision", pipeline: "pipeline", reports: "report", workflows: "workflow" },
     statusEnums: {
       decision: new Set(["proposed", "accepted", "superseded", "rejected"]),
       pipeline: new Set(["design", "qualify", "build", "ship", "archive", "shelved"]),
       report: new Set(["draft", "complete"]),
+      workflow: new Set(["draft", "active", "deprecated"]),
     },
-    requiredSections: { decision: ["Context"], pipeline: [], report: [] },
+    requiredSections: { decision: ["Context"], pipeline: [], report: [], workflow: ["Workflow"] },
+    swimlaneKinds: ["workflow"],
+    swimlaneLaneKinds: new Set(["human", "ai", "system", "tool", "neutral"]),
+    swimlaneSeverity: "error",
+    workflowSection: "Workflow",
     tagRegistry: {
       priority: { type: "enum", values: ["high", "medium", "low"] },
       scope: { type: "string", lintAgainst: ["alpha", "beta"], unknownAllowed: true },
@@ -248,6 +269,13 @@ function selfTest() {
       ...over,
     });
     const errs = (e) => validateEntity(e, ctx).filter((i) => i.severity === "error");
+    // A workflow-kind entity carrying a parsed swimlane (mirrors what loadEntities produces).
+    const wf = (workflow, over = {}) => ({
+      kind: "workflow", id: "wfx", file: "workflows/wfx.md", hasFrontmatter: true,
+      sections: { Workflow: "present" }, fullText: "",
+      fm: { title: "T", status: "draft", updated: "2026-06-20" },
+      workflow, ...over,
+    });
     const cases = [
       ["valid decision → 0 errors", () => errs(base()).length === 0],
       ["bad status enum → error", () => errs(base({ fm: { title: "T", status: "active", updated: "2026-06-20" } })).some((i) => /invalid status/.test(i.message))],
@@ -268,6 +296,16 @@ function selfTest() {
         const lines = captureLines(() => printSummary({ ctx, entities: [base()], issues: [{ severity: "error", file: "decisions/x.md", message: "boom" }], counts: { error: 1, warning: 0, info: 0 } }));
         return lines.length === 2 && /^\[synthetic\] 1 files · 1 errors/.test(lines[0]) && lines[1] === "ERROR: decisions/x.md: boom";
       }],
+      // --- swimlane validation (gated on carriesSwimlanes) ---
+      ["valid swimlane → 0 errors", () => errs(wf({ value: { lanes: [{ id: "you", label: "You", kind: "human" }], steps: [{ id: "a", lane: "you", label: "A", to: [] }] } })).length === 0],
+      ["dangling step.to → error", () => errs(wf({ value: { lanes: [{ id: "you", label: "You" }], steps: [{ id: "a", lane: "you", label: "A", to: ["ghost"] }] } })).some((i) => /workflow .*to/.test(i.message))],
+      ["step.lane references missing lane → error", () => errs(wf({ value: { lanes: [{ id: "you", label: "You" }], steps: [{ id: "a", lane: "ghost", label: "A", to: [] }] } })).some((i) => /workflow .*lane/.test(i.message))],
+      ["duplicate step id → error", () => errs(wf({ value: { lanes: [{ id: "l", label: "L" }], steps: [{ id: "a", lane: "l", label: "A", to: [] }, { id: "a", lane: "l", label: "B", to: [] }] } })).some((i) => /duplicate step id/.test(i.message))],
+      ["unknown lane.kind → warning, not error", () => { const r = validateEntity(wf({ value: { lanes: [{ id: "l", label: "L", kind: "robot" }], steps: [{ id: "a", lane: "l", label: "A", to: [] }] } }), ctx); return r.some((i) => i.severity === "warning" && /lane kind/.test(i.message)) && !r.some((i) => i.severity === "error"); }],
+      ["unreachable step → warning, not error", () => { const r = validateEntity(wf({ value: { lanes: [{ id: "l", label: "L" }], steps: [{ id: "a", lane: "l", label: "A", to: [] }, { id: "b", lane: "l", label: "B", to: ["c"] }, { id: "c", lane: "l", label: "C", to: ["b"] }] } }), ctx); return r.some((i) => i.severity === "warning" && /unreachable/.test(i.message)) && !r.some((i) => i.severity === "error"); }],
+      ["malformed workflow JSON → error", () => errs(wf({ error: "invalid JSON (boom)" })).some((i) => /not valid JSON/.test(i.message))],
+      ["swimlane severity off → suppressed", () => validateEntity(wf({ value: { lanes: [], steps: [{ lane: "x", label: "Y", to: ["ghost"] }] } }), { ...ctx, swimlaneSeverity: "off" }).every((i) => !/workflow/.test(i.message))],
+      ["non-swimlane kind ignores a broken ## Workflow block (gate proof)", () => !validateEntity(base({ workflow: { value: { lanes: "bad" } } }), ctx).some((i) => /workflow/.test(i.message))],
     ];
     let pass = 0;
     for (const [name, fn] of cases) {

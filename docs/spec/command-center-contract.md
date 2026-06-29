@@ -118,9 +118,14 @@ authored block through verbatim, so every field below already reaches the UI):
   - `col` — optional explicit 0-based column (otherwise steps flow sequentially).
 - top-level optional **`caption`** — a one-line summary rendered above the board.
 
-`title`/`code` default from the entity (overridable in the block). A malformed block is warned
-and skipped (it never appears here). The Command Center renders each as a `@trembus/ui`
-`Swimlane`. See decision `0004-pipeline-entities-carry-a-structured-workflow-block`.
+`title`/`code` default from the entity (overridable in the block). The block is parsed once at
+load (`entity.workflow`) and — for kinds that `carriesSwimlanes` — structurally validated by
+`validateEntity` (`lib/swimlane.mjs`): required lane/step fields, unique lane/step ids, and
+resolvable `lane`/`to[]` references, at the severity set by `swimlaneEnforcement.rollout`
+(referential breaks block at `error`; unknown lane kind/status and unreachable steps stay
+warnings). A block that isn't valid JSON, or lacks `lanes[]`/`steps[]`, is dropped from
+`workflows` (the renderer can't lay out half a parse). The Command Center renders each as a
+`@trembus/ui` `Swimlane`. See decision `0004-pipeline-entities-carry-a-structured-workflow-block`.
 
 ### `runs` — optional, windowed run history
 

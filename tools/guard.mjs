@@ -22,6 +22,7 @@ import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { loadContract } from "../lib/contract.mjs";
 import { parseFrontmatter, parseSections } from "../lib/md.mjs";
+import { fencedJson } from "../lib/swimlane.mjs";
 import { validateEntity } from "./validate.mjs";
 
 function escapeRegex(s) {
@@ -78,13 +79,15 @@ export function decide(payload, resolveCtx = defaultResolveCtx) {
   if (content == null) return { allow: true };
 
   const { data, body, hasFrontmatter } = parseFrontmatter(content);
+  const sections = parseSections(body);
   const entity = {
     kind: ctx.kindByFolder[folder],
     id: stem,
     file: relPath,
     fm: data,
     hasFrontmatter,
-    sections: parseSections(body),
+    sections,
+    workflow: fencedJson(sections[ctx.workflowSection]), // parsed like loadEntities, so validateEntity sees it
     fullText: content,
   };
   const errors = validateEntity(entity, ctx).filter((i) => i.severity === "error");
@@ -108,9 +111,11 @@ function selfTest() {
       project: "guard-test",
       kinds: {
         decision: { folder: "decisions", status: ["proposed", "accepted", "superseded", "rejected"], requiredSections: ["Context"] },
+        workflow: { folder: "workflows", status: ["draft", "active", "deprecated"], carriesSwimlanes: true, requiredSections: ["Workflow"] },
       },
       relTargetKinds: { "superseded-by": ["decision"] },
       proseStatusEnforcement: { rollout: "error" },
+      swimlaneEnforcement: { rollout: "error" },
     };
     writeFileSync(join(root, "project-system.config.json"), JSON.stringify(config, null, 2));
     mkdirSync(join(root, "_project", "decisions"), { recursive: true });
@@ -118,6 +123,13 @@ function selfTest() {
     const goodDecision = `---\ntitle: "X"\nstatus: accepted\nupdated: 2026-06-20\n---\n\n# X\n\n**Status**: accepted (2026-06-20)\n\n## Context\n\nx\n`;
     writeFileSync(decisionFile, goodDecision);
     const badStatus = goodDecision.replace("status: accepted", "status: active");
+
+    // A workflow entity whose `## Workflow` swimlane the guard now validates (carriesSwimlanes).
+    mkdirSync(join(root, "_project", "workflows"), { recursive: true });
+    const wfFile = join(root, "_project", "workflows", "loop.md");
+    const goodWf = '---\ntitle: "Loop"\nstatus: active\nupdated: 2026-06-20\n---\n\n# Loop\n\n**Status**: active (2026-06-20)\n\n## Workflow\n\n```json\n{\n  "lanes": [ { "id": "you", "label": "You", "kind": "human" } ],\n  "steps": [ { "id": "a", "lane": "you", "label": "A", "to": [] } ]\n}\n```\n';
+    writeFileSync(wfFile, goodWf);
+    const danglingWf = goodWf.replace('"to": []', '"to": ["ghost"]');
 
     const cases = [
       ["valid Write → allow", () => decide({ tool_name: "Write", tool_input: { file_path: decisionFile, content: goodDecision } }).allow === true],
@@ -130,6 +142,9 @@ function selfTest() {
       ["Edit fm→proposed while prose says accepted → block (prose↔fm)", () => decide({ tool_name: "Edit", tool_input: { file_path: decisionFile, old_string: "status: accepted", new_string: "status: proposed" } }).block === true],
       ["Edit with absent old_string → allow", () => decide({ tool_name: "Edit", tool_input: { file_path: decisionFile, old_string: "this string is not present anywhere", new_string: "x" } }).allow === true],
       ["empty payload → allow", () => decide({}).allow === true],
+      ["valid workflow Write → allow", () => decide({ tool_name: "Write", tool_input: { file_path: wfFile, content: goodWf } }).allow === true],
+      ["dangling step.to Write → block", () => decide({ tool_name: "Write", tool_input: { file_path: wfFile, content: danglingWf } }).block === true],
+      ["Edit a clean workflow into a dangling to → block", () => decide({ tool_name: "Edit", tool_input: { file_path: wfFile, old_string: '"to": []', new_string: '"to": ["ghost"]' } }).block === true],
     ];
 
     let pass = 0;

@@ -72,6 +72,21 @@
       },
       "default": { "rollout": "warn" }
     },
+    "swimlaneLaneKinds": {
+      "description": "Allowed values for a swimlane lane's `kind` (the actor type) on a carriesSwimlanes kind. An unknown kind is a warning, never an error. Default ['human','ai','system','tool','neutral'] (the @trembus/ui Swimlane vocabulary).",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["human", "ai", "system", "tool", "neutral"]
+    },
+    "swimlaneEnforcement": {
+      "description": "Whether/at what severity a carriesSwimlanes kind's `## Workflow` swimlane block is structurally validated (required lane/step fields, unique ids, lane + to[] references resolve). Referential breaks use this severity; advisory issues (unknown lane kind/status, unreachable steps) stay warnings. Mirrors proseStatusEnforcement.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rollout": { "enum": ["off", "warn", "error"], "default": "warn" }
+      },
+      "default": { "rollout": "warn" }
+    },
     "render": {
       "description": "Optional. Drives the hub dashboard renderer. Entirely project-agnostic: a brand string, accent tone, and editorial copy. By default kinds are auto-placed into the hub's hex slots in declared order; `hex` overrides that with a curated layout. The slot-naming is an internal adapter concern, never surfaced here.",
       "type": "object",
@@ -82,6 +97,7 @@
         "tagline": { "type": "string" },
         "tone": { "type": "string", "description": "Accent hex, default #D4AF37." },
         "centerName": { "type": "string", "description": "Label for the center tile (the contract). Default 'ProjectEntity'." },
+        "workflowSection": { "type": "string", "description": "Body section a swimlane lives in. Default 'Workflow'. Parsed once at load into entity.workflow." },
         "hex": {
           "type": "object",
           "description": "Optional curated hex layout. Absent → auto-place one petal per kind-with-entities + a tooling petal. Present → place the declared petals in slot order.",

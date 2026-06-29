@@ -20,6 +20,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { loadContract, loadEntities } from "../lib/contract.mjs";
+import { fencedJson } from "../lib/swimlane.mjs";
 import { listMarkdown, parseFrontmatter } from "../lib/md.mjs";
 import { validateEntity } from "./validate.mjs";
 import { GUIDE_ANATOMY } from "./guide-anatomy.mjs";
@@ -82,30 +83,9 @@ function statusSummary(byStatus) {
   return entries.map(([s, n]) => `${n} ${s}`).join(" · ");
 }
 
-// Parse a single fenced ```json block out of an entity body section. The ONE place that reads
-// a structured block — both the Workflow and Runs facets go through it (single source, no
-// second fence parser). Returns { value }, { error } to warn on, or null (no block present).
-function fencedJson(sectionText) {
-  if (!sectionText) return null;
-  const m = sectionText.match(/```(?:json)?\s*\n([\s\S]*?)```/);
-  if (!m) return null;
-  try {
-    return { value: JSON.parse(m[1]) };
-  } catch (e) {
-    return { error: `invalid JSON (${e.message})` };
-  }
-}
-
-// A structured workflow (a Trembus swimlane contract). Domain-neutral: the engine invents no
-// workflow semantics — it just passes a `{ lanes[], steps[] }` block through.
-function extractWorkflow(sectionText) {
-  const block = fencedJson(sectionText);
-  if (!block || block.error) return block;
-  if (!Array.isArray(block.value?.lanes) || !Array.isArray(block.value?.steps)) {
-    return { error: "needs lanes[] and steps[] arrays" };
-  }
-  return { contract: block.value };
-}
+// `fencedJson` (the ONE fenced-```json reader) now lives in lib/swimlane.mjs, alongside the
+// swimlane structural validator. The Workflow block is parsed once at load (entity.workflow);
+// the Runs and Phases facets below still read their blocks here via the shared fencedJson.
 
 // A run-history log: an array of run records. Sorted newest-first and WINDOWED to the latest
 // `window` so the emitted contract stays bounded even as the authored log grows to hundreds;
@@ -453,16 +433,20 @@ export function buildModel(ctx) {
   // Optional structured workflows: any entity may declare a swimlane in a `## <section>` body
   // (a fenced json block). Keyed by entity id; the Command Center renders each as a Swimlane.
   // The section name is config-driven so the engine carries no domain word.
-  const workflowSection = ctx.render?.workflowSection ?? "Workflow";
+  const workflowSection = ctx.workflowSection;
   const workflows = {};
   for (const e of entities) {
-    const found = extractWorkflow(e.sections?.[workflowSection]);
-    if (!found) continue;
-    if (found.error) {
-      console.warn(`! ${e.kind}/${e.id}: "${workflowSection}" block ignored — ${found.error}`);
+    const wf = e.workflow; // parsed once at load (lib/contract.mjs); validateEntity gates its shape
+    if (!wf) continue;
+    if (wf.error) {
+      console.warn(`! ${e.kind}/${e.id}: "${workflowSection}" block ignored — ${wf.error}`);
       continue;
     }
-    workflows[e.id] = { view: "swimlane", title: e.fm?.title ?? e.id, code: `${e.kind}.${e.id}`, ...found.contract };
+    if (!Array.isArray(wf.value?.lanes) || !Array.isArray(wf.value?.steps)) {
+      console.warn(`! ${e.kind}/${e.id}: "${workflowSection}" block ignored — needs lanes[] and steps[] arrays`);
+      continue;
+    }
+    workflows[e.id] = { view: "swimlane", title: e.fm?.title ?? e.id, code: `${e.kind}.${e.id}`, ...wf.value };
   }
 
   // Optional run history: a `## Runs` block (array of run records) replayed over the workflow.

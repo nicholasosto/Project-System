@@ -90,6 +90,7 @@
   },
   "milestones": [],
   "proseStatusEnforcement": { "rollout": "error" },
+  "swimlaneEnforcement": { "rollout": "error" },
   "render": {
     "hex": {
       "petals": [

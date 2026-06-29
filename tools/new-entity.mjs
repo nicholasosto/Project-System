@@ -23,6 +23,7 @@ import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseFrontmatter, parseSections } from "../lib/md.mjs";
+import { fencedJson } from "../lib/swimlane.mjs";
 import {
   AUTHORED_FIELDS,
   DERIVED_FIELDS,
@@ -123,13 +124,15 @@ function buildContent(ctx, { kind, title, status, date, scope, tags, links }) {
 
 function entityFor(ctx, kind, stem, content) {
   const { data, body, hasFrontmatter } = parseFrontmatter(content);
+  const sections = parseSections(body);
   return {
     kind,
     id: stem,
     file: `_project/${ctx.folderByKind[kind]}/${stem}.md`,
     fm: data,
     hasFrontmatter,
-    sections: parseSections(body),
+    sections,
+    workflow: fencedJson(sections[ctx.workflowSection]), // so the scaffold self-validates its swimlane
     fullText: content,
   };
 }
@@ -223,7 +226,13 @@ function syntheticCtx() {
     filenameScheme,
     requiredSections: sections,
     scaffoldSections: sections,
-    sectionHints: {},
+    // A clean born-valid swimlane stub, so a scaffolded `workflow` exercises swimlane validation
+    // (the real config's richer hint demonstrates status/detail/note; this one just must validate).
+    sectionHints: { Workflow: '```json\n{\n  "lanes": [ { "id": "you", "label": "You", "kind": "human" } ],\n  "steps": [ { "id": "start", "lane": "you", "label": "Start", "status": "done", "to": [] } ]\n}\n```' },
+    swimlaneKinds: ["workflow"],
+    swimlaneLaneKinds: new Set(["human", "ai", "system", "tool", "neutral"]),
+    swimlaneSeverity: "error",
+    workflowSection: "Workflow",
     relEnum: new Set(loadBaseSchema().$defs.rel.enum),
     relTargetKinds: { "superseded-by": ["decision"], milestone: "marker", references: "any" },
     tagRegistry: { tier: { type: "enum", values: ["required", "optional"] } },
@@ -269,6 +278,10 @@ function selfTest() {
     () => scaffold({ kind: "decision", title: "X", links: [{ rel: "superseded-by", target: "decisions/nope" }] }, ctx).errors.some((i) => /dangling/.test(i.message)),
   ]);
   cases.push(["serial stem is zero-padded", () => /^0*\d+-/.test(stemFor(ctx, "decision", "x", "2026-01-01"))]);
+  cases.push([
+    "scaffolded workflow carries a parsed, born-valid swimlane",
+    () => { const r = scaffold({ kind: "workflow", title: "Probe", links: [] }, ctx); return !!entityFor(ctx, "workflow", r.stem, r.content).workflow?.value && r.errors.length === 0; },
+  ]);
   cases.push([
     "--tag with a valid enum value → 0 errors + emitted in frontmatter",
     () => {
