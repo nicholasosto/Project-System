@@ -62,10 +62,17 @@ fails if a consumer renames a vendored tool or forks the wiring — so "copy the
 
 ## Packaging
 
-The contract is **mirrored with a CI drift check**, not yet published — there are 2
+The contract is **mirrored with a drift check**, not yet published — there are 2
 consumers and the threshold to publish `@trembus/project-schema` is 3. Run
 `node tools/check-consumer-drift.mjs` to verify every consumer still mirrors the canonical
-contract (structurally and behaviorally).
+contract (structurally and behaviorally). The full suite runs in CI on every push/PR
+([.github/workflows/ci.yml](.github/workflows/ci.yml), Node 18/20/22, no install — the core is
+zero-dep).
+
+**Today the framework is vendored from a checkout** (`cp -R schema lib tools templates`), not
+`npm install`-able yet (`private: true`). The `files` allowlist governs the eventual
+`@trembus/project-schema` tarball, not the current install — so the `.claude` wiring under
+`templates/` is copied from a clone, not pulled from npm.
 
 ## Docs
 

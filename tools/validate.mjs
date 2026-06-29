@@ -22,6 +22,8 @@ import {
   AUTHORED_FIELDS,
   DERIVED_FIELDS,
   PRIMITIVE_KEYS,
+  REQUIRED_AUTHORED,
+  buildContext,
   classifyTarget,
   loadBaseSchema,
   loadContract,
@@ -83,8 +85,8 @@ export function validateEntity(entity, ctx) {
   }
   if (migrate.length) add("info", `frontmatter fields to migrate: ${migrate.join(", ")}`);
 
-  // Required authored fields.
-  for (const field of ["title", "status", "updated"]) {
+  // Required authored fields (single source — same set the schema-parity self-test pins).
+  for (const field of REQUIRED_AUTHORED) {
     if (!fm[field]) add("error", `missing required field: ${field}`);
   }
 
@@ -312,6 +314,24 @@ function selfTest() {
       ["step ref to a real target → 0 errors", () => errs(wf({ value: { lanes: [{ id: "l", label: "L" }], steps: [{ id: "a", lane: "l", label: "A", to: [], refs: [{ rel: "references", target: "decisions/sample" }] }] } })).length === 0],
       ["step ref to a missing target → error", () => errs(wf({ value: { lanes: [{ id: "l", label: "L" }], steps: [{ id: "a", lane: "l", label: "A", to: [], refs: [{ rel: "references", target: "decisions/nope" }] }] } })).some((i) => /dangling workflow step .* ref target/.test(i.message))],
       ["step ref with wrong-kind rel → error", () => errs(wf({ value: { lanes: [{ id: "l", label: "L" }], steps: [{ id: "a", lane: "l", label: "A", to: [], refs: [{ rel: "predecessor", target: "decisions/sample" }] }] } })).some((i) => /expected pipeline\/report/.test(i.message))],
+      // --- schema parity (CF-6b): the validator's hand-coded constants must still mirror the
+      // canonical base schema, else schema and checker drift silently. Both pass today → a guard. ---
+      ["schema parity — tag shadow-rule equals PRIMITIVE_KEYS", () => {
+        const shadow = (loadBaseSchema().properties?.tags?.not?.anyOf ?? []).flatMap((c) => c.required ?? []);
+        return [...shadow].sort().join(",") === [...PRIMITIVE_KEYS].sort().join(",");
+      }],
+      ["schema parity — base.required equals REQUIRED_AUTHORED ∪ DERIVED_FIELDS", () => {
+        const req = [...(loadBaseSchema().required ?? [])].sort().join(",");
+        return req === [...REQUIRED_AUTHORED, ...DERIVED_FIELDS].sort().join(",");
+      }],
+      // --- ctx-drift guard (CF-4): the hand-built syntheticCtx must not reference a ctx key the
+      // real buildContext seam no longer produces (a renamed/removed field would break the real
+      // path while this synthetic test stayed green). ---
+      ["synthetic ctx keys ⊆ buildContext output (no parallel-ctx drift)", () => {
+        const real = buildContext({ project: "p", kinds: { decision: { folder: "decisions", status: ["proposed", "accepted"] } } }, { configPath: "/x/c.json", projectRoot: "/x" });
+        const realKeys = new Set(Object.keys(real));
+        return Object.keys(syntheticCtx(root)).every((k) => realKeys.has(k));
+      }],
     ];
     let pass = 0;
     for (const [name, fn] of cases) {

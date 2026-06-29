@@ -504,6 +504,51 @@ export function buildModel(ctx) {
   return { entities: entities.length, migrated, counts, nodes, byKind, edges, edgesByRel, workflows, runs, phases, swimlaneKinds: ctx.swimlaneKinds ?? [], guide: buildGuide(ctx) };
 }
 
+// Place the up-to-6 petals around the center — either a curated config.render.hex.petals layout
+// or the auto-placed default (one per kind-with-entities, then a reserved tooling slot). Pure given
+// the petal builders; returns the petals to append after the center. Extracted so the auto-place +
+// overflow branch — which a curated dogfood layout hides from --check — is unit-testable. (CF-6a.)
+function placeDomains({ render, kindsWithEntities, kindPetal, facetPetal, errorCount, proseSeverity }) {
+  const out = [];
+  if (Array.isArray(render.hex?.petals)) {
+    render.hex.petals.forEach((petal, i) => {
+      const pos = KIT_HEX_SLOTS.petals[i];
+      if (!pos) {
+        console.warn(`! hub view holds ${MAX_PETALS} petals; petal #${i + 1} (${petal.facet ?? petal.kind}) overflows and is dropped`);
+        return;
+      }
+      if (petal.facet) out.push(facetPetal(petal.facet, pos));
+      else if (petal.kind) out.push(kindPetal(petal.kind, i, pos));
+    });
+    return out;
+  }
+  // Auto-place: one petal per kind-with-entities, then a tooling petal — in declared order.
+  let petalIdx = 0;
+  const overflow = [];
+  for (const kind of kindsWithEntities) {
+    if (petalIdx >= MAX_PETALS - 1) { overflow.push(kind); continue; } // reserve last slot for tooling
+    out.push(kindPetal(kind, petalIdx, KIT_HEX_SLOTS.petals[petalIdx]));
+    petalIdx += 1;
+  }
+  if (overflow.length) {
+    console.warn(`! hub view holds ${MAX_PETALS} petals; ${overflow.length} kind(s) overflow and are summarized, not tiled: ${overflow.join(", ")}`);
+  }
+  out.push({
+    id: "tooling",
+    pos: KIT_HEX_SLOTS.petals[Math.min(petalIdx, MAX_PETALS - 1)],
+    kind: "shipped",
+    tag: "Tooling",
+    name: "Triad",
+    sub: "validator · scaffolder · guard",
+    status: `${errorCount} errors · prose↔fm ${proseSeverity}`,
+    dot: "#5a6478",
+    note:
+      "Three zero-dependency engines, all reading the one contract via lib/contract.mjs (no check re-implemented): the validator (per-kind enums, link resolution, prose↔frontmatter), the scaffolder behind /new <kind>, and the PreToolUse guard that blocks any _project/ write that would break the contract.",
+    sources: ["tools/validate.mjs", "tools/new-entity.mjs", "tools/guard.mjs"],
+  });
+  return out;
+}
+
 function hubContract(ctx, model) {
   const { byKind, edges, counts, migrated, entities } = model;
   const render = ctx.render ?? {};
@@ -578,42 +623,9 @@ function hubContract(ctx, model) {
     };
   };
 
-  if (Array.isArray(render.hex?.petals)) {
-    render.hex.petals.forEach((petal, i) => {
-      const pos = KIT_HEX_SLOTS.petals[i];
-      if (!pos) {
-        console.warn(`! hub view holds ${MAX_PETALS} petals; petal #${i + 1} (${petal.facet ?? petal.kind}) overflows and is dropped`);
-        return;
-      }
-      if (petal.facet) domains.push(facetPetal(petal.facet, pos));
-      else if (petal.kind) domains.push(kindPetal(petal.kind, i, pos));
-    });
-  } else {
-    // Auto-place: one petal per kind-with-entities, then a tooling petal — in declared order.
-    let petalIdx = 0;
-    const overflow = [];
-    for (const kind of kindsWithEntities) {
-      if (petalIdx >= MAX_PETALS - 1) { overflow.push(kind); continue; } // reserve last slot for tooling
-      domains.push(kindPetal(kind, petalIdx, KIT_HEX_SLOTS.petals[petalIdx]));
-      petalIdx += 1;
-    }
-    if (overflow.length) {
-      console.warn(`! hub view holds ${MAX_PETALS} petals; ${overflow.length} kind(s) overflow and are summarized, not tiled: ${overflow.join(", ")}`);
-    }
-    domains.push({
-      id: "tooling",
-      pos: KIT_HEX_SLOTS.petals[Math.min(petalIdx, MAX_PETALS - 1)],
-      kind: "shipped",
-      tag: "Tooling",
-      name: "Triad",
-      sub: "validator · scaffolder · guard",
-      status: `${counts.error} errors · prose↔fm ${ctx.proseSeverity}`,
-      dot: "#5a6478",
-      note:
-        "Three zero-dependency engines, all reading the one contract via lib/contract.mjs (no check re-implemented): the validator (per-kind enums, link resolution, prose↔frontmatter), the scaffolder behind /new <kind>, and the PreToolUse guard that blocks any _project/ write that would break the contract.",
-      sources: ["tools/validate.mjs", "tools/new-entity.mjs", "tools/guard.mjs"],
-    });
-  }
+  domains.push(
+    ...placeDomains({ render, kindsWithEntities, kindPetal, facetPetal, errorCount: counts.error, proseSeverity: ctx.proseSeverity }),
+  );
 
   // Model-derived defaults; any can be overridden by config.render passthrough below.
   const derived = {
@@ -717,8 +729,68 @@ function check(ctx) {
   return ok;
 }
 
+// --- self-test: pin the pure projection logic that --check + verify-contract can't reach —
+// the auto-place/overflow branch (a curated dogfood layout hides it), extractRuns windowing
+// (the dogfood's Runs block has fewer records than the window), and the tone/dot fallbacks
+// (the dogfood sets explicit dots). Hermetic, no project. (CF-6a.)
+function selfTest() {
+  const kindPetal = (kind, idx, pos) => ({ id: kind, pos, _idx: idx });
+  const facetPetal = (f, pos) => ({ id: f, pos, _facet: true });
+  const runsBlock = (arr) => "```json\n" + JSON.stringify(arr) + "\n```";
+  const ctx = { renderMeta: { a: {}, b: { dot: "#123456" }, c: { tone: "danger" }, d: { dot: "#44DDFF" } } };
+
+  const cases = [
+    ["auto-place: 7 kinds → 5 tiled + tooling, 2 overflow", () => {
+      const p = placeDomains({ render: {}, kindsWithEntities: ["a", "b", "c", "d", "e", "f", "g"], kindPetal, facetPetal, errorCount: 0, proseSeverity: "warn" });
+      return p.length === 6 && p.filter((x) => x.id !== "tooling").length === 5 && p[5].id === "tooling" && p[5].pos === KIT_HEX_SLOTS.petals[5];
+    }],
+    ["auto-place: tooling slot tracks petalIdx + wires errorCount/proseSeverity", () => {
+      const p = placeDomains({ render: {}, kindsWithEntities: ["x", "y"], kindPetal, facetPetal, errorCount: 3, proseSeverity: "error" });
+      return p.length === 3 && p[2].id === "tooling" && p[2].pos === KIT_HEX_SLOTS.petals[2] && p[2].status === "3 errors · prose↔fm error";
+    }],
+    ["curated layout: places kind/facet by slot, no auto tooling", () => {
+      const p = placeDomains({ render: { hex: { petals: [{ kind: "a" }, { facet: "hooks" }, { kind: "b" }] } }, kindsWithEntities: ["a", "b", "c", "d", "e", "f", "g"], kindPetal, facetPetal, errorCount: 0, proseSeverity: "warn" });
+      return p.length === 3 && p[0]._idx === 0 && p[1]._facet === true && p[2]._idx === 2 && !p.some((x) => x.id === "tooling");
+    }],
+    ["curated overflow: >6 declared petals are dropped at MAX_PETALS", () => {
+      const p = placeDomains({ render: { hex: { petals: Array.from({ length: 8 }, (_, i) => ({ kind: "k" + i })) } }, kindsWithEntities: [], kindPetal, facetPetal, errorCount: 0, proseSeverity: "warn" });
+      return p.length === MAX_PETALS;
+    }],
+    ["extractRuns: windows to `window`, newest-first, totals the full set", () => {
+      const recs = Array.from({ length: 30 }, (_, i) => ({ startedAt: 1000 + i, status: i % 2 ? "ok" : "fail" }));
+      const r = extractRuns(runsBlock(recs), 25).runs;
+      return r.total === 30 && r.runs.length === 25 && r.runs[0].startedAt === 1029 && r.rollup.byStatus.ok === 15 && r.rollup.byStatus.fail === 15;
+    }],
+    ["extractRuns: missing/NaN startedAt sorts without throwing", () => {
+      const r = extractRuns(runsBlock([{ status: "ok" }, { startedAt: "nope", status: "x" }, { startedAt: 5, status: "y" }]), 25).runs;
+      return r.total === 3 && r.runs.length === 3;
+    }],
+    ["extractRuns: non-array block → error", () => !!extractRuns(runsBlock({ a: 1 }), 25).error],
+    ["toneForKind: explicit tone > known hex > rotation fallback", () => toneForKind(ctx, "d", 0) === "info" && toneForKind(ctx, "b", 1) === "success" && toneForKind(ctx, "c", 2) === "danger"],
+    ["dotForKind: explicit dot, else palette rotation", () => dotForKind(ctx, "b", 1) === "#123456" && dotForKind(ctx, "a", 0) === DEFAULT_DOTS[0] && dotForKind({ renderMeta: {} }, "z", 7) === DEFAULT_DOTS[7 % DEFAULT_DOTS.length]],
+    ["statusSummary: single → 'all x', multiple → count-desc", () => statusSummary({ a: 1 }) === "all a" && statusSummary({ a: 1, b: 3 }) === "3 b · 1 a"],
+  ];
+
+  const origWarn = console.warn;
+  console.warn = () => {}; // silence the expected overflow warns during the run
+  let pass = 0;
+  try {
+    for (const [name, fn] of cases) {
+      let ok = false;
+      try { ok = fn(); } catch { ok = false; }
+      console.log(`${ok ? "PASS" : "FAIL"}: ${name}`);
+      if (ok) pass += 1;
+    }
+  } finally {
+    console.warn = origWarn;
+  }
+  console.log(`self-test: ${pass}/${cases.length} passed`);
+  return pass === cases.length;
+}
+
 function main() {
   const argv = process.argv.slice(2);
+  if (argv.includes("--self-test")) process.exit(selfTest() ? 0 : 1);
   const opts = {};
   const flags = [];
   for (let i = 0; i < argv.length; i += 1) {
