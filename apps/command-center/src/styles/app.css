@@ -555,6 +555,56 @@ body,
   font-size: 0.82rem;
   font-weight: 600;
 }
+
+/* References: clickable cross-links to the ProjectEntities a step implements (decision / feature /
+   spec). A resolved ref navigates the board to that entity; an unresolved one renders disabled. */
+.cc-stepdetail__refs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.cc-stepdetail__ref {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--tcl-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--tcl-radius-md, 8px);
+  background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.04));
+  color: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cc-stepdetail__ref:hover:not(:disabled) {
+  border-color: var(--tcl-border-strong, rgba(255, 255, 255, 0.25));
+  background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.08));
+}
+.cc-stepdetail__ref:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.cc-stepdetail__ref-rel {
+  flex: none;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+  padding: 0.12rem 0.4rem;
+  border-radius: var(--tcl-radius-full, 9999px);
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+.cc-stepdetail__ref-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
 .cc-stepdetail__terminal {
   margin-top: 1.05rem;
   font-size: 0.78rem;

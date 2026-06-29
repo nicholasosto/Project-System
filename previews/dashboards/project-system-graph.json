@@ -638,6 +638,14 @@
           "note": "Derives the filename per the kind's scheme, writes valid frontmatter (status = the kind's initialStatus), lays down the section skeleton, and self-validates — conformant by construction.",
           "to": [
             "edit"
+          ],
+          "refs": [
+            {
+              "rel": "references",
+              "target": "new-scaffolder",
+              "title": "/new scaffolder",
+              "kind": "feature"
+            }
           ]
         },
         {
@@ -657,6 +665,14 @@
           "note": "The hook re-runs the single validateEntity check on every _project/ write and blocks (exit 2) anything that would break the contract. Read-only, fails open.",
           "to": [
             "validate"
+          ],
+          "refs": [
+            {
+              "rel": "references",
+              "target": "validator-and-guard",
+              "title": "Validator and save-time guard",
+              "kind": "feature"
+            }
           ]
         },
         {
@@ -735,6 +751,14 @@
           "note": "init-config.mjs fills conventional defaults and proves the config loads through lib/contract.mjs before writing it — born valid, like a scaffolded entity.",
           "to": [
             "wire"
+          ],
+          "refs": [
+            {
+              "rel": "references",
+              "target": "0009-born-valid-config-generator",
+              "title": "Generate consumer configs with a born-valid init tool and setup skill",
+              "kind": "decision"
+            }
           ]
         },
         {

@@ -139,6 +139,15 @@ function normalizeNav(raw: unknown): NavEntry[] | undefined {
 
 const AREAS: NavEntry[] = normalizeNav(hub.nav) ?? deriveNav();
 
+// Map an entity kind → the nav tab that surfaces it (for step-ref cross-navigation): a
+// swimlane-carrier or pipeline → Workflows, a kind the Roadmap panel shows → Roadmap, else the
+// kind's own auto-tab, falling back to Overview. Derived from the same seams deriveNav() uses.
+function tabForKind(kind: string): string {
+  if (swimlaneKinds.includes(kind) || WORKFLOW_TABLE_KINDS.includes(kind)) return 'workflows';
+  if (ROADMAP_KINDS.includes(kind)) return 'roadmap';
+  return AREAS.find((a) => a.kinds?.includes(kind))?.value ?? 'overview';
+}
+
 function AreaTable({ kinds, empty }: { kinds: string[]; empty: string }) {
   const rows = entitiesOfKinds(...kinds);
   if (!rows.length) {
@@ -550,6 +559,19 @@ export function App() {
   const [guideSel, setGuideSel] = useState<string | undefined>(undefined);
   const selectedGuideNode = guideSel ? guideIndex.get(guideSel) : undefined;
 
+  // Step-ref cross-navigation: jump to the entity a workflow step references. A workflow target
+  // re-points the picker + opens Workflows; anything else switches to the tab that lists its kind.
+  const navigateToEntity = (target: string) => {
+    const e = entities.find((x) => x.id === target);
+    if (!e) return;
+    if (swimlaneKinds.includes(e.kind)) {
+      setWfId(target);
+      setTab('workflows');
+    } else {
+      setTab(tabForKind(e.kind));
+    }
+  };
+
   // The three bespoke panels (compose multiple kinds + non-kind data — not auto-generatable).
   const overviewBody = (
     <div className="cc-overview">
@@ -605,6 +627,7 @@ export function App() {
           workflow={activeWorkflow.contract}
           runs={activeWorkflow.runs}
           runsTotal={activeWorkflow.runsTotal}
+          onNavigate={navigateToEntity}
         />
       ) : (
         <EmptyState

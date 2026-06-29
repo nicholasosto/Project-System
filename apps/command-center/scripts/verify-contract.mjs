@@ -105,6 +105,25 @@ function verifyGraph(path, label) {
     for (const d of dangling) console.error(`  ✗ ${d.from} --${d.rel}--> ${d.target} (resolved "${d.resolvedTo}")`);
     process.exit(1);
   }
+
+  // Workflow step refs (optional): render-hub denormalizes each authored { rel, target } into a
+  // resolved ref whose `target` is a bare node id. Assert each resolves; unresolved is a SOFT
+  // warning (refs fail open, mirroring render-hub), never a hard exit. Skipped if no workflows.
+  if (g.workflows && typeof g.workflows === 'object') {
+    let unresolved = 0;
+    for (const [wid, wf] of Object.entries(g.workflows)) {
+      for (const step of Array.isArray(wf?.steps) ? wf.steps : []) {
+        for (const ref of Array.isArray(step?.refs) ? step.refs : []) {
+          const to = String(ref?.target ?? '').split('/').pop();
+          if (!ids.has(to)) {
+            unresolved += 1;
+            console.warn(`  ! ${label}: workflow "${wid}" step "${step?.id}" ref → "${ref?.target}" resolves to no node`);
+          }
+        }
+      }
+    }
+    if (unresolved) console.warn(`[verify-contract] ${label}: ${unresolved} workflow step ref(s) unresolved (soft)`);
+  }
 }
 
 let files;

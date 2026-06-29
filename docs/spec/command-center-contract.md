@@ -109,13 +109,18 @@ authored block through verbatim, so every field below already reaches the UI):
 
 - **lane** — `{ id?, label (required), kind? }`, where `kind` ∈ `human · ai · system · tool ·
   neutral` (tints the lane). A step references its lane by `id`, else by `label`.
-- **step** — `{ id?, lane (required), label (required), col?, status?, detail?, note?, to? }`:
+- **step** — `{ id?, lane (required), label (required), col?, status?, detail?, note?, to?, refs? }`:
   - `status` ∈ `done · active · pending · blocked · skipped` — tints the card + status dot.
   - `detail` — a short secondary line shown **on the card**.
   - `note` — guidance shown **in the inspector** when the step is selected.
   - `to` — successor step ids (draws a connector to each); `[]` marks a terminal step; omit to
     flow to the next step in order.
   - `col` — optional explicit 0-based column (otherwise steps flow sequentially).
+  - `refs` — optional typed links into the planning graph: `[{ rel, target }]`, authored exactly
+    like an entity's `links` and validated against `relTargetKinds` (e.g. a step
+    `references decisions/0009-…`). render-hub **denormalizes** each into `{ rel, target, title,
+    kind }` (resolving the target's title/kind from `nodes[]`); the Command Center renders them as
+    clickable cross-links in the step-detail drawer that navigate to the referenced entity.
 - top-level optional **`caption`** — a one-line summary rendered above the board.
 
 `title`/`code` default from the entity (overridable in the block). The block is parsed once at

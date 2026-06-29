@@ -8,8 +8,9 @@
 // time-travel (applyRun) so selecting a run replays its state across the lanes.
 import { useState } from 'react';
 import { RunHistory, Swimlane } from '@trembus/ui';
-import type { RunRecord, SwimlaneContract } from '@trembus/ui';
+import type { RunRecord } from '@trembus/ui';
 import { StepDetail } from './StepDetail';
+import type { StepWithRefs, WorkflowContract } from './contract';
 
 // A true on/off pill that greys out + disables when there is nothing to toggle.
 // role=switch + aria-checked keeps it accessible. (Ported from the SwimlaneRuns example.)
@@ -97,12 +98,12 @@ function SwitchPill({
 // page-local (it is not barrel-exported), so we carry our own copy of the same logic: index
 // outcomes by step id, set each step's status from its outcome (steps the run never mentions
 // fall to `pending`), and fold per-step output labels into the inspector note.
-function applyRun(base: SwimlaneContract, run: RunRecord): SwimlaneContract {
+function applyRun(base: WorkflowContract, run: RunRecord): WorkflowContract {
   if (!run.stepOutcomes?.length) return base;
   const byStep = new Map(run.stepOutcomes.map((o) => [o.step, o]));
   return {
     ...base,
-    steps: base.steps.map((step): SwimlaneContract['steps'][number] => {
+    steps: base.steps.map((step): StepWithRefs => {
       const outcome = step.id != null ? byStep.get(step.id) : undefined;
       if (!outcome) return { ...step, status: 'pending' };
       const outs = outcome.outputs?.length
@@ -118,10 +119,12 @@ export function WorkflowConsole({
   workflow,
   runs = [],
   runsTotal = 0,
+  onNavigate,
 }: {
-  workflow: SwimlaneContract;
+  workflow: WorkflowContract;
   runs?: RunRecord[];
   runsTotal?: number;
+  onNavigate?: (target: string) => void;
 }) {
   const hasRuns = runs.length > 0;
   const [showRuns, setShowRuns] = useState(true);
@@ -187,6 +190,7 @@ export function WorkflowConsole({
                 allSteps={swimlaneData.steps}
                 onClose={() => setStepSel(undefined)}
                 onSelectStep={setStepSel}
+                onNavigate={onNavigate}
               />
             ) : null}
           </div>

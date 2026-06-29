@@ -44,6 +44,27 @@ function statusesAgree(prose, fm) {
   return synonyms[prose] === fm;
 }
 
+// Validate one typed link ({ rel, target }) against the rel vocabulary + relTargetKinds rules.
+// `label` is the noun used in messages, so the SAME check serves frontmatter `links` ("link") and
+// per-step `refs` ("workflow step \"x\" ref") — single source, no second link checker. Pushes via add.
+function validateRel(ctx, link, add, label = "link") {
+  if (!link || typeof link !== "object") return add("error", `malformed ${label} (expected { rel, target })`);
+  if (!ctx.relEnum.has(link.rel)) return add("error", `invalid ${label} rel "${link.rel}"`);
+  if (!link.target) return add("error", `${label} rel ${link.rel} has no target`);
+  const allowed = ctx.relTargetKinds[link.rel];
+  const t = classifyTarget(ctx, link.target);
+  if (allowed === "marker") {
+    if (t.type !== "marker") add("error", `${label} rel ${link.rel} expects a milestone marker, got "${link.target}"`);
+    else if (ctx.knownMilestones.size && !ctx.knownMilestones.has(t.milestone)) add("warning", `unknown milestone ${t.milestone}`);
+  } else if (allowed === "external" || allowed === "any") {
+    if (t.type === "internal" && !t.exists) add("error", `dangling ${label} target: ${link.target}`);
+  } else if (Array.isArray(allowed)) {
+    if (t.type !== "internal") add("error", `${label} rel ${link.rel} expects ${allowed.join("/")} target, got "${link.target}"`);
+    else if (!t.exists) add("error", `dangling ${label} target: ${link.target}`);
+    else if (!allowed.includes(t.kind)) add("error", `${label} rel ${link.rel} points at a ${t.kind} (${link.target}); expected ${allowed.join("/")}`);
+  }
+}
+
 export function validateEntity(entity, ctx) {
   const issues = [];
   const add = (severity, message) => issues.push({ severity, file: entity.file, message });
@@ -106,32 +127,7 @@ export function validateEntity(entity, ctx) {
 
   // links.
   if (Array.isArray(fm.links)) {
-    for (const link of fm.links) {
-      if (!link || typeof link !== "object") {
-        add("error", "malformed link (expected { rel, target })");
-        continue;
-      }
-      if (!ctx.relEnum.has(link.rel)) {
-        add("error", `invalid link rel "${link.rel}"`);
-        continue;
-      }
-      if (!link.target) {
-        add("error", `link rel ${link.rel} has no target`);
-        continue;
-      }
-      const allowed = ctx.relTargetKinds[link.rel];
-      const t = classifyTarget(ctx, link.target);
-      if (allowed === "marker") {
-        if (t.type !== "marker") add("error", `rel ${link.rel} expects a milestone marker, got "${link.target}"`);
-        else if (ctx.knownMilestones.size && !ctx.knownMilestones.has(t.milestone)) add("warning", `unknown milestone ${t.milestone}`);
-      } else if (allowed === "external" || allowed === "any") {
-        if (t.type === "internal" && !t.exists) add("error", `dangling link target: ${link.target}`);
-      } else if (Array.isArray(allowed)) {
-        if (t.type !== "internal") add("error", `rel ${link.rel} expects ${allowed.join("/")} target, got "${link.target}"`);
-        else if (!t.exists) add("error", `dangling link target: ${link.target}`);
-        else if (!allowed.includes(t.kind)) add("error", `rel ${link.rel} points at a ${t.kind} (${link.target}); expected ${allowed.join("/")}`);
-      }
-    }
+    for (const link of fm.links) validateRel(ctx, link, add, "link");
   } else if (fm.links) {
     add("warning", "links is not a sequence");
   }
@@ -154,6 +150,13 @@ export function validateEntity(entity, ctx) {
     } else if (wf && wf.value !== undefined) {
       for (const issue of validateSwimlane(wf.value, { laneKinds: ctx.swimlaneLaneKinds, severity: ctx.swimlaneSeverity })) {
         add(issue.severity, issue.path ? `workflow ${issue.path}: ${issue.message}` : `workflow: ${issue.message}`);
+      }
+      // Per-step refs: typed links into the planning graph, validated like fm.links (relTargetKinds).
+      for (const step of Array.isArray(wf.value.steps) ? wf.value.steps : []) {
+        if (step?.refs == null) continue;
+        const sid = typeof step.id === "string" ? step.id : "?";
+        if (!Array.isArray(step.refs)) { add(ctx.swimlaneSeverity, `workflow step "${sid}" refs must be an array`); continue; }
+        for (const ref of step.refs) validateRel(ctx, ref, add, `workflow step "${sid}" ref`);
       }
     }
     // wf == null (no block) → nothing here; a required-but-missing Workflow section already warns.
@@ -306,6 +309,9 @@ function selfTest() {
       ["malformed workflow JSON → error", () => errs(wf({ error: "invalid JSON (boom)" })).some((i) => /not valid JSON/.test(i.message))],
       ["swimlane severity off → suppressed", () => validateEntity(wf({ value: { lanes: [], steps: [{ lane: "x", label: "Y", to: ["ghost"] }] } }), { ...ctx, swimlaneSeverity: "off" }).every((i) => !/workflow/.test(i.message))],
       ["non-swimlane kind ignores a broken ## Workflow block (gate proof)", () => !validateEntity(base({ workflow: { value: { lanes: "bad" } } }), ctx).some((i) => /workflow/.test(i.message))],
+      ["step ref to a real target → 0 errors", () => errs(wf({ value: { lanes: [{ id: "l", label: "L" }], steps: [{ id: "a", lane: "l", label: "A", to: [], refs: [{ rel: "references", target: "decisions/sample" }] }] } })).length === 0],
+      ["step ref to a missing target → error", () => errs(wf({ value: { lanes: [{ id: "l", label: "L" }], steps: [{ id: "a", lane: "l", label: "A", to: [], refs: [{ rel: "references", target: "decisions/nope" }] }] } })).some((i) => /dangling workflow step .* ref target/.test(i.message))],
+      ["step ref with wrong-kind rel → error", () => errs(wf({ value: { lanes: [{ id: "l", label: "L" }], steps: [{ id: "a", lane: "l", label: "A", to: [], refs: [{ rel: "predecessor", target: "decisions/sample" }] }] } })).some((i) => /expected pipeline\/report/.test(i.message))],
     ];
     let pass = 0;
     for (const [name, fn] of cases) {

@@ -1,11 +1,13 @@
 // The step-detail drawer for the Workflows tab. Mirrors the Overview hub's right-side
 // `.cc-detailpanel` pattern: clicking a swimlane step opens this panel with the step's guidance
-// (lane · status · detail · note) and its handoffs resolved to successor LABELS — each clickable,
-// so the drawer walks the flow. The kit `Swimlane` keeps its own inline inspector for a
-// quick-glance below the board; this is the roomier surface. (Commit 4 adds clickable cross-links
-// to the ProjectEntities a step references.)
+// (lane · status · detail · note), its handoffs resolved to successor LABELS (clickable, so the
+// drawer walks the flow), and — the differentiator — clickable cross-links to the ProjectEntities
+// the step references (decisions / features / specs), which navigate the Command Center to them.
+// The kit `Swimlane` keeps its own inline inspector for a quick-glance below the board; this is
+// the roomier surface (augment, not replace).
 import { Badge, Card } from '@trembus/ui';
-import type { SwimlaneLane, SwimlaneStep } from '@trembus/ui';
+import type { SwimlaneLane } from '@trembus/ui';
+import type { StepWithRefs } from './contract';
 
 type StatusTone = 'success' | 'info' | 'warning' | 'danger' | 'neutral';
 
@@ -29,18 +31,21 @@ export function StepDetail({
   allSteps,
   onClose,
   onSelectStep,
+  onNavigate,
 }: {
-  step: SwimlaneStep;
+  step: StepWithRefs;
   lanes: SwimlaneLane[];
-  allSteps: SwimlaneStep[];
+  allSteps: StepWithRefs[];
   onClose: () => void;
   onSelectStep: (id: string) => void;
+  onNavigate?: (target: string) => void;
 }) {
   const lane = laneFor(lanes, step.lane);
   const successors = (step.to ?? [])
     .map((id) => allSteps.find((s) => s.id === id))
-    .filter((s): s is SwimlaneStep => Boolean(s));
+    .filter((s): s is StepWithRefs => Boolean(s));
   const isTerminal = Array.isArray(step.to) && step.to.length === 0;
+  const refs = step.refs ?? [];
 
   return (
     <Card className="cc-detailpanel__card cc-stepdetail">
@@ -65,6 +70,33 @@ export function StepDetail({
 
       {step.detail ? <p className="cc-stepdetail__detail">{step.detail}</p> : null}
       {step.note ? <p className="cc-stepdetail__note">{step.note}</p> : null}
+
+      {refs.length > 0 ? (
+        <div className="cc-stepdetail__section">
+          <p className="cc-stepdetail__section-head">References</p>
+          <ul className="cc-stepdetail__refs">
+            {refs.map((r, i) => (
+              <li key={`${r.rel}-${r.target}-${i}`}>
+                <button
+                  type="button"
+                  className="cc-stepdetail__ref"
+                  disabled={!r.kind || !onNavigate}
+                  onClick={() => r.kind && onNavigate?.(r.target)}
+                  title={r.kind ? `Go to ${r.kind} “${r.title}”` : 'Unresolved reference'}
+                >
+                  <span className="cc-stepdetail__ref-rel">{r.rel}</span>
+                  <span className="cc-stepdetail__ref-title">{r.title}</span>
+                  {r.kind ? (
+                    <Badge tone="neutral" variant="soft" size="sm">
+                      {r.kind}
+                    </Badge>
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {successors.length > 0 ? (
         <div className="cc-stepdetail__section">

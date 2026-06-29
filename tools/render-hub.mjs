@@ -434,6 +434,22 @@ export function buildModel(ctx) {
   // (a fenced json block). Keyed by entity id; the Command Center renders each as a Swimlane.
   // The section name is config-driven so the engine carries no domain word.
   const workflowSection = ctx.workflowSection;
+  // Denormalize a step's authored refs ({ rel, target }) into navigable { rel, target, title, kind }
+  // — resolved against the same nodes[] the graph emits, so the Command Center shows target TITLES
+  // (and routes by kind) without re-deriving the folder/id strip. Unresolved → kind:null (a non-nav
+  // chip in the UI) and a warning, mirroring the fail-soft posture of the block-ignored warnings.
+  const nodesById = new Map(nodes.map((n) => [n.id, n]));
+  const resolveStepRefs = (refs, e) => {
+    const out = [];
+    for (const r of Array.isArray(refs) ? refs : []) {
+      if (!r || !r.rel || !r.target) continue;
+      const bareId = String(r.target).split("/").pop();
+      const node = nodesById.get(bareId);
+      if (!node) console.warn(`! ${e.kind}/${e.id}: workflow step ref → "${r.target}" resolves to no entity`);
+      out.push({ rel: r.rel, target: bareId, title: node?.title ?? bareId, kind: node?.kind ?? null });
+    }
+    return out;
+  };
   const workflows = {};
   for (const e of entities) {
     const wf = e.workflow; // parsed once at load (lib/contract.mjs); validateEntity gates its shape
@@ -446,7 +462,14 @@ export function buildModel(ctx) {
       console.warn(`! ${e.kind}/${e.id}: "${workflowSection}" block ignored — needs lanes[] and steps[] arrays`);
       continue;
     }
-    workflows[e.id] = { view: "swimlane", title: e.fm?.title ?? e.id, code: `${e.kind}.${e.id}`, ...wf.value };
+    // Resolve per-step refs; a step without refs passes through unchanged (output stays byte-stable).
+    const steps = wf.value.steps.map((s) => {
+      if (!s || typeof s !== "object" || !Array.isArray(s.refs)) return s;
+      const { refs, ...rest } = s;
+      const resolved = resolveStepRefs(refs, e);
+      return resolved.length ? { ...rest, refs: resolved } : rest;
+    });
+    workflows[e.id] = { view: "swimlane", title: e.fm?.title ?? e.id, code: `${e.kind}.${e.id}`, ...wf.value, steps };
   }
 
   // Optional run history: a `## Runs` block (array of run records) replayed over the workflow.

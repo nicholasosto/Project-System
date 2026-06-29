@@ -3,7 +3,7 @@
 // artifacts; it never re-reads _project/. Regenerate them with:
 //   node ../../tools/render-hub.mjs   (zero-dep)
 import type { GraphContract, GraphEdge, GraphNode, LineageTone } from '@trembus/viz';
-import type { HubContract, RunRecord, SwimlaneContract } from '@trembus/ui';
+import type { HubContract, RunRecord, SwimlaneContract, SwimlaneStep } from '@trembus/ui';
 import psGraph from '../../../previews/dashboards/project-system-graph.json';
 import psHub from '../../../previews/dashboards/project-system-hub.json';
 import ssGraph from '../../../previews/dashboards/soul-steel-demo-graph.json';
@@ -255,9 +255,27 @@ export function buildGraphContract(g: RawGraph = graph, h: RawHub = hub): BuildR
 export const hubData = hub as unknown as HubContract;
 
 // Per-entity structured workflows (swimlane contracts) emitted by render-hub.mjs from an
-// entity's `## Workflow` block, keyed by entity id. Phase 2: the Workflows tab renders these.
-export const workflows: Record<string, SwimlaneContract> =
-  (graph.workflows ?? {}) as Record<string, SwimlaneContract>;
+// entity's `## Workflow` block, keyed by entity id. The Workflows tab renders these.
+//
+// A step ref, resolved by render-hub: the rel + the target entity's id, title, and kind (kind is
+// null when the target didn't resolve — the drawer then shows a non-navigating chip).
+export interface ResolvedRef {
+  rel: string;
+  target: string;
+  title: string;
+  kind: string | null;
+}
+// A swimlane step widened with the resolved refs render-hub emits. The kit's SwimlaneStep has no
+// refs field; extra fields are ignored by the kit's <Swimlane>, so this stays structurally
+// compatible (a WorkflowContract is assignable wherever a SwimlaneContract is expected).
+export interface StepWithRefs extends SwimlaneStep {
+  refs?: ResolvedRef[];
+}
+export interface WorkflowContract extends Omit<SwimlaneContract, 'steps'> {
+  steps: StepWithRefs[];
+}
+export const workflows: Record<string, WorkflowContract> =
+  (graph.workflows ?? {}) as Record<string, WorkflowContract>;
 
 // Per-entity run history emitted from a `## Runs` block: the latest `runsWindow` records
 // (newest-first) plus `total` + `rollup` over the full set. Phase 3: RunHistory + time-travel.

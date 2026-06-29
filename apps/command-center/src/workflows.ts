@@ -5,15 +5,16 @@
 // render-hub.mjs extracts each into graph.json's `workflows` map; this module just adapts that
 // map into the picker's option shape. Nothing is hardcoded here anymore — the framework's own
 // authoring loop moved to _project/workflows/authoring-loop.md (decision 0004, fully realized).
-import type { RunRecord, SwimlaneContract } from '@trembus/ui';
+import type { RunRecord } from '@trembus/ui';
 import { entities, runs as contractRuns, swimlaneKinds, workflows as contractWorkflows } from './contract';
+import type { WorkflowContract } from './contract';
 
 export interface WorkflowOption {
   id: string;
   label: string;
   /** Which kind of entity declared it — a standalone `workflow`, or another kind's inline block. */
   source: 'workflow' | 'inline';
-  contract: SwimlaneContract;
+  contract: WorkflowContract;
   /** The latest (windowed) runs to replay over this workflow; empty when none captured. */
   runs: RunRecord[];
   /** Total runs in the source, for an honest "latest N of M" when windowed. */
