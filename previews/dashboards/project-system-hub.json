@@ -12,7 +12,7 @@
   "stats": [
     {
       "label": "entities",
-      "value": 36
+      "value": 38
     },
     {
       "label": "kinds",
@@ -25,19 +25,19 @@
     },
     {
       "label": "edges",
-      "value": 26
+      "value": 29
     }
   ],
   "scopeTitle": "Contract · coverage",
   "scope": [
     {
       "label": "Entities",
-      "num": "36",
+      "num": "38",
       "value": "across 7 kinds"
     },
     {
       "label": "Conformant",
-      "num": "36/36",
+      "num": "38/38",
       "value": "carry frontmatter · 0 pending"
     },
     {
@@ -47,7 +47,7 @@
     },
     {
       "label": "Edges",
-      "num": "26",
+      "num": "29",
       "value": "typed links · decided-in · predecessor · references · successor"
     },
     {
@@ -70,7 +70,7 @@
       "tag": "Contract",
       "name": "ProjectEntity",
       "sub": "3 primitives · 1 shape",
-      "status": "36/36",
+      "status": "38/38",
       "dot": "#D4AF37",
       "note": "One non-optional contract every _project/ file derives from — Identity (kind·id·title) · State (status·updated) · Relation (links). kind & id are loader-derived from the path; the authored surface is just title/status/updated (+links/tags). The validator, scaffolder, guard, and this dashboard all read this single source.",
       "sources": [

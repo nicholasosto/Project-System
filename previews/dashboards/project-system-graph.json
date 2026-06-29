@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 36,
-  "migrated": 36,
+  "entities": 38,
+  "migrated": 38,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -269,6 +269,19 @@
       "excerpt": "<…>"
     },
     {
+      "id": "capture-and-file",
+      "kind": "feature",
+      "title": "Quick-capture and file-to-inbox surface",
+      "status": "planned",
+      "updated": "2026-06-29",
+      "file": "_project/features/capture-and-file.md",
+      "tags": {
+        "scope": "tooling",
+        "tier": "optional"
+      },
+      "excerpt": "A first-class capture → file surface: a durable quick-capture buffer (one record per pending idea/concept) plus an idempotent \"file\" action that writes a born-valid _project/ (or inbox/) entity from the capture and flip…"
+    },
+    {
       "id": "command-center-dashboard",
       "kind": "feature",
       "title": "Command Center dashboard",
@@ -280,6 +293,19 @@
         "tier": "optional"
       },
       "excerpt": "<…>"
+    },
+    {
+      "id": "derived-status-views",
+      "kind": "feature",
+      "title": "Session and plan views derived from the contract",
+      "status": "planned",
+      "updated": "2026-06-29",
+      "file": "_project/features/derived-status-views.md",
+      "tags": {
+        "scope": "tooling",
+        "tier": "optional"
+      },
+      "excerpt": "Make the framework the single source for derived status views — sessions, plans, and the like — so a consumer never hand-maintains a dashboard that drifts from _project/. Surfaced by the Soul-Steel-Official assessment (…"
     },
     {
       "id": "feature-roadmap",
@@ -508,14 +534,16 @@
       ]
     },
     "feature": {
-      "total": 10,
+      "total": 12,
       "byStatus": {
-        "planned": 4,
+        "planned": 6,
         "available": 6
       },
       "ids": [
         "brain-registration",
+        "capture-and-file",
         "command-center-dashboard",
+        "derived-status-views",
         "feature-roadmap",
         "field-guide-reference",
         "init-config-and-setup",
@@ -689,10 +717,28 @@
       "fromKind": "workflow",
       "rel": "references",
       "target": "workflows/authoring-loop"
+    },
+    {
+      "from": "capture-and-file",
+      "fromKind": "feature",
+      "rel": "references",
+      "target": "pipeline/migrate-soul-steel-command-center"
+    },
+    {
+      "from": "derived-status-views",
+      "fromKind": "feature",
+      "rel": "references",
+      "target": "pipeline/migrate-soul-steel-command-center"
+    },
+    {
+      "from": "derived-status-views",
+      "fromKind": "feature",
+      "rel": "references",
+      "target": "decisions/0007-derive-kind-presentation-from-the-contract"
     }
   ],
   "edgesByRel": {
-    "references": 22,
+    "references": 25,
     "decided-in": 1,
     "predecessor": 1,
     "successor": 2

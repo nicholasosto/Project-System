@@ -92,9 +92,9 @@ engines this pipeline relies on. Do on the SS branch.
 9. Verify the capture→file server, runner, code-topology, briefs, and asset explorer all still work
    untouched. *Exit:* `command-center.sh` boots; capture + file-to-inbox round-trips; out-of-scope
    surfaces render.
-10. Open a framework follow-up: evaluate **upstreaming the quick-capture→inbox workflow** (item 5) and
-    **consolidating planning-sessions into render-hub** (item 7) — both are generic enough to belong in
-    the framework, not SS.
+10. Framework follow-ups filed: [[capture-and-file]] (upstream the quick-capture→inbox workflow, item 5)
+    and [[derived-status-views]] (consolidate planning-sessions into the contract, item 7) — both are
+    generic enough to belong in the framework, not SS.
 
 ## Key decisions
 
