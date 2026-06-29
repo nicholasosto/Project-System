@@ -12,13 +12,17 @@ links:
 
 > **Status:** build (2026-06-29)
 
-**Progress:** Phases 0–3 landed on SS branch `migrate/project-system-defork` (not pushed): framework
-vendored into `.project-system/`, root config authored (100% vs golden), the **4 forked engines +
-forked `md.mjs` deleted** (`build-planning-sessions` repointed to the vendored parser; its output
-verified byte-identical), and `.claude` rewired to the vendored engines (guard + SessionStart, generic
-`/new`, both skills; Roblox perms + plugins preserved). Vendored validate holds the baseline
-(`29/0/1/9`). **SS now consumes the framework.** Remaining: Phase 4 (content carry-forwards → 0/0/0 —
-needs the non-marker `milestone` call) and Phase 5 (drift-registry repoint + dashboard tidy).
+**Progress:** Phases 0–5 executed and verified on SS branch `migrate/project-system-defork` (not yet
+pushed/merged). SS now **consumes** the framework: vendored `.project-system/`, its own root config, the
+4 forked engines + forked `md.mjs` deleted (`build-planning-sessions` repointed; output byte-identical),
+`.claude` rewired (the two canonical hooks + generic `/new` + both skills; Roblox perms + plugins
+preserved), all 9 legacy sessions migrated + the two prose nits + the missing `## Context` carried
+forward, and the drift registry repointed (vendored schema · own config · `ownValidator` dropped ·
+`claudeDir` added). **`node tools/check-consumer-drift.mjs` → soul-steel PASS on structural + behavioral
+(`29/0/0/0`) + hooks.** The dead-config bug the session scopes hit is fixed in
+[[0015-honor-unknownallowed-tag-lint]]. Remaining: merge the branch into SS `main` (your call), and the
+dashboard migration — its own pipeline, [[migrate-soul-steel-command-center]], which also owns deleting
+the orphaned stale `project-system*` fork output.
 
 ## Context
 

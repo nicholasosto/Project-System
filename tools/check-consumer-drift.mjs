@@ -47,13 +47,15 @@ const TEMPLATE_SETTINGS = join(FRAMEWORK_ROOT, "templates", "consumer", ".claude
 const CONSUMERS = [
   {
     name: "soul-steel",
-    // The consumer's fused (base+config) schema, for the structural compare.
-    schema: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official/documents/specs/project-system/project-entity.schema.json",
-    // The consumer's _project/ root + the project-system config that describes it.
+    // De-forked 2026-06-29: SS now VENDORS the framework. Compare its vendored base-schema copy
+    // (not the old fused documents/specs schema, which is retired) against canonical.
+    schema: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official/.project-system/schema/project-entity.base.schema.json",
+    // The consumer's _project/ root + its OWN root project-system config (no longer the golden example).
     root: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official",
-    config: join(FRAMEWORK_ROOT, "examples", "soul-steel.config.json"),
-    // Optional: the consumer's own validator, to compare counts against (strongest equivalence).
-    ownValidator: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official/tools/validate-project-entities.mjs",
+    config: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official/project-system.config.json",
+    // No ownValidator: SS relies on the vendored validate.mjs, so there is no separate fork to compare
+    // counts against (behavioral = 0-errors). claudeDir opts SS into the HOOKS parity axis.
+    claudeDir: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official/.claude",
   },
   {
     name: "soul-steel-demo",
