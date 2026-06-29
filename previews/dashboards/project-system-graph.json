@@ -172,7 +172,7 @@
       "status": "design",
       "updated": "2026-06-29",
       "file": "_project/pipeline/migrate-soul-steel-official.md",
-      "excerpt": "<what is forcing this now>"
+      "excerpt": "Extraction (2026-06-24) deliberately left Soul-Steel-Official running its forked tools — the \"no regression\" call. It is still frozen at that commit: forked entity engines (validate-project-entities · new-project-entity…"
     },
     {
       "id": "package-as-trembus-project-schema",
@@ -196,8 +196,8 @@
       "id": "migrate-soul-steel-to-consume-the-packaged-framework",
       "kind": "roadmap",
       "title": "Migrate Soul-Steel to consume the packaged framework",
-      "status": "proposed",
-      "updated": "2026-06-24",
+      "status": "active",
+      "updated": "2026-06-29",
       "file": "_project/roadmap/migrate-soul-steel-to-consume-the-packaged-framework.md",
       "excerpt": "Extraction left Soul-Steel running its original un-generalized tools (deliberately — \"no regression\" this session). That is the second copy that [[0002-mirror-the-contract-with-a-ci-check-before-publishing]] keeps hones…"
     },
@@ -446,8 +446,7 @@
     "roadmap": {
       "total": 2,
       "byStatus": {
-        "active": 1,
-        "proposed": 1
+        "active": 2
       },
       "ids": [
         "command-center",
@@ -604,6 +603,12 @@
       "target": "decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing"
     },
     {
+      "from": "migrate-soul-steel-to-consume-the-packaged-framework",
+      "fromKind": "roadmap",
+      "rel": "successor",
+      "target": "pipeline/migrate-soul-steel-official"
+    },
+    {
       "from": "2026-06-27-command-center-evolution-and-data-driven-kinds",
       "fromKind": "session",
       "rel": "references",
@@ -660,7 +665,8 @@
   ],
   "edgesByRel": {
     "references": 21,
-    "decided-in": 1
+    "decided-in": 1,
+    "successor": 1
   },
   "workflows": {
     "package-as-trembus-project-schema": {

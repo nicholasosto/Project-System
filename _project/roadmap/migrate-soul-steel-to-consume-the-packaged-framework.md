@@ -1,14 +1,15 @@
 ---
 title: "Migrate Soul-Steel to consume the packaged framework"
-status: proposed
-updated: 2026-06-24
+status: active
+updated: 2026-06-29
 links:
   - { rel: references, target: decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing }
+  - { rel: successor, target: pipeline/migrate-soul-steel-official }
 ---
 
 # Migrate Soul-Steel to consume the packaged framework
 
-> **Status:** proposed (2026-06-24)
+> **Status:** active (2026-06-29)
 
 ## Context
 
@@ -17,6 +18,12 @@ Extraction left Soul-Steel running its **original** un-generalized tools (delibe
 [[0002-mirror-the-contract-with-a-ci-check-before-publishing]] keeps honest via the drift
 check. The clean end-state is for Soul-Steel to *consume* the framework rather than carry
 a divergent fork, so there is one implementation and one canonical base contract.
+
+A real, assessed, sequenced execution plan now lives in [[migrate-soul-steel-official]]. Key
+re-assessment finding (2026-06-29): the latest validator already reads **0 errors** against the live
+SS tree (29 files / 5 kinds; 1 warning + 9 info), so the work is mechanical de-forking, not content
+surgery. SS is also already `CONSUMERS[0]` in the drift check (structural + behavioral run today; only
+the hooks axis is skipped for lack of a `claudeDir`).
 
 ## Plan
 
@@ -41,7 +48,11 @@ a divergent fork, so there is one implementation and one canonical base contract
 
 ## Open questions
 
-- Vendor the framework into Soul-Steel, or path-reference it across spaces? (Vendoring
-  keeps Soul-Steel self-contained; path-reference avoids copies but couples the two repos.)
-- Do this before or after a 3rd consumer triggers publishing `@trembus/project-schema`?
-  Publishing would make this a plain `npm install` and may be worth waiting for.
+- ~~Vendor the framework into Soul-Steel, or path-reference it across spaces?~~ **Resolved: vendor
+  verbatim into `SS/.project-system/`** — the documented consumer pattern the drift check is built
+  around; path-referencing couples the two working trees.
+- Do this before or after a 3rd consumer triggers publishing `@trembus/project-schema`? Publishing
+  would make this a plain `npm install`. **Leaning proceed-now** (SS is consumer #2; vendoring is
+  re-copy-to-update, cheap to swap for an install later) — but a deliberate call.
+- Non-marker session `milestone` values (`future`/`post-M5`): register a `milestone` tag (drift-coupled
+  in golden + live config) or drop them? (see [[migrate-soul-steel-official]] Phase 4.)
