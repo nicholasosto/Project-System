@@ -53,6 +53,13 @@ link straight back to the markdown. A node also carries `tags` (the entity's tag
 any** — omitted otherwise — so a view can filter/group by a facet without re-reading `_project/`
 (e.g. the Roadmap groups `feature` nodes by `tags.tier` = required | optional).
 
+A node also carries `excerpt` (a string) **when its body has prose** — the first paragraph of the
+entity's first `## ` section, markdown-stripped and capped (~220 chars). Domain-neutral: "first
+section" is whatever the kind's body leads with (a `decision`'s Context, a `feature`'s Summary…),
+so the engine names no kind. It lets a detail view show a one-line gist of *why* without re-reading
+`_project/` (the Decision Surface uses it). Omitted for a body with no prose — back-compatible, so
+an older app simply ignores it.
+
 ### `byKind` — the per-kind aggregate
 
 `byKind` is an **object keyed by kind name**; every configured kind is seeded even at zero

@@ -24,7 +24,8 @@
       "title": "Aria Vance",
       "status": "concept",
       "updated": "2026-06-27",
-      "file": "_project/characters/aria-vance.md"
+      "file": "_project/characters/aria-vance.md",
+      "excerpt": "A disgraced steel-city engineer who reads the resonance of broken machines — she hears what a mechanism wants to do, and bends it."
     },
     {
       "id": "character-creation",
@@ -35,7 +36,8 @@
       "file": "_project/workflows/character-creation.md",
       "tags": {
         "scope": "ip-wide"
-      }
+      },
+      "excerpt": "Turns a one-line character idea into a canon, riggable, playable character — design, art, 3D, and engine work sequenced so nothing starts before its lore + concept dependencies are locked."
     },
     {
       "id": "character-onboarding",
@@ -43,7 +45,8 @@
       "title": "Character onboarding",
       "status": "draft",
       "updated": "2026-06-27",
-      "file": "_project/workflows/character-onboarding.md"
+      "file": "_project/workflows/character-onboarding.md",
+      "excerpt": "Takes a player from \"new character selected\" to \"in the world with kit equipped\" — reliably, every time."
     }
   ],
   "byKind": {

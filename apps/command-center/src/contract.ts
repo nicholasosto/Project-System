@@ -29,6 +29,8 @@ export interface RawNode {
   file: string;
   /** The entity's tag map (omitted when none) — lets a view filter/group by a facet, e.g. tier. */
   tags?: Record<string, string>;
+  /** First-paragraph gist of the body (markdown-stripped, ~220 chars). Omitted for a prose-less body. */
+  excerpt?: string;
 }
 export interface RawEdge {
   from: string;
@@ -168,6 +170,8 @@ export interface EntityRecord {
   tone: LineageTone;
   /** The entity's tag map (empty when none) — e.g. `tags.tier` = required | optional. */
   tags: Record<string, string>;
+  /** First-paragraph gist of the body ('' when the body carries no prose). */
+  excerpt: string;
 }
 
 function toRecord(n: RawNode): EntityRecord {
@@ -180,6 +184,7 @@ function toRecord(n: RawNode): EntityRecord {
     file: n.file ?? '',
     tone: toneByKind[n.kind] ?? 'neutral',
     tags: n.tags ?? {},
+    excerpt: n.excerpt ?? '',
   };
 }
 
@@ -248,6 +253,109 @@ export function buildGraphContract(g: RawGraph = graph, h: RawHub = hub): BuildR
     },
     dropped,
   };
+}
+
+// ── Relationship surface ────────────────────────────────────────────────────────────────
+// Kind-agnostic projections of the emitted edges[], reused by the Decision Surface (and open to
+// any kind). `from` is a bare id; `target` is a `<folder>/<id>` path — the namespace asymmetry the
+// spec documents — so we resolve a target to its final segment (ids are globally unique).
+const recordById = new Map(entities.map((e) => [e.id, e]));
+const bareId = (target: string): string => String(target).split('/').pop() ?? target;
+
+/** The entity record for an id (the navigable detail), or undefined for an unknown id. */
+export function recordFor(id: string): EntityRecord | undefined {
+  return recordById.get(id);
+}
+
+/** One edge incident to a subject entity, resolved to the entity on the OTHER end + direction. */
+export interface RelatedEdge {
+  rel: string;
+  /** The entity on the other end of the edge from the subject. */
+  other: EntityRecord;
+  /** 'out' = subject → other (an authored link); 'in' = other → subject (a backlink). */
+  dir: 'out' | 'in';
+}
+
+// Every edge touching `id`, resolved to the far entity + direction. Unresolved ends are dropped.
+// The Decision Surface buckets these into Provenance / Lineage / Impact; any view can re-bucket.
+export function relatedEdges(id: string): RelatedEdge[] {
+  const out: RelatedEdge[] = [];
+  for (const e of graph.edges) {
+    const to = bareId(e.target);
+    if (e.from === id) {
+      const other = recordById.get(to);
+      if (other) out.push({ rel: e.rel, other, dir: 'out' });
+    } else if (to === id) {
+      const other = recordById.get(e.from);
+      if (other) out.push({ rel: e.rel, other, dir: 'in' });
+    }
+  }
+  return out;
+}
+
+// A scoped @trembus/viz GraphContract centered on `id`: the subject + its 1-hop neighbors, with
+// every edge among that set (so neighbor↔neighbor context shows, but the graph stays small — the
+// reason the whole-project lineage was retired). Render with <Lineage> + selectedId={id}.
+export function egoGraph(id: string): GraphContract {
+  const center = recordById.get(id);
+  const neighborIds = new Set<string>([id, ...relatedEdges(id).map((r) => r.other.id)]);
+  const nodes: GraphNode[] = [...neighborIds]
+    .map((nid) => recordById.get(nid))
+    .filter((r): r is EntityRecord => Boolean(r))
+    .map((r) => ({ id: r.id, label: r.title, kind: r.kind, sub: r.status, tone: r.tone }));
+  const edges: GraphEdge[] = [];
+  for (const e of graph.edges) {
+    const to = bareId(e.target);
+    if (neighborIds.has(e.from) && neighborIds.has(to)) edges.push({ from: e.from, to, label: e.rel });
+  }
+  return {
+    view: 'lineage',
+    brand: center?.kind ?? 'entity',
+    title: center?.title ?? id,
+    caption: `${nodes.length - 1} linked · ${edges.length} edges`,
+    // Top-down so the ego-graph fits the narrow detail drawer (grows in height, not width).
+    direction: 'TB',
+    nodes,
+    edges,
+  };
+}
+
+/** One entity's cross-kind reach — the heart of the impact constellation. */
+export interface ConstellationRow {
+  entity: EntityRecord;
+  /** Inbound edge count from each OTHER kind (what depends on this entity), by kind. */
+  reachByKind: Record<string, number>;
+  /** Total inbound from other kinds — the "load-bearing" magnitude. */
+  reach: number;
+  /** Same-kind edge degree touching this entity (e.g. the decision↔decision DAG). */
+  lineage: number;
+}
+export interface Constellation {
+  rows: ConstellationRow[];
+  /** The other kinds that actually appear as columns, in declared kind order. */
+  columns: string[];
+}
+
+// Project a kind's entities into the constellation: each row's connectivity across the OTHER kinds
+// (inbound = what depends on it) plus its same-kind lineage degree. Sorted most load-bearing first.
+export function constellation(kind: string): Constellation {
+  const rows: ConstellationRow[] = entitiesOfKinds(kind).map((entity) => {
+    const reachByKind: Record<string, number> = {};
+    let lineage = 0;
+    for (const r of relatedEdges(entity.id)) {
+      if (r.other.kind === kind) lineage += 1;
+      else if (r.dir === 'in') reachByKind[r.other.kind] = (reachByKind[r.other.kind] ?? 0) + 1;
+    }
+    const reach = Object.values(reachByKind).reduce((a, b) => a + b, 0);
+    return { entity, reachByKind, reach, lineage };
+  });
+  const present = new Set(rows.flatMap((r) => Object.keys(r.reachByKind)));
+  const columns = kinds.filter((k) => k !== kind && present.has(k));
+  rows.sort(
+    (a, b) =>
+      b.reach - a.reach || b.lineage - a.lineage || b.entity.updated.localeCompare(a.entity.updated),
+  );
+  return { rows, columns };
 }
 
 // The hub view-model typed for @trembus/ui's <Hub>. hub.json IS the Trembus hub contract,

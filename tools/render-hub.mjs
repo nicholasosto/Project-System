@@ -21,7 +21,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { loadContract, loadEntities } from "../lib/contract.mjs";
 import { fencedJson } from "../lib/swimlane.mjs";
-import { listMarkdown, parseFrontmatter } from "../lib/md.mjs";
+import { listMarkdown, parseFrontmatter, stripMarkdown } from "../lib/md.mjs";
 import { validateEntity } from "./validate.mjs";
 import { GUIDE_ANATOMY } from "./guide-anatomy.mjs";
 
@@ -373,6 +373,23 @@ export function buildGuide(ctx) {
   };
 }
 
+// First-paragraph excerpt of an entity's body — the first non-empty paragraph of its first `## `
+// section, markdown-stripped and length-bounded. Domain-neutral: "first section" is whatever the
+// kind's body leads with (a decision's Context, a feature's Summary, a roadmap's Context…). Lets a
+// view show a one-line gist without re-reading _project/. Empty body → omitted (back-compatible).
+const EXCERPT_MAX = 220;
+function excerptFor(entity) {
+  const sections = entity?.sections;
+  if (!sections || typeof sections !== "object") return null;
+  const first = Object.values(sections).find((v) => typeof v === "string" && v.trim());
+  if (!first) return null;
+  // First paragraph = up to the first blank line; drop a per-line blockquote marker (`> `).
+  const para = first.trim().split(/\n\s*\n/)[0].replace(/^>\s?/gm, "");
+  const text = stripMarkdown(para);
+  if (!text) return null;
+  return text.length > EXCERPT_MAX ? `${text.slice(0, EXCERPT_MAX - 1).trimEnd()}…` : text;
+}
+
 export function buildModel(ctx) {
   const entities = loadEntities(ctx);
   const issues = entities.flatMap((e) => validateEntity(e, ctx));
@@ -427,6 +444,8 @@ export function buildModel(ctx) {
       file: e.file,
     };
     if (e.fm?.tags && typeof e.fm.tags === "object" && Object.keys(e.fm.tags).length) node.tags = e.fm.tags;
+    const excerpt = excerptFor(e);
+    if (excerpt) node.excerpt = excerpt;
     return node;
   });
 

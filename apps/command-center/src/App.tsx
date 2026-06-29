@@ -20,33 +20,16 @@ import {
   ribbonTitle,
   ribbonTotal,
   setConsumer,
-  statusOrderForKind,
   strategy,
   swimlaneKinds,
 } from './contract';
 import type { EntityRecord, GuideNode, Phase } from './contract';
 import { WorkflowConsole } from './WorkflowConsole';
 import { WORKFLOWS } from './workflows';
+import { DecisionSurface } from './DecisionSurface';
+import { groupByStatus, statusTone } from './status';
 
-type StatusTone = 'success' | 'info' | 'warning' | 'danger' | 'neutral';
-
-// Map a per-kind status word onto the shared status-tone ontology. Unknown → neutral.
-const STATUS_TONE: Record<string, StatusTone> = {
-  accepted: 'success',
-  done: 'success',
-  shipped: 'success',
-  complete: 'success',
-  active: 'success',
-  proposed: 'info',
-  draft: 'info',
-  design: 'info',
-  qualify: 'warning',
-  build: 'warning',
-  planned: 'warning',
-  blocked: 'danger',
-  banned: 'danger',
-};
-const statusTone = (s: string): StatusTone => STATUS_TONE[s] ?? 'neutral';
+// statusTone + groupByStatus now live in ./status — one source, shared with the DecisionSurface panel.
 
 // Phase status → Timeline tone. The status words are the project's own (authored in the
 // `## Phases` block); unknown words fall back to neutral. This is the only phase vocabulary
@@ -93,23 +76,29 @@ function phaseTimeline(title: string, phases: Phase[]): TimelineContract {
   };
 }
 
-type NavEntry = { value: string; label: string; panel?: 'overview' | 'roadmap' | 'workflows' | 'guide'; kinds?: string[] };
+type NavEntry = { value: string; label: string; panel?: 'overview' | 'roadmap' | 'decisions' | 'workflows' | 'guide'; kinds?: string[] };
 
 // The editorial seams: which kinds the bespoke panels already surface, so they don't ALSO get an
 // auto-tab. Adding a new kind never edits these — it just gets its own tab (or a config
 // `render.nav` line places it elsewhere). The Overview hub composes everything, so it consumes none.
 const ROADMAP_KINDS = ['feature', 'roadmap', 'report', 'session']; // the Roadmap panel surfaces these
 const WORKFLOW_TABLE_KINDS = ['pipeline']; // the "Build plans" table inside the Workflows panel
+const DECISION_KINDS = ['decision']; // the bespoke Decision Surface (constellation + ledger + ego-graph)
 
-// Default nav when config sets no `render.nav`: Overview + Roadmap, an auto-tab per kind not
-// shown by a special panel (declared order), then Workflows iff any swimlane exists. The old
-// Graph/Lineage view is retired (buildGraphContract + @trembus/viz stay for an easy revival).
+// Default nav when config sets no `render.nav`: Overview + Roadmap, the Decision Surface (when the
+// project declares the decision kind), an auto-tab per remaining kind (declared order), then
+// Workflows iff any swimlane exists. The old Graph/Lineage view is retired (buildGraphContract +
+// @trembus/viz stay — the Decision Surface revives the latter for a scoped ego-graph).
 function deriveNav(): NavEntry[] {
-  const consumed = new Set([...ROADMAP_KINDS, ...WORKFLOW_TABLE_KINDS, ...swimlaneKinds]);
+  const consumed = new Set([...ROADMAP_KINDS, ...DECISION_KINDS, ...WORKFLOW_TABLE_KINDS, ...swimlaneKinds]);
   const nav: NavEntry[] = [
     { value: 'overview', label: 'Overview', panel: 'overview' },
     { value: 'roadmap', label: 'Roadmap', panel: 'roadmap' },
   ];
+  const decisionKinds = DECISION_KINDS.filter((k) => kinds.includes(k));
+  if (decisionKinds.length) {
+    nav.push({ value: 'decisions', label: 'Decisions', panel: 'decisions', kinds: decisionKinds });
+  }
   for (const k of kinds) {
     if (!consumed.has(k)) nav.push({ value: k, label: `${prettify(k)}s`, kinds: [k] });
   }
@@ -145,6 +134,7 @@ const AREAS: NavEntry[] = normalizeNav(hub.nav) ?? deriveNav();
 function tabForKind(kind: string): string {
   if (swimlaneKinds.includes(kind) || WORKFLOW_TABLE_KINDS.includes(kind)) return 'workflows';
   if (ROADMAP_KINDS.includes(kind)) return 'roadmap';
+  if (DECISION_KINDS.includes(kind)) return 'decisions';
   return AREAS.find((a) => a.kinds?.includes(kind))?.value ?? 'overview';
 }
 
@@ -200,20 +190,6 @@ const FACET_SECTION: Record<string, SectionKind> = {
 // domain-neutral emitter having to carry the role — it's derivable from the event name.
 const BLOCKING_HOOK = /^(PreToolUse|UserPromptSubmit)\b/;
 const hookRole = (text: string): string => (BLOCKING_HOOK.test(text) ? 'blocking' : 'advisory');
-
-// Group a kind's entities by status, in the config's declared enum order (`statusOrder`); any
-// off-enum status (the '—' placeholder, a legacy value) is appended in first-seen order. Each
-// group is sorted newest-first. The shared spine of every categorized brief.
-function groupByStatus(kind: string, rows: EntityRecord[]): [string, EntityRecord[]][] {
-  const byStatus = new Map<string, EntityRecord[]>();
-  for (const e of rows) byStatus.set(e.status, [...(byStatus.get(e.status) ?? []), e]);
-  const declared = statusOrderForKind(kind);
-  const ordered = [
-    ...declared.filter((s) => byStatus.has(s)),
-    ...[...byStatus.keys()].filter((s) => !declared.includes(s)),
-  ];
-  return ordered.map((s) => [s, byStatus.get(s)!.slice().sort((a, b) => b.updated.localeCompare(a.updated))]);
-}
 
 // A compact, config-ordered status rollup for a kind's entities — e.g. "1 active · 1 proposed".
 const statusRollup = (kind: string, rows: EntityRecord[]): string =>
@@ -681,6 +657,7 @@ export function App() {
   const renderPanel = (area: NavEntry) => {
     if (area.panel === 'overview') return overviewBody;
     if (area.panel === 'roadmap') return <RoadmapBoard />;
+    if (area.panel === 'decisions') return <DecisionSurface kind={area.kinds?.[0] ?? 'decision'} onNavigate={navigateToEntity} />;
     if (area.panel === 'workflows') return workflowsBody;
     if (area.panel === 'guide') return guideBody;
     return <AreaTable kinds={area.kinds ?? []} empty={`No ${area.label.toLowerCase()} yet.`} />;

@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 34,
-  "migrated": 34,
+  "entities": 35,
+  "migrated": 35,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -24,7 +24,8 @@
       "title": "Home the project-system framework in its own space",
       "status": "accepted",
       "updated": "2026-06-24",
-      "file": "_project/decisions/0001-home-the-project-system-framework-in-its-own-space.md"
+      "file": "_project/decisions/0001-home-the-project-system-framework-in-its-own-space.md",
+      "excerpt": "The ProjectEntity contract + its tooling (validator, scaffolder, guard, hub renderer) were built inside Soul-Steel-Official over 2026-06-24 (commits e4e18fd→4d9078f, phases A–E). The design is project-agnostic — one con…"
     },
     {
       "id": "0002-mirror-the-contract-with-a-ci-check-before-publishing",
@@ -32,7 +33,8 @@
       "title": "Mirror the contract with a CI check before publishing",
       "status": "accepted",
       "updated": "2026-06-24",
-      "file": "_project/decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing.md"
+      "file": "_project/decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing.md",
+      "excerpt": "Extraction ([[0001-home-the-project-system-framework-in-its-own-space]]) makes Project-System the canonical owner of the base contract (schema/project-entity.base.schema.json). Soul-Steel keeps its own working copy of t…"
     },
     {
       "id": "0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter",
@@ -40,7 +42,8 @@
       "title": "Quarantine the kit domain slot names behind a render adapter",
       "status": "accepted",
       "updated": "2026-06-24",
-      "file": "_project/decisions/0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter.md"
+      "file": "_project/decisions/0003-quarantine-the-kit-domain-slot-names-behind-a-render-adapter.md",
+      "excerpt": "The hub renderer projects the entity graph through the Trembus visual-grammar kit. That kit's hub.schema.json hard-codes its 7 hex slots as [\"hub\",\"robot\",\"blood\",\"decay\",\"spirit\",\"fate\",\"shared\"] — Soul-Steel domain na…"
     },
     {
       "id": "0004-pipeline-entities-carry-a-structured-workflow-block",
@@ -48,7 +51,8 @@
       "title": "Pipeline entities carry a structured workflow block",
       "status": "accepted",
       "updated": "2026-06-25",
-      "file": "_project/decisions/0004-pipeline-entities-carry-a-structured-workflow-block.md"
+      "file": "_project/decisions/0004-pipeline-entities-carry-a-structured-workflow-block.md",
+      "excerpt": "The Command Center's Workflows tab visualizes established workflows as a Swimlane (Phase 1). That first swimlane — the framework's authoring loop — was hand-authored in the app. To stay true to the framework's \"source-o…"
     },
     {
       "id": "0005-window-run-history-in-the-contract-sidecar-at-scale",
@@ -56,7 +60,8 @@
       "title": "Window run history in the contract; sidecar at scale",
       "status": "accepted",
       "updated": "2026-06-25",
-      "file": "_project/decisions/0005-window-run-history-in-the-contract-sidecar-at-scale.md"
+      "file": "_project/decisions/0005-window-run-history-in-the-contract-sidecar-at-scale.md",
+      "excerpt": "Run history (Phase 3 of the command-center) follows decision 0004's pattern: an entity carries a ## Runs fenced-JSON block, emitted into the contract and rendered by the Command Center. But runs are append-only log data…"
     },
     {
       "id": "0006-workflow-as-a-first-class-kind-distinct-from-pipeline",
@@ -64,7 +69,8 @@
       "title": "Workflow as a first-class kind, distinct from pipeline",
       "status": "accepted",
       "updated": "2026-06-27",
-      "file": "_project/decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline.md"
+      "file": "_project/decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline.md",
+      "excerpt": "Reshaping the hub's hex grid to surface a Workflows tile exposed a conceptual muddle: the pipeline kind was doing double duty — a staged build plan (design → ship) and the carrier of ## Workflow swimlanes (per 0004). Wo…"
     },
     {
       "id": "0007-derive-kind-presentation-from-the-contract",
@@ -72,7 +78,8 @@
       "title": "Derive kind presentation from the contract",
       "status": "accepted",
       "updated": "2026-06-27",
-      "file": "_project/decisions/0007-derive-kind-presentation-from-the-contract.md"
+      "file": "_project/decisions/0007-derive-kind-presentation-from-the-contract.md",
+      "excerpt": "The engine layer was always config-driven — adding the workflow kind (0006) needed zero engine changes. But the Command Center app still hardcoded kind names in three places: KIND_TONE, the AREAS nav + AreaTable calls,…"
     },
     {
       "id": "0008-field-guide-derived-from-config",
@@ -80,7 +87,8 @@
       "title": "Derive the Field Guide from the config, not authored prose",
       "status": "accepted",
       "updated": "2026-06-28",
-      "file": "_project/decisions/0008-field-guide-derived-from-config.md"
+      "file": "_project/decisions/0008-field-guide-derived-from-config.md",
+      "excerpt": "New collaborators — and the owner returning after a gap — had no in-product way to learn how the system is structured and named; only CLAUDE.md + docs/spec/schema.md. A hand-authored doc-tree would immediately drift fro…"
     },
     {
       "id": "0009-born-valid-config-generator",
@@ -88,7 +96,8 @@
       "title": "Generate consumer configs with a born-valid init tool and setup skill",
       "status": "accepted",
       "updated": "2026-06-28",
-      "file": "_project/decisions/0009-born-valid-config-generator.md"
+      "file": "_project/decisions/0009-born-valid-config-generator.md",
+      "excerpt": "Adopting the framework meant hand-copying examples/soul-steel.config.json and editing it — the moment a project's naming conventions are actually chosen, with no validation until the first engine run. We wanted a guided…"
     },
     {
       "id": "0010-feature-kind-roadmap",
@@ -96,7 +105,8 @@
       "title": "Model the roadmap as a feature kind tiered by tag",
       "status": "accepted",
       "updated": "2026-06-28",
-      "file": "_project/decisions/0010-feature-kind-roadmap.md"
+      "file": "_project/decisions/0010-feature-kind-roadmap.md",
+      "excerpt": "The Command Center had no roadmap of capabilities — only the milestone ribbon (coarse) and per-roadmap ## Phases (coupled to one roadmap). We wanted a single view of \"currently available features (required/optional) vs…"
     },
     {
       "id": "0011-register-a-brain",
@@ -104,7 +114,8 @@
       "title": "Register a brain via a read-only config pointer",
       "status": "proposed",
       "updated": "2026-06-28",
-      "file": "_project/decisions/0011-register-a-brain.md"
+      "file": "_project/decisions/0011-register-a-brain.md",
+      "excerpt": "The owner runs an ecosystem of \"brains\" — KOS brain/v1.1 knowledge vaults (Obsidian graphs under Knowledge-Architectures/graphs/, tracked in a registry, bound to plugins by symlink). A planning project would benefit fro…"
     },
     {
       "id": "0012-managed-project-vault",
@@ -112,7 +123,8 @@
       "title": "Manage a per-project context vault as a scoped KOS instance",
       "status": "proposed",
       "updated": "2026-06-28",
-      "file": "_project/decisions/0012-managed-project-vault.md"
+      "file": "_project/decisions/0012-managed-project-vault.md",
+      "excerpt": "Beyond referencing external brains (0011), a project may want its own scoped knowledge store — a \"context engine\" for project-specific patterns, gotchas, and decision rationale — managed by the planning layer rather tha…"
     },
     {
       "id": "0013-validate-the-swimlane-body-and-let-steps-reference-the-graph",
@@ -120,7 +132,8 @@
       "title": "Validate the swimlane body and let steps reference the graph",
       "status": "accepted",
       "updated": "2026-06-29",
-      "file": "_project/decisions/0013-validate-the-swimlane-body-and-let-steps-reference-the-graph.md"
+      "file": "_project/decisions/0013-validate-the-swimlane-body-and-let-steps-reference-the-graph.md",
+      "excerpt": "workflow is a first-class kind whose ## Workflow swimlane is the entity's reason to exist (0006), yet that body was the least-governed surface in the framework: render-hub only checked that lanes[]/steps[] were arrays,…"
     },
     {
       "id": "0014-migration-skill-infers-config-from-existing-planning",
@@ -128,7 +141,8 @@
       "title": "Adopt existing projects by inference with a migration skill",
       "status": "accepted",
       "updated": "2026-06-29",
-      "file": "_project/decisions/0014-migration-skill-infers-config-from-existing-planning.md"
+      "file": "_project/decisions/0014-migration-skill-infers-config-from-existing-planning.md",
+      "excerpt": "The two existing on-ramps both assume a blank slate: init-config.mjs --preset standard stamps the canonical six kinds, and the setup-project-system skill runs an interview that asks the human \"what does your project pla…"
     },
     {
       "id": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
@@ -136,7 +150,8 @@
       "title": "Extract and generalize the framework from Soul-Steel",
       "status": "complete",
       "updated": "2026-06-24",
-      "file": "_project/reports/2026-06-24-extract-and-generalize-the-framework-from-soul-steel.md"
+      "file": "_project/reports/2026-06-24-extract-and-generalize-the-framework-from-soul-steel.md",
+      "excerpt": "What shipped"
     },
     {
       "id": "2026-06-29-framework-review-load-bearing-surfaces-test-packaging-bootst",
@@ -147,7 +162,17 @@
       "file": "_project/reports/2026-06-29-framework-review-load-bearing-surfaces-test-packaging-bootst.md",
       "tags": {
         "scope": "framework"
-      }
+      },
+      "excerpt": "What shipped"
+    },
+    {
+      "id": "migrate-soul-steel-official",
+      "kind": "pipeline",
+      "title": "Migrate Soul-Steel-Official onto the latest framework",
+      "status": "design",
+      "updated": "2026-06-29",
+      "file": "_project/pipeline/migrate-soul-steel-official.md",
+      "excerpt": "<what is forcing this now>"
     },
     {
       "id": "package-as-trembus-project-schema",
@@ -155,7 +180,8 @@
       "title": "Package as trembus project-schema",
       "status": "design",
       "updated": "2026-06-25",
-      "file": "_project/pipeline/package-as-trembus-project-schema.md"
+      "file": "_project/pipeline/package-as-trembus-project-schema.md",
+      "excerpt": "<what is forcing this now>"
     },
     {
       "id": "command-center",
@@ -163,7 +189,8 @@
       "title": "Command-Center",
       "status": "active",
       "updated": "2026-06-27",
-      "file": "_project/roadmap/command-center.md"
+      "file": "_project/roadmap/command-center.md",
+      "excerpt": "The framework already produces everything a real dashboard needs — it just freezes it into one static HTML file. Three forces make a live surface worth building now:"
     },
     {
       "id": "migrate-soul-steel-to-consume-the-packaged-framework",
@@ -171,7 +198,8 @@
       "title": "Migrate Soul-Steel to consume the packaged framework",
       "status": "proposed",
       "updated": "2026-06-24",
-      "file": "_project/roadmap/migrate-soul-steel-to-consume-the-packaged-framework.md"
+      "file": "_project/roadmap/migrate-soul-steel-to-consume-the-packaged-framework.md",
+      "excerpt": "Extraction left Soul-Steel running its original un-generalized tools (deliberately — \"no regression\" this session). That is the second copy that [[0002-mirror-the-contract-with-a-ci-check-before-publishing]] keeps hones…"
     },
     {
       "id": "2026-06-24-extract-and-generalize-project-system-into-its-own-space",
@@ -179,7 +207,8 @@
       "title": "Extract and generalize project-system into its own space",
       "status": "active",
       "updated": "2026-06-24",
-      "file": "_project/sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space.md"
+      "file": "_project/sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space.md",
+      "excerpt": "<the single outcome this session targets>"
     },
     {
       "id": "2026-06-27-command-center-evolution-and-data-driven-kinds",
@@ -187,7 +216,8 @@
       "title": "Command Center evolution and data-driven kinds",
       "status": "completed",
       "updated": "2026-06-27",
-      "file": "_project/sessions/2026-06-27-command-center-evolution-and-data-driven-kinds.md"
+      "file": "_project/sessions/2026-06-27-command-center-evolution-and-data-driven-kinds.md",
+      "excerpt": "Evolve the Command Center into a config/contract-driven surface, and take the framework's \"supply a config, the framework supplies everything else\" promise all the way to the dashboard — so adding an entity kind is fric…"
     },
     {
       "id": "2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a",
@@ -195,7 +225,8 @@
       "title": "Enhance workflows — validate the swimlane body, step guidance, and graph links",
       "status": "completed",
       "updated": "2026-06-29",
-      "file": "_project/sessions/2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a.md"
+      "file": "_project/sessions/2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a.md",
+      "excerpt": "Address the report that workflow steps were \"minimally stated, with little guidance when clicked\" — and, more broadly, close the gap between the rich @trembus/ui swimlane model and the framework's thin authoring/validat…"
     },
     {
       "id": "authoring-loop",
@@ -203,7 +234,8 @@
       "title": "Authoring loop",
       "status": "active",
       "updated": "2026-06-27",
-      "file": "_project/workflows/authoring-loop.md"
+      "file": "_project/workflows/authoring-loop.md",
+      "excerpt": "The framework's own operating loop — how every _project/ artifact is born valid and reaches the live Command Center. Three actors: you (the author), the zero-dep engines (scaffolder · guard · validator · renderer), and…"
     },
     {
       "id": "instantiate-a-new-project-system-project",
@@ -211,7 +243,8 @@
       "title": "Instantiate a new Project-System project",
       "status": "draft",
       "updated": "2026-06-29",
-      "file": "_project/workflows/instantiate-a-new-project-system-project.md"
+      "file": "_project/workflows/instantiate-a-new-project-system-project.md",
+      "excerpt": "The consumer-onboarding loop — how a fresh repo becomes a Project-System consumer: vendor the framework verbatim, generate a born-valid config, wire the Claude Code control surface, register for the drift check, then ve…"
     },
     {
       "id": "brain-registration",
@@ -223,7 +256,8 @@
       "tags": {
         "scope": "framework",
         "tier": "optional"
-      }
+      },
+      "excerpt": "<…>"
     },
     {
       "id": "command-center-dashboard",
@@ -235,7 +269,8 @@
       "tags": {
         "scope": "tooling",
         "tier": "optional"
-      }
+      },
+      "excerpt": "<…>"
     },
     {
       "id": "feature-roadmap",
@@ -247,7 +282,8 @@
       "tags": {
         "scope": "tooling",
         "tier": "optional"
-      }
+      },
+      "excerpt": "<…>"
     },
     {
       "id": "field-guide-reference",
@@ -259,7 +295,8 @@
       "tags": {
         "scope": "docs",
         "tier": "optional"
-      }
+      },
+      "excerpt": "<…>"
     },
     {
       "id": "init-config-and-setup",
@@ -271,7 +308,8 @@
       "tags": {
         "scope": "tooling",
         "tier": "optional"
-      }
+      },
+      "excerpt": "<…>"
     },
     {
       "id": "managed-project-vault",
@@ -283,7 +321,8 @@
       "tags": {
         "scope": "framework",
         "tier": "optional"
-      }
+      },
+      "excerpt": "<…>"
     },
     {
       "id": "new-scaffolder",
@@ -295,7 +334,8 @@
       "tags": {
         "scope": "tooling",
         "tier": "required"
-      }
+      },
+      "excerpt": "<…>"
     },
     {
       "id": "projectentity-contract",
@@ -307,7 +347,8 @@
       "tags": {
         "scope": "framework",
         "tier": "required"
-      }
+      },
+      "excerpt": "<…>"
     },
     {
       "id": "publish-project-schema",
@@ -319,7 +360,8 @@
       "tags": {
         "scope": "packaging",
         "tier": "required"
-      }
+      },
+      "excerpt": "<…>"
     },
     {
       "id": "validator-and-guard",
@@ -331,7 +373,8 @@
       "tags": {
         "scope": "tooling",
         "tier": "required"
-      }
+      },
+      "excerpt": "<…>"
     }
   ],
   "byKind": {
@@ -382,11 +425,12 @@
       ]
     },
     "pipeline": {
-      "total": 1,
+      "total": 2,
       "byStatus": {
-        "design": 1
+        "design": 2
       },
       "ids": [
+        "migrate-soul-steel-official",
         "package-as-trembus-project-schema"
       ],
       "tone": "accent",
@@ -530,6 +574,18 @@
       "target": "sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space"
     },
     {
+      "from": "migrate-soul-steel-official",
+      "fromKind": "pipeline",
+      "rel": "references",
+      "target": "roadmap/migrate-soul-steel-to-consume-the-packaged-framework"
+    },
+    {
+      "from": "migrate-soul-steel-official",
+      "fromKind": "pipeline",
+      "rel": "references",
+      "target": "decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing"
+    },
+    {
       "from": "command-center",
       "fromKind": "roadmap",
       "rel": "references",
@@ -603,7 +659,7 @@
     }
   ],
   "edgesByRel": {
-    "references": 19,
+    "references": 21,
     "decided-in": 1
   },
   "workflows": {
