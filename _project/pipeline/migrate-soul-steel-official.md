@@ -1,6 +1,6 @@
 ---
 title: "Migrate Soul-Steel-Official onto the latest framework"
-status: design
+status: build
 updated: 2026-06-29
 links:
   - { rel: references, target: roadmap/migrate-soul-steel-to-consume-the-packaged-framework }
@@ -10,7 +10,13 @@ links:
 
 # Migrate Soul-Steel-Official onto the latest framework
 
-> **Status:** design (2026-06-29)
+> **Status:** build (2026-06-29)
+
+**Progress:** Phase 0–1 landed on SS branch `migrate/project-system-defork` (not pushed) — framework
+vendored into `.project-system/`, root `project-system.config.json` authored (scores 100% vs the
+golden), and the vendored engines reproduce the baseline exactly (`29 files / 0 errors / 1 warning /
+9 info`). Phases 2–5 (repoint-before-delete, `.claude` rewire, content carry-forwards, rejoin the
+mirror) are pending.
 
 ## Context
 

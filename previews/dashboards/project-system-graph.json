@@ -178,7 +178,7 @@
       "id": "migrate-soul-steel-official",
       "kind": "pipeline",
       "title": "Migrate Soul-Steel-Official onto the latest framework",
-      "status": "design",
+      "status": "build",
       "updated": "2026-06-29",
       "file": "_project/pipeline/migrate-soul-steel-official.md",
       "excerpt": "Extraction (2026-06-24) deliberately left Soul-Steel-Official running its forked tools — the \"no regression\" call. It is still frozen at that commit: forked entity engines (validate-project-entities · new-project-entity…"
@@ -462,7 +462,8 @@
     "pipeline": {
       "total": 3,
       "byStatus": {
-        "design": 3
+        "design": 2,
+        "build": 1
       },
       "ids": [
         "migrate-soul-steel-command-center",
