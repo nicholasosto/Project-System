@@ -58,6 +58,16 @@ const CONSUMERS = [
     claudeDir: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official/.claude",
   },
   {
+    name: "asset-studio",
+    // The game-agnostic asset-production space (REAL consumer #2). VENDORS the framework like SS;
+    // its config adds a domain `medium` kind atop the standard six. No ownValidator (vendored
+    // validate.mjs); claudeDir opts it into the HOOKS parity axis.
+    schema: "/Users/nicholasosto/Master-Managed/Project-Spaces/Asset-Studio/.project-system/schema/project-entity.base.schema.json",
+    root: "/Users/nicholasosto/Master-Managed/Project-Spaces/Asset-Studio",
+    config: "/Users/nicholasosto/Master-Managed/Project-Spaces/Asset-Studio/project-system.config.json",
+    claudeDir: "/Users/nicholasosto/Master-Managed/Project-Spaces/Asset-Studio/.claude",
+  },
+  {
     name: "soul-steel-demo",
     // An in-repo FICTIONAL consumer (adds `character` + `workflow` kinds the core has never
     // seen) — the test bed for consumer-shaped `/new`, validation, and drift. Always reachable,

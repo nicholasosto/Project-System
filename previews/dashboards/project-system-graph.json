@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 39,
-  "migrated": 39,
+  "entities": 41,
+  "migrated": 41,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -175,6 +175,15 @@
       "excerpt": "What shipped"
     },
     {
+      "id": "2026-06-30-bootstrapping-the-asset-studio",
+      "kind": "report",
+      "title": "Bootstrapping the Asset-Studio space",
+      "status": "draft",
+      "updated": "2026-06-30",
+      "file": "_project/reports/2026-06-30-bootstrapping-the-asset-studio.md",
+      "excerpt": "What shipped"
+    },
+    {
       "id": "migrate-soul-steel-command-center",
       "kind": "pipeline",
       "title": "Migrate the Soul-Steel-Official command center onto the framework",
@@ -302,6 +311,19 @@
         "tier": "optional"
       },
       "excerpt": "<…>"
+    },
+    {
+      "id": "consumer-onboarding-helpers",
+      "kind": "feature",
+      "title": "Consumer onboarding helpers",
+      "status": "planned",
+      "updated": "2026-06-30",
+      "file": "_project/features/consumer-onboarding-helpers.md",
+      "tags": {
+        "scope": "tooling",
+        "tier": "optional"
+      },
+      "excerpt": "A small set of helpers that automate the manual steps of adopting the framework in a new space — the residue left after the born-valid generator and scaffolder do their part:"
     },
     {
       "id": "derived-status-views",
@@ -454,14 +476,15 @@
       ]
     },
     "report": {
-      "total": 2,
+      "total": 3,
       "byStatus": {
         "complete": 1,
-        "draft": 1
+        "draft": 2
       },
       "ids": [
         "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
-        "2026-06-29-framework-review-load-bearing-surfaces-test-packaging-bootst"
+        "2026-06-29-framework-review-load-bearing-surfaces-test-packaging-bootst",
+        "2026-06-30-bootstrapping-the-asset-studio"
       ],
       "tone": "success",
       "statusOrder": [
@@ -546,15 +569,16 @@
       ]
     },
     "feature": {
-      "total": 12,
+      "total": 13,
       "byStatus": {
-        "planned": 6,
+        "planned": 7,
         "available": 6
       },
       "ids": [
         "brain-registration",
         "capture-and-file",
         "command-center-dashboard",
+        "consumer-onboarding-helpers",
         "derived-status-views",
         "feature-roadmap",
         "field-guide-reference",
@@ -627,6 +651,24 @@
       "fromKind": "report",
       "rel": "references",
       "target": "sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space"
+    },
+    {
+      "from": "2026-06-30-bootstrapping-the-asset-studio",
+      "fromKind": "report",
+      "rel": "references",
+      "target": "features/consumer-onboarding-helpers"
+    },
+    {
+      "from": "2026-06-30-bootstrapping-the-asset-studio",
+      "fromKind": "report",
+      "rel": "references",
+      "target": "features/init-config-and-setup"
+    },
+    {
+      "from": "2026-06-30-bootstrapping-the-asset-studio",
+      "fromKind": "report",
+      "rel": "references",
+      "target": "features/new-scaffolder"
     },
     {
       "from": "migrate-soul-steel-command-center",
@@ -743,6 +785,12 @@
       "target": "pipeline/migrate-soul-steel-command-center"
     },
     {
+      "from": "consumer-onboarding-helpers",
+      "fromKind": "feature",
+      "rel": "references",
+      "target": "features/init-config-and-setup"
+    },
+    {
       "from": "derived-status-views",
       "fromKind": "feature",
       "rel": "references",
@@ -756,7 +804,7 @@
     }
   ],
   "edgesByRel": {
-    "references": 26,
+    "references": 30,
     "decided-in": 1,
     "predecessor": 1,
     "successor": 2
