@@ -178,8 +178,8 @@
       "id": "migrate-soul-steel-command-center",
       "kind": "pipeline",
       "title": "Migrate the Soul-Steel-Official command center onto the framework",
-      "status": "build",
-      "updated": "2026-06-29",
+      "status": "ship",
+      "updated": "2026-06-30",
       "file": "_project/pipeline/migrate-soul-steel-command-center.md",
       "excerpt": "The contract de-fork ([[migrate-soul-steel-official]]) treated SS's dashboard as out of scope. This pipeline pulls the command center into scope (excepting the asset explorer) and migrates the planning-derived surfaces…"
     },
@@ -187,8 +187,8 @@
       "id": "migrate-soul-steel-official",
       "kind": "pipeline",
       "title": "Migrate Soul-Steel-Official onto the latest framework",
-      "status": "build",
-      "updated": "2026-06-29",
+      "status": "ship",
+      "updated": "2026-06-30",
       "file": "_project/pipeline/migrate-soul-steel-official.md",
       "excerpt": "Extraction (2026-06-24) deliberately left Soul-Steel-Official running its forked tools — the \"no regression\" call. It is still frozen at that commit: forked entity engines (validate-project-entities · new-project-entity…"
     },
@@ -214,8 +214,8 @@
       "id": "migrate-soul-steel-to-consume-the-packaged-framework",
       "kind": "roadmap",
       "title": "Migrate Soul-Steel to consume the packaged framework",
-      "status": "active",
-      "updated": "2026-06-29",
+      "status": "complete",
+      "updated": "2026-06-30",
       "file": "_project/roadmap/migrate-soul-steel-to-consume-the-packaged-framework.md",
       "excerpt": "Extraction left Soul-Steel running its original un-generalized tools (deliberately — \"no regression\" this session). That is the second copy that [[0002-mirror-the-contract-with-a-ci-check-before-publishing]] keeps hones…"
     },
@@ -472,7 +472,7 @@
     "pipeline": {
       "total": 3,
       "byStatus": {
-        "build": 2,
+        "ship": 2,
         "design": 1
       },
       "ids": [
@@ -493,7 +493,8 @@
     "roadmap": {
       "total": 2,
       "byStatus": {
-        "active": 2
+        "active": 1,
+        "complete": 1
       },
       "ids": [
         "command-center",
@@ -1431,7 +1432,7 @@
               "children": [
                 {
                   "id": "project/report/example",
-                  "label": "2026-06-29-example-title.md",
+                  "label": "2026-06-30-example-title.md",
                   "path": null,
                   "nodeType": "kind-file",
                   "origin": "derived",
@@ -1617,7 +1618,7 @@
               "children": [
                 {
                   "id": "project/session/example",
-                  "label": "2026-06-29-example-title.md",
+                  "label": "2026-06-30-example-title.md",
                   "path": null,
                   "nodeType": "kind-file",
                   "origin": "derived",

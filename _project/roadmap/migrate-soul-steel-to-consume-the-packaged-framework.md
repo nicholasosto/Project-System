@@ -1,7 +1,7 @@
 ---
 title: "Migrate Soul-Steel to consume the packaged framework"
-status: active
-updated: 2026-06-29
+status: complete
+updated: 2026-06-30
 links:
   - { rel: references, target: decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing }
   - { rel: successor, target: pipeline/migrate-soul-steel-official }
@@ -9,7 +9,16 @@ links:
 
 # Migrate Soul-Steel to consume the packaged framework
 
-> **Status:** active (2026-06-29)
+> **Status:** complete (2026-06-30)
+
+**Outcome (2026-06-30):** Done. Soul-Steel-Official consumes the vendored framework — the de-fork
+([[migrate-soul-steel-official]]) and the command-center migration ([[migrate-soul-steel-command-center]])
+both shipped and merged into SS `main` (PR #1). `check-consumer-drift.mjs` reports soul-steel **PASS** on
+structural · behavioral · hooks; SS validates 0/0/0 through the vendored engines. The dashboard's
+`plan-board` view was descoped to a future SS-side redesign (the live composite is Hub + Decisions, both
+regenerable phenotype). The publish-vs-vendor question stands open — SS is still consumer #2; publishing
+`@trembus/project-schema` stays deferred to a 3rd consumer per
+[[0002-mirror-the-contract-with-a-ci-check-before-publishing]].
 
 ## Context
 

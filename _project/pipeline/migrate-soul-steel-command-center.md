@@ -1,7 +1,7 @@
 ---
 title: "Migrate the Soul-Steel-Official command center onto the framework"
-status: build
-updated: 2026-06-29
+status: ship
+updated: 2026-06-30
 links:
   - { rel: predecessor, target: pipeline/migrate-soul-steel-official }
   - { rel: references, target: roadmap/migrate-soul-steel-to-consume-the-packaged-framework }
@@ -9,7 +9,7 @@ links:
 
 # Migrate the Soul-Steel-Official command center onto the framework
 
-> **Status:** build (2026-06-29)
+> **Status:** ship (2026-06-30)
 
 **Progress (2026-06-29):** Started on the SS `migrate/project-system-defork` branch (per the branch
 decision). **Bridge proven:** the kit `build.mjs --manifest` rebuilds the composite
@@ -32,9 +32,17 @@ not hand-edited. (Surgical 10-line diff, cross-checked against `status.md` for c
 the orphaned stale `project-system*.{json,html}` fork output is deleted; the Atlas (`previews/index.html`)
 was regenerated via `build-atlas.mjs` — the dead "Project System" card is gone (5 dashboards, no stray
 warnings) and the render-status-board-generated **Command Center** card is the live entry; the dashboards
-README index was updated to match. **Remaining:** (optional) revive the dormant `plan-board`; then cut
-over via the de-fork branch merge into SS `main`. The decision-tree view was left as-is — it's current
-(5 ADRs match `_project/decisions/`) and now governed by the regenerate-from-source convention.
+README index was updated to match. **Shipped (2026-06-30):** the de-fork branch is merged into SS `main`
+(PR #1, `e829ebf`), so the live command center is the migrated one. Re-verified on close-out: the
+composite rebuilds **byte-identical** (115,551 B, empty diff) from `contracts/*.json` via
+`build.mjs --manifest` — a true regenerable phenotype, no hand-edits. The decision-tree view was left
+as-is — it's current (5 ADRs match `_project/decisions/`) and now governed by the regenerate-from-source
+convention. **`plan-board` is descoped, not migrated:** it was dormant before this pipeline began (the
+live composite was always two views, Hub + Decisions), and reviving it is a *design* round, not
+mechanical re-sourcing — the `render-status-board` plan-board step is manual-curation v1 (one board =
+one pipeline) while SS now carries six. The deferral is recorded in the SS `command-center.manifest.json`
+`_note`; any future plan-board redesign is an SS-side concern tracked there, not a blocker on this
+migration.
 
 ## Context
 

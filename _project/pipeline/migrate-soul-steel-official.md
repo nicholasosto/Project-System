@@ -1,7 +1,7 @@
 ---
 title: "Migrate Soul-Steel-Official onto the latest framework"
-status: build
-updated: 2026-06-29
+status: ship
+updated: 2026-06-30
 links:
   - { rel: references, target: roadmap/migrate-soul-steel-to-consume-the-packaged-framework }
   - { rel: references, target: decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing }
@@ -10,7 +10,7 @@ links:
 
 # Migrate Soul-Steel-Official onto the latest framework
 
-> **Status:** build (2026-06-29)
+> **Status:** ship (2026-06-30)
 
 **Progress:** Phases 0–5 executed and verified on SS branch `migrate/project-system-defork` (not yet
 pushed/merged). SS now **consumes** the framework: vendored `.project-system/`, its own root config, the
@@ -20,9 +20,10 @@ preserved), all 9 legacy sessions migrated + the two prose nits + the missing `#
 forward, and the drift registry repointed (vendored schema · own config · `ownValidator` dropped ·
 `claudeDir` added). **`node tools/check-consumer-drift.mjs` → soul-steel PASS on structural + behavioral
 (`29/0/0/0`) + hooks.** The dead-config bug the session scopes hit is fixed in
-[[0015-honor-unknownallowed-tag-lint]]. Remaining: merge the branch into SS `main` (your call), and the
-dashboard migration — its own pipeline, [[migrate-soul-steel-command-center]], which also owns deleting
-the orphaned stale `project-system*` fork output.
+[[0015-honor-unknownallowed-tag-lint]]. **Shipped (2026-06-30):** both remaining items are resolved —
+the branch is merged into SS `main` (PR #1, `e829ebf`), and the dashboard migration shipped in its own
+pipeline, [[migrate-soul-steel-command-center]] (which deleted the orphaned stale `project-system*` fork
+output). `check-consumer-drift.mjs` → soul-steel **PASS** on structural · behavioral · hooks at close-out.
 
 ## Context
 
