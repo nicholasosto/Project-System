@@ -65,6 +65,29 @@ body,
   margin: 0 auto;
 }
 
+/* Framework system map — a full-width block below the hub row. */
+.cc-overview__map {
+  width: 100%;
+  max-width: 76rem;
+  margin: 1.75rem auto 0;
+}
+.cc-overview__map-head {
+  margin-bottom: 0.85rem;
+}
+.cc-overview__map-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--tcl-text, #fff);
+}
+.cc-overview__map-sub {
+  margin: 0.3rem 0 0;
+  max-width: 48rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.62));
+}
+
 .cc-overview__hub {
   flex: 1 1 auto;
   min-width: 0;

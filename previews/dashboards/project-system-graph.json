@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 41,
-  "migrated": 41,
+  "entities": 43,
+  "migrated": 43,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -152,6 +152,15 @@
       "updated": "2026-06-29",
       "file": "_project/decisions/0015-honor-unknownallowed-tag-lint.md",
       "excerpt": "The Soul-Steel-Official migration ([[migrate-soul-steel-official]], Phase 4) surfaced a real bug: the config field unknownAllowed was dead. schema/project-config.schema.json declared it on a tagSpec (with default: true)…"
+    },
+    {
+      "id": "0016-system-map-as-a-first-class-kind-distinct-from-the-derived-f",
+      "kind": "decision",
+      "title": "System-map as a first-class kind, distinct from the derived framework-anatomy map",
+      "status": "proposed",
+      "updated": "2026-07-01",
+      "file": "_project/decisions/0016-system-map-as-a-first-class-kind-distinct-from-the-derived-f.md",
+      "excerpt": "The Command Center grew a system-map view ([[command-center-system-map]]) — a C4-style architecture diagram via @trembus/viz SystemMap, authored in apps/command-center/src/systemMap.ts and rendered in the Overview. Stan…"
     },
     {
       "id": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
@@ -313,6 +322,19 @@
       "excerpt": "<…>"
     },
     {
+      "id": "command-center-system-map",
+      "kind": "feature",
+      "title": "System-map view in the Command Center Overview",
+      "status": "available",
+      "updated": "2026-07-01",
+      "file": "_project/features/command-center-system-map.md",
+      "tags": {
+        "scope": "tooling",
+        "tier": "optional"
+      },
+      "excerpt": "A C4-style system map of the framework on the Command Center Overview, rendered with @trembus/viz SystemMap (0.3.0). It shows the framework's architecture — the contract (schema/), the seam (lib/contract.mjs), the four…"
+    },
+    {
       "id": "consumer-onboarding-helpers",
       "kind": "feature",
       "title": "Consumer onboarding helpers",
@@ -445,10 +467,10 @@
   ],
   "byKind": {
     "decision": {
-      "total": 15,
+      "total": 16,
       "byStatus": {
         "accepted": 13,
-        "proposed": 2
+        "proposed": 3
       },
       "ids": [
         "0001-home-the-project-system-framework-in-its-own-space",
@@ -465,7 +487,8 @@
         "0012-managed-project-vault",
         "0013-validate-the-swimlane-body-and-let-steps-reference-the-graph",
         "0014-migration-skill-infers-config-from-existing-planning",
-        "0015-honor-unknownallowed-tag-lint"
+        "0015-honor-unknownallowed-tag-lint",
+        "0016-system-map-as-a-first-class-kind-distinct-from-the-derived-f"
       ],
       "tone": "info",
       "statusOrder": [
@@ -569,15 +592,16 @@
       ]
     },
     "feature": {
-      "total": 13,
+      "total": 14,
       "byStatus": {
         "planned": 7,
-        "available": 6
+        "available": 7
       },
       "ids": [
         "brain-registration",
         "capture-and-file",
         "command-center-dashboard",
+        "command-center-system-map",
         "consumer-onboarding-helpers",
         "derived-status-views",
         "feature-roadmap",
@@ -639,6 +663,24 @@
       "fromKind": "decision",
       "rel": "references",
       "target": "pipeline/migrate-soul-steel-official"
+    },
+    {
+      "from": "0016-system-map-as-a-first-class-kind-distinct-from-the-derived-f",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline"
+    },
+    {
+      "from": "0016-system-map-as-a-first-class-kind-distinct-from-the-derived-f",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "decisions/0008-field-guide-derived-from-config"
+    },
+    {
+      "from": "0016-system-map-as-a-first-class-kind-distinct-from-the-derived-f",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "features/command-center-system-map"
     },
     {
       "from": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
@@ -804,7 +846,7 @@
     }
   ],
   "edgesByRel": {
-    "references": 30,
+    "references": 33,
     "decided-in": 1,
     "predecessor": 1,
     "successor": 2
@@ -1480,7 +1522,7 @@
               "children": [
                 {
                   "id": "project/report/example",
-                  "label": "2026-06-30-example-title.md",
+                  "label": "2026-07-01-example-title.md",
                   "path": null,
                   "nodeType": "kind-file",
                   "origin": "derived",
@@ -1666,7 +1708,7 @@
               "children": [
                 {
                   "id": "project/session/example",
-                  "label": "2026-06-30-example-title.md",
+                  "label": "2026-07-01-example-title.md",
                   "path": null,
                   "nodeType": "kind-file",
                   "origin": "derived",

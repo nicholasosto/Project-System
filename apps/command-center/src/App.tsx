@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Badge, Brief, Card, EmptyState, FolderTree, Hub, Meter, Table, Tabs, Timeline } from '@trembus/ui';
 import type { BriefContract, FolderNode, SectionKind, TimelineContract, TimelineTone } from '@trembus/ui';
+import { SystemMap } from '@trembus/viz';
+import { PROJECT_SYSTEM_MAP } from './systemMap';
 import {
   activeConsumer,
   consumerOptions,
@@ -550,6 +552,7 @@ export function App() {
 
   // The three bespoke panels (compose multiple kinds + non-kind data — not auto-generatable).
   const overviewBody = (
+    <>
     <div className="cc-overview">
       <div className="cc-overview__hub">
         <Hub data={hubData} selectedId={hubSel} onSelect={setHubSel} />
@@ -577,6 +580,17 @@ export function App() {
         </div>
       </aside>
     </div>
+      <section className="cc-overview__map" aria-label="Framework system map">
+        <div className="cc-overview__map-head">
+          <h2 className="cc-overview__map-title">System map</h2>
+          <p className="cc-overview__map-sub">
+            The framework's architecture — one contract → the seam → the engines → an emitted
+            contract → this dashboard. Open a container (⌕) to drill in; select a node to inspect it.
+          </p>
+        </div>
+        <SystemMap data={PROJECT_SYSTEM_MAP} />
+      </section>
+    </>
   );
 
   const workflowsBody = (
