@@ -263,9 +263,12 @@ function schemeLabel(fs) {
 }
 
 // A representative filename synthesized from the scheme (not a live entity) — the example leaf.
+// The date-slug example uses a STABLE `YYYY-MM-DD` placeholder, never today's date: this string
+// lands in graph.json, which `--check` compares byte-for-byte, so a today-derived date drifted the
+// contract daily. A placeholder also reads more clearly as "the date goes here" than a real date.
 function exampleName(fs) {
   if (fs?.scheme === "serial") return `${"0".repeat(Math.max(0, (fs.pad ?? 4) - 1))}1-example-title.md`;
-  if (fs?.scheme === "date-slug") return `${todayISO()}-example-title.md`;
+  if (fs?.scheme === "date-slug") return "YYYY-MM-DD-example-title.md";
   return "example-title.md";
 }
 
