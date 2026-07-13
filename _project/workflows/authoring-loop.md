@@ -30,13 +30,67 @@ set but only half-realized while this loop stayed hardcoded in the consuming app
     { "id": "surface", "label": "Command Center", "kind": "tool" }
   ],
   "steps": [
-    { "id": "request", "lane": "you", "label": "Run /new <kind>", "detail": "one generic scaffolder", "note": "Pick a kind from the config (decision · report · pipeline · roadmap · session · workflow · feature). The kind is validated against the config, so there are no per-kind commands to maintain.", "to": ["scaffold"] },
-    { "id": "scaffold", "lane": "engines", "label": "Scaffold file", "detail": "new-entity.mjs · born valid", "note": "Derives the filename per the kind's scheme, writes valid frontmatter (status = the kind's initialStatus), lays down the section skeleton, and self-validates — conformant by construction.", "refs": [{ "rel": "references", "target": "features/new-scaffolder" }], "to": ["edit"] },
-    { "id": "edit", "lane": "you", "label": "Edit title · status · links", "note": "Fill the authored surface — title, status, optional links/tags. id and kind are derived (folder + filename), never authored.", "to": ["guard"] },
-    { "id": "guard", "lane": "engines", "label": "Guard the save", "detail": "PreToolUse · blocks contract breaks", "note": "The hook re-runs the single validateEntity check on every _project/ write and blocks (exit 2) anything that would break the contract. Read-only, fails open.", "refs": [{ "rel": "references", "target": "features/validator-and-guard" }], "to": ["validate"] },
-    { "id": "validate", "lane": "engines", "label": "Validate the graph", "detail": "validate.mjs", "note": "Runs the same check across the whole graph — frontmatter, link integrity, prose↔status agreement. Also the SessionStart advisory health summary.", "to": ["render"] },
-    { "id": "render", "lane": "engines", "label": "Emit JSON contract", "detail": "render-hub.mjs · graph + hub", "note": "Emits graph.json + hub.json from _project/. A Vite dev plugin, not a hook — editing any _project/ file repaints the dashboard.", "to": ["view"] },
-    { "id": "view", "lane": "surface", "label": "Render live", "detail": "this dashboard", "note": "The Command Center renders the emitted contract; with vite dev running it hot-reloads on every _project/ edit.", "to": [] }
+    {
+      "id": "request", "lane": "you", "label": "Run /new <kind>", "detail": "one generic scaffolder",
+      "note": "Pick a kind from the config (decision · report · pipeline · roadmap · session · workflow · feature). The kind is validated against the config, so there are no per-kind commands to maintain.",
+      "inputs": [
+        "A kind from the config — decision · report · pipeline · roadmap · session · workflow · feature",
+        "A working title for the new artifact"
+      ],
+      "to": ["scaffold"]
+    },
+    {
+      "id": "scaffold", "lane": "engines", "label": "Scaffold file", "detail": "new-entity.mjs · born valid",
+      "note": "Derives the filename per the kind's scheme, writes valid frontmatter (status = the kind's initialStatus), lays down the section skeleton, and self-validates — conformant by construction.",
+      "substeps": [
+        "Derive the filename from the kind's naming scheme",
+        "Write valid frontmatter — status = the kind's initialStatus",
+        "Lay down the conventional section skeleton",
+        "Self-validate the new file — conformant by construction"
+      ],
+      "inputs": [
+        { "text": "The chosen kind", "detail": "selects the target _project/ folder" },
+        { "text": "title", "detail": "plus optional --tag key=value pairs" }
+      ],
+      "outputs": ["_project/<kind>/<id>.md"],
+      "refs": [{ "rel": "references", "target": "features/new-scaffolder" }], "to": ["edit"]
+    },
+    {
+      "id": "edit", "lane": "you", "label": "Edit title · status · links",
+      "note": "Fill the authored surface — title, status, optional links/tags. id and kind are derived (folder + filename), never authored.",
+      "to": ["guard"]
+    },
+    {
+      "id": "guard", "lane": "engines", "label": "Guard the save", "detail": "PreToolUse · blocks contract breaks",
+      "note": "The hook re-runs the single validateEntity check on every _project/ write and blocks (exit 2) anything that would break the contract. Read-only, fails open.",
+      "substeps": [
+        "Re-run the single validateEntity check on the pending write",
+        "Block the write (exit 2 + reason) if it would break the contract",
+        "Fail open — a guard-internal error never blocks the save"
+      ],
+      "inputs": ["The pending _project/ write (the file being saved)"],
+      "refs": [{ "rel": "references", "target": "features/validator-and-guard" }], "to": ["validate"]
+    },
+    {
+      "id": "validate", "lane": "engines", "label": "Validate the graph", "detail": "validate.mjs",
+      "note": "Runs the same check across the whole graph — frontmatter, link integrity, prose↔status agreement. Also the SessionStart advisory health summary.",
+      "inputs": ["The whole _project/ tree", "project-system.config.json"],
+      "to": ["render"]
+    },
+    {
+      "id": "render", "lane": "engines", "label": "Emit JSON contract", "detail": "render-hub.mjs · graph + hub",
+      "note": "Emits graph.json + hub.json from _project/. A Vite dev plugin, not a hook — editing any _project/ file repaints the dashboard.",
+      "outputs": [
+        "previews/dashboards/project-system-graph.json",
+        "previews/dashboards/project-system-hub.json"
+      ],
+      "to": ["view"]
+    },
+    {
+      "id": "view", "lane": "surface", "label": "Render live", "detail": "this dashboard",
+      "note": "The Command Center renders the emitted contract; with vite dev running it hot-reloads on every _project/ edit.",
+      "to": []
+    }
   ]
 }
 ```

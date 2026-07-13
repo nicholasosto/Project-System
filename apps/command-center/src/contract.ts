@@ -373,11 +373,37 @@ export interface ResolvedRef {
   title: string;
   kind: string | null;
 }
-// A swimlane step widened with the resolved refs render-hub emits. The kit's SwimlaneStep has no
-// refs field; extra fields are ignored by the kit's <Swimlane>, so this stays structurally
-// compatible (a WorkflowContract is assignable wherever a SwimlaneContract is expected).
+// An authored sub-step — the finer breakdown of a step. `string` shorthand ⇒ `{ text }`.
+export interface StepSubstep {
+  text: string;
+  detail?: string;
+  status?: string;
+}
+// An authored input requirement — what a step needs before it can run.
+export interface StepInput {
+  text: string;
+  detail?: string;
+}
+// An authored file/artifact output — RunOutput-shaped so run-produced artifacts and authored ones
+// merge in the drawer. A `label` that reads as a path drives the folder-location readout.
+export interface StepOutput {
+  label: string;
+  href?: string;
+  kind?: string;
+}
+// A swimlane step widened with the resolved refs render-hub emits, plus the optional authored
+// facets the step-detail drawer surfaces. The kit's SwimlaneStep has none of these; extra fields
+// are ignored by the kit's <Swimlane> and passed through verbatim by render-hub (it only resolves
+// `refs`), so this stays structurally compatible (a WorkflowContract is assignable wherever a
+// SwimlaneContract is expected) and needs no emitter/validator change.
 export interface StepWithRefs extends SwimlaneStep {
   refs?: ResolvedRef[];
+  /** Finer breakdown shown as a checklist in the drawer. */
+  substeps?: (string | StepSubstep)[];
+  /** Input requirements shown before the outputs. */
+  inputs?: (string | StepInput)[];
+  /** Authored artifact outputs; merged with run-produced ones to derive the folder location. */
+  outputs?: (string | StepOutput)[];
 }
 export interface WorkflowContract extends Omit<SwimlaneContract, 'steps'> {
   steps: StepWithRefs[];

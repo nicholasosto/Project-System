@@ -599,37 +599,10 @@ body,
   gap: 1.25rem;
 }
 
-/* Step-detail drawer body (inside the shared .cc-detailpanel__card). */
-.cc-stepdetail__eyebrow {
-  margin: 0;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  opacity: 0.6;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-.cc-stepdetail__title {
-  margin: 0.2rem 0 0;
-  font-size: 1.1rem;
-  font-weight: 650;
-  padding-right: 1.5rem; /* clear the close button */
-}
-.cc-stepdetail__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.6rem;
-}
-.cc-stepdetail__detail {
-  margin: 0.85rem 0 0;
-  font-size: 0.82rem;
-  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.62));
-}
-.cc-stepdetail__note {
-  margin: 0.6rem 0 0;
-  font-size: 0.9rem;
-  line-height: 1.55;
-  color: var(--tcl-text, rgba(255, 255, 255, 0.9));
+/* Step-detail drawer body (inside the shared .cc-detailpanel__card): a <Brief> of the step, then
+   the interactive footer (references + hand-offs). */
+.cc-stepdetail__brief {
+  padding-right: 1.5rem; /* clear the absolute close button */
 }
 .cc-stepdetail__section {
   margin-top: 1.05rem;

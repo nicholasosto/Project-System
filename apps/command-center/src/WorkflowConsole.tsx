@@ -6,9 +6,9 @@
 // disabled (greyed) and only the flow shows, exactly like the reference's NoHistory state.
 // Phase 3 will pass real runs (e.g. from session entities or CI) and add run→swimlane
 // time-travel (applyRun) so selecting a run replays its state across the lanes.
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RunHistory, Swimlane } from '@trembus/ui';
-import type { RunRecord } from '@trembus/ui';
+import type { RunOutput, RunRecord } from '@trembus/ui';
 import { StepDetail } from './StepDetail';
 import type { StepWithRefs, WorkflowContract } from './contract';
 
@@ -161,6 +161,22 @@ export function WorkflowConsole({
   // selection survives a run change.
   const selectedStep = swimlaneData.steps.find((s) => s.id === stepSel);
 
+  // Per-step run-produced artifacts, gathered across this workflow's (windowed) runs and keyed by
+  // step id — the step-detail drawer folds these into its outputs section and folder-root readout.
+  const stepRunOutputs = useMemo(() => {
+    const m = new Map<string, RunOutput[]>();
+    for (const r of runs) {
+      for (const o of r.stepOutcomes ?? []) {
+        if (o.step && o.outputs?.length) {
+          const arr = m.get(o.step) ?? [];
+          arr.push(...o.outputs);
+          m.set(o.step, arr);
+        }
+      }
+    }
+    return m;
+  }, [runs]);
+
   return (
     <div className="cc-workflow">
       <div className="cc-workflow__layout">
@@ -190,6 +206,7 @@ export function WorkflowConsole({
                 step={selectedStep}
                 lanes={swimlaneData.lanes}
                 allSteps={swimlaneData.steps}
+                runOutputs={selectedStep.id ? stepRunOutputs.get(selectedStep.id) : undefined}
                 onClose={() => setStepSel(undefined)}
                 onSelectStep={setStepSel}
                 onNavigate={onNavigate}
