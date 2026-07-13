@@ -26,8 +26,8 @@ import {
   swimlaneKinds,
 } from './contract';
 import type { EntityRecord, GuideNode, Phase } from './contract';
-import { WorkflowConsole } from './WorkflowConsole';
-import { WORKFLOWS } from './workflows';
+import { SwitchPill, WorkflowConsole } from './WorkflowConsole';
+import { WORKFLOWS, WORKFLOW_TREE, WORKFLOW_TREE_EXPANDED, isGroupId, resolveTreeSel } from './workflows';
 import { DecisionSurface } from './DecisionSurface';
 import { groupByStatus, statusTone } from './status';
 
@@ -105,7 +105,9 @@ function deriveNav(): NavEntry[] {
     if (!consumed.has(k)) nav.push({ value: k, label: `${prettify(k)}s`, kinds: [k] });
   }
   if (WORKFLOWS.length || swimlaneKinds.length) {
-    nav.push({ value: 'workflows', label: 'Workflows', panel: 'workflows' });
+    // Displayed as "Processes"; the internal value/panel stays 'workflows' so #workflows deep-links,
+    // tabForKind, and navigateToEntity keep working unchanged.
+    nav.push({ value: 'workflows', label: 'Processes', panel: 'workflows' });
   }
   // The Field Guide tab appears only when the contract carries a guide payload, so a consumer
   // (or older contract) without it never gets an empty tab.
@@ -529,8 +531,23 @@ function RoadmapBoard() {
 export function App() {
   const [tab, setTab] = useState('overview');
   const [hubSel, setHubSel] = useState<string | undefined>(undefined);
-  const [wfId, setWfId] = useState<string>(WORKFLOWS[0]?.id ?? '');
-  const activeWorkflow = WORKFLOWS.find((w) => w.id === wfId) ?? WORKFLOWS[0];
+  // Processes side-nav selection: a WORKFLOW_TREE node id — a bare workflow id (root), a callee
+  // link, or a pipeline leaf. The console target + run preselect derive from it (resolveTreeSel).
+  const [wfTreeSel, setWfTreeSel] = useState<string>(WORKFLOWS[0]?.id ?? '');
+  const wfSel = resolveTreeSel(wfTreeSel);
+  const activeWorkflow = WORKFLOWS.find((w) => w.id === wfSel.wfId) ?? WORKFLOWS[0];
+  // A pipeline leaf preselects that pipeline's LATEST run: merged runs are namespaced
+  // `${pipelineId}/${runId}` and sorted newest-first, so the first prefix match is the latest.
+  const wfInitialRun = wfSel.pipelineId
+    ? activeWorkflow?.runs.find((r) => r.id?.startsWith(`${wfSel.pipelineId}/`))?.id
+    : undefined;
+  // Run-history visibility, lifted out of WorkflowConsole so the toggle can live in the full-width
+  // Processes header (beside the title). Persists across selections; selecting a pipeline instance
+  // force-reveals it (see the tree onSelect) so its preselected run is actually visible.
+  const [wfShowRuns, setWfShowRuns] = useState(true);
+  const wfHasRuns = (activeWorkflow?.runs.length ?? 0) > 0;
+  // Collapsible side-nav: minimize the process tree to hand the swimlane the full width.
+  const [wfNavCollapsed, setWfNavCollapsed] = useState(false);
 
   // Field Guide: selected node drives the right-pane brief. FolderTree owns its own expansion
   // (uncontrolled, the top-level forest open by default); we just track the selection.
@@ -543,7 +560,7 @@ export function App() {
     const e = entities.find((x) => x.id === target);
     if (!e) return;
     if (swimlaneKinds.includes(e.kind)) {
-      setWfId(target);
+      setWfTreeSel(target); // bare id = the tree's root node id, so the highlight lands there
       setTab('workflows');
     } else {
       setTab(tabForKind(e.kind));
@@ -593,43 +610,104 @@ export function App() {
     </>
   );
 
+  // Show the tree when there's more than one process to navigate (mirrors the old picker gate); a
+  // lone process is just the console. The header (title + run-history toggle) shows either way.
+  const showWfTree = WORKFLOWS.length > 1;
+
+  const wfConsole = activeWorkflow ? (
+    <WorkflowConsole
+      // Keyed by the TREE selection (not the workflow id): root vs callee vs pipeline node of the
+      // same workflow each remount with a fresh run/step seed — the console's contract.
+      key={wfTreeSel}
+      workflow={activeWorkflow.contract}
+      runs={activeWorkflow.runs}
+      runsTotal={activeWorkflow.runsTotal}
+      initialRunId={wfInitialRun}
+      showRuns={wfShowRuns}
+      onNavigate={navigateToEntity}
+    />
+  ) : (
+    <EmptyState
+      title="No processes yet"
+      description="No entity declares a ## Workflow block. Scaffold one with /new workflow."
+    />
+  );
+
+  // Full-width header: a nav-collapse toggle + the active process title (left) and the run-history
+  // toggle (right). Pulling the title up here lets the tree and swimlane top-align, and the
+  // Swimlane's own header (code/title/caption) is hidden in CSS so the title isn't shown twice.
+  const wfHeader = activeWorkflow ? (
+    <div className="cc-wf-shell__header">
+      <div className="cc-wf-shell__headline">
+        {showWfTree && (
+          <button
+            type="button"
+            className="cc-wf-shell__navtoggle"
+            aria-expanded={!wfNavCollapsed}
+            aria-controls="cc-wf-nav"
+            aria-label={wfNavCollapsed ? 'Show process navigation' : 'Hide process navigation'}
+            title={wfNavCollapsed ? 'Show process navigation' : 'Hide process navigation'}
+            onClick={() => setWfNavCollapsed((v) => !v)}
+          >
+            <span aria-hidden="true">{wfNavCollapsed ? '☰' : '«'}</span>
+          </button>
+        )}
+        <h2 className="cc-wf-shell__title">{activeWorkflow.label}</h2>
+      </div>
+      <SwitchPill
+        checked={wfShowRuns}
+        onChange={setWfShowRuns}
+        label="Run history"
+        count={wfHasRuns ? activeWorkflow.runsTotal : undefined}
+        disabled={!wfHasRuns}
+        disabledHint="No run history captured for this process yet"
+      />
+    </div>
+  ) : null;
+
+  const buildPlans = (
+    <section className="cc-section">
+      <h3 className="cc-section-title">Build plans</h3>
+      <AreaTable kinds={WORKFLOW_TABLE_KINDS} empty="No pipelines defined yet." />
+    </section>
+  );
+
   const workflowsBody = (
-    <>
-      {WORKFLOWS.length > 1 && (
-        <div className="cc-wf-picker" aria-label="Choose a workflow">
-          {WORKFLOWS.map((w) => (
-            <button
-              key={w.id}
-              type="button"
-              className="cc-wf-picker__btn"
-              aria-pressed={w.id === wfId}
-              data-active={w.id === wfId}
-              onClick={() => setWfId(w.id)}
-            >
-              {w.label}
-            </button>
-          ))}
+    <div className="cc-wf-shell">
+      {wfHeader}
+      {showWfTree ? (
+        <div className="cc-wf-shell__body">
+          <aside
+            id="cc-wf-nav"
+            className="cc-wf-shell__tree"
+            aria-label="Process navigation"
+            hidden={wfNavCollapsed}
+          >
+            <FolderTree
+              data={WORKFLOW_TREE}
+              label="Processes & pipelines"
+              defaultExpandedIds={WORKFLOW_TREE_EXPANDED}
+              selectedId={wfTreeSel}
+              onSelect={(id) => {
+                if (isGroupId(id)) return; // a group container — toggle expansion, don't drive the console
+                setWfTreeSel(id);
+                if (resolveTreeSel(id).pipelineId) setWfShowRuns(true); // a pipeline instance → reveal its run
+              }}
+              filter
+            />
+          </aside>
+          <div className="cc-wf-shell__main">
+            {wfConsole}
+            {buildPlans}
+          </div>
         </div>
-      )}
-      {activeWorkflow ? (
-        <WorkflowConsole
-          key={activeWorkflow.id}
-          workflow={activeWorkflow.contract}
-          runs={activeWorkflow.runs}
-          runsTotal={activeWorkflow.runsTotal}
-          onNavigate={navigateToEntity}
-        />
       ) : (
-        <EmptyState
-          title="No workflows yet"
-          description="No entity declares a ## Workflow block. Scaffold one with /new workflow."
-        />
+        <>
+          {wfConsole}
+          {buildPlans}
+        </>
       )}
-      <section className="cc-section">
-        <h3 className="cc-section-title">Build plans</h3>
-        <AreaTable kinds={WORKFLOW_TABLE_KINDS} empty="No pipelines defined yet." />
-      </section>
-    </>
+    </div>
   );
 
   // Field Guide: an expandable convention tree on the left, the selected node's brief on the right

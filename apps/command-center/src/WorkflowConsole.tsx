@@ -14,7 +14,8 @@ import type { StepWithRefs, WorkflowContract } from './contract';
 
 // A true on/off pill that greys out + disables when there is nothing to toggle.
 // role=switch + aria-checked keeps it accessible. (Ported from the SwimlaneRuns example.)
-function SwitchPill({
+// Exported so App can host it in the Processes header bar (the toggle lives above both columns).
+export function SwitchPill({
   checked,
   onChange,
   label,
@@ -119,23 +120,36 @@ export function WorkflowConsole({
   workflow,
   runs = [],
   runsTotal = 0,
+  initialRunId,
+  showRuns = true,
   onNavigate,
 }: {
   workflow: WorkflowContract;
   runs?: RunRecord[];
   runsTotal?: number;
+  /** Seed the run selection at mount (a namespaced run id, e.g. a pipeline leaf's latest run).
+   *  Unknown/absent → the failed-first/newest default. Mount-only: App keys this console. */
+  initialRunId?: string;
+  /** Whether the run-history strip is shown — owned by App's header toggle (lifted out of the
+   *  console so the switch can live in the full-width Processes header, beside the title). */
+  showRuns?: boolean;
   onNavigate?: (target: string) => void;
 }) {
   const hasRuns = runs.length > 0;
-  const [showRuns, setShowRuns] = useState(true);
-  // Runs arrive newest-first; seed selection on the most recent failed run (so a failure is
-  // visible at a glance), else the newest. Re-seeds per workflow because App keys this console.
+  // Runs arrive newest-first; seed on the caller's pick (validated — a stale id would desync the
+  // history highlight from the selectedRun fallback below), else the most recent failed run (so a
+  // failure is visible at a glance), else the newest. Re-seeds per tree selection because App keys
+  // this console by it.
   const [selectedRunId, setSelectedRunId] = useState(
-    () => runs.find((r) => r.status === 'failed')?.id ?? runs[0]?.id ?? '',
+    () =>
+      (initialRunId && runs.some((r) => r.id === initialRunId) ? initialRunId : undefined) ??
+      runs.find((r) => r.status === 'failed')?.id ??
+      runs[0]?.id ??
+      '',
   );
   // App-managed step selection drives our richer right-side drawer; the kit Swimlane keeps its own
-  // inline inspector (uncontrolled — we don't pass selectedId). Switching workflows remounts this
-  // console (App keys it by workflow id), so stepSel resets for free.
+  // inline inspector (uncontrolled — we don't pass selectedId). Switching tree selections remounts
+  // this console (App keys it by the selection), so stepSel resets for free.
   const [stepSel, setStepSel] = useState<string | undefined>(undefined);
 
   const runsVisible = showRuns && hasRuns;
@@ -149,18 +163,6 @@ export function WorkflowConsole({
 
   return (
     <div className="cc-workflow">
-      <div className="cc-workflow__bar">
-        <p className="cc-eyebrow">Workflow console</p>
-        <SwitchPill
-          checked={showRuns}
-          onChange={setShowRuns}
-          label="Run history"
-          count={hasRuns ? runsTotal : undefined}
-          disabled={!hasRuns}
-          disabledHint="No run history captured for this workflow yet"
-        />
-      </div>
-
       <div className="cc-workflow__layout">
         <div className="cc-workflow__board">
           {/* key by run so the diagram's own step-selection resets when the run changes */}
