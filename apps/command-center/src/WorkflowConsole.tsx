@@ -118,6 +118,11 @@ function applyRun(base: WorkflowContract, run: RunRecord): WorkflowContract {
 // file badge when outputs declare file ops. The kit renders markers top-right on the card and
 // folds every title into the step's accessible name.
 const OP_MARK: Record<string, string> = { create: '+', modify: '~', delete: '−' };
+// Basename for the marker tooltip — folder labels keep a trailing `/` instead of vanishing.
+const baseOf = (label: string): string => {
+  const seg = label.replace(/\/+$/, '').split('/').pop();
+  return seg ? (label.endsWith('/') ? `${seg}/` : seg) : label;
+};
 function withMarkers(workflow: WorkflowContract): WorkflowContract {
   return {
     ...workflow,
@@ -135,7 +140,7 @@ function withMarkers(workflow: WorkflowContract): WorkflowContract {
         markers.push({
           id: 'files',
           glyph: 'file',
-          title: `Files: ${ops.map((o) => `${OP_MARK[o.op!]} ${o.label.split('/').pop()}`).join(' · ')}`,
+          title: `Files: ${ops.map((o) => `${OP_MARK[o.op!]} ${baseOf(o.label)}`).join(' · ')}`,
         });
       }
       return markers.length ? { ...step, markers } : step;
