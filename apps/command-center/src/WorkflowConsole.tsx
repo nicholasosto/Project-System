@@ -8,10 +8,10 @@
 // time-travel (applyRun) so selecting a run replays its state across the lanes.
 import { useMemo, useState } from 'react';
 import { RunHistory, Swimlane } from '@trembus/ui';
-import type { RunRecord } from '@trembus/ui';
+import type { RunOutput, RunRecord, SwimlaneStepMarker } from '@trembus/ui';
 import { DetailOverlay } from './DetailOverlay';
 import { StepDetail } from './StepDetail';
-import type { RunOutputWithOp, StepWithRefs, WorkflowContract } from './contract';
+import type { StepOutput, StepWithRefs, WorkflowContract } from './contract';
 
 // A true on/off pill that greys out + disables when there is nothing to toggle.
 // role=switch + aria-checked keeps it accessible. (Ported from the SwimlaneRuns example.)
@@ -96,11 +96,11 @@ export function SwitchPill({
   );
 }
 
-// Replay one run over the workflow definition ("time-travel"). The library keeps applyRun
-// page-local (it is not barrel-exported), so we carry our own copy of the same logic: index
-// outcomes by step id and set each step's status from its outcome (steps the run never mentions
-// fall to `pending`). Outputs are NOT folded into the note — the step-detail drawer's Outputs
-// section owns them (no duplicate raw paths in the kit inspector).
+// Replay one run over the workflow definition ("time-travel"): index outcomes by step id and set
+// each step's status from its outcome (steps the run never mentions fall to `pending`).
+// DELIBERATE divergence from @trembus/ui's exported `applyRun` (ui ≥0.8): the kit version folds
+// per-step output labels into the note for its inline inspector; here the step-detail drawer's
+// Outputs section owns run artifacts, so folding them would duplicate raw paths. Keep this local.
 function applyRun(base: WorkflowContract, run: RunRecord): WorkflowContract {
   if (!run.stepOutcomes?.length) return base;
   const byStep = new Map(run.stepOutcomes.map((o) => [o.step, o]));
@@ -109,6 +109,36 @@ function applyRun(base: WorkflowContract, run: RunRecord): WorkflowContract {
     steps: base.steps.map((step): StepWithRefs => {
       const outcome = step.id != null ? byStep.get(step.id) : undefined;
       return outcome ? { ...step, status: outcome.status } : { ...step, status: 'pending' };
+    }),
+  };
+}
+
+// Card annotations derived from the authored facets — the at-a-glance cue whose detail lives in
+// the drawer: a shield for each decision that shaped the step (resolved `decided-in` refs), one
+// file badge when outputs declare file ops. The kit renders markers top-right on the card and
+// folds every title into the step's accessible name.
+const OP_MARK: Record<string, string> = { create: '+', modify: '~', delete: '−' };
+function withMarkers(workflow: WorkflowContract): WorkflowContract {
+  return {
+    ...workflow,
+    steps: workflow.steps.map((step): StepWithRefs => {
+      const markers: SwimlaneStepMarker[] = [];
+      for (const r of step.refs ?? []) {
+        if (r.rel === 'decided-in' && r.kind) {
+          markers.push({ id: `dec-${r.target}`, glyph: 'shield', title: `Decided in “${r.title}”` });
+        }
+      }
+      const ops = (step.outputs ?? []).filter(
+        (o): o is StepOutput => typeof o !== 'string' && Boolean(o.op),
+      );
+      if (ops.length) {
+        markers.push({
+          id: 'files',
+          glyph: 'file',
+          title: `Files: ${ops.map((o) => `${OP_MARK[o.op!]} ${o.label.split('/').pop()}`).join(' · ')}`,
+        });
+      }
+      return markers.length ? { ...step, markers } : step;
     }),
   };
 }
@@ -151,7 +181,9 @@ export function WorkflowConsole({
 
   const runsVisible = showRuns && hasRuns;
   const selectedRun = runs.find((r) => r.id === selectedRunId) ?? runs[0];
-  const swimlaneData = runsVisible && selectedRun ? applyRun(workflow, selectedRun) : workflow;
+  // Annotate once per workflow (markers survive applyRun — it spreads each step).
+  const annotated = useMemo(() => withMarkers(workflow), [workflow]);
+  const swimlaneData = runsVisible && selectedRun ? applyRun(annotated, selectedRun) : annotated;
   const windowed = runsTotal > runs.length;
   // Resolve the selection against the CURRENT data so a stale id (e.g. after a run swap) closes the
   // drawer rather than leaking. Step ids are stable across runs (applyRun maps by id), so a valid
@@ -160,14 +192,13 @@ export function WorkflowConsole({
 
   // Per-step run-produced artifacts, gathered across this workflow's (windowed) runs and keyed by
   // step id — the step-detail drawer folds these into its outputs section and folder-root readout.
-  // Widened to RunOutputWithOp: the JSON may carry a file-op (`op`) the kit type doesn't know yet.
   const stepRunOutputs = useMemo(() => {
-    const m = new Map<string, RunOutputWithOp[]>();
+    const m = new Map<string, RunOutput[]>();
     for (const r of runs) {
       for (const o of r.stepOutcomes ?? []) {
         if (o.step && o.outputs?.length) {
           const arr = m.get(o.step) ?? [];
-          arr.push(...(o.outputs as RunOutputWithOp[]));
+          arr.push(...o.outputs);
           m.set(o.step, arr);
         }
       }
@@ -179,8 +210,9 @@ export function WorkflowConsole({
     <div className="cc-workflow">
       <div className="cc-workflow__layout">
         <div className="cc-workflow__board">
-          {/* key by run so the diagram's own step-selection resets when the run changes */}
-          <Swimlane key={runsVisible ? selectedRunId : 'base'} data={swimlaneData} onSelect={setStepSel} />
+          {/* key by run so the diagram's own step-selection resets when the run changes;
+              comfortable density = the readable preset (2-line labels) this board opts into */}
+          <Swimlane key={runsVisible ? selectedRunId : 'base'} data={swimlaneData} density="comfortable" onSelect={setStepSel} />
 
           {runsVisible && (
             <RunHistory

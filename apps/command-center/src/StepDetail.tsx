@@ -5,8 +5,8 @@
 // operations (+ create · ~ modify · − delete, folded to their common folder root), clickable
 // cross-links to the ProjectEntities the step references, and its hand-offs (walk the flow).
 import { Brief, Card } from '@trembus/ui';
-import type { BriefContract, SwimlaneLane } from '@trembus/ui';
-import type { FileOp, RunOutputWithOp, StepOutput, StepWithRefs } from './contract';
+import type { BriefContract, RunOutput, SwimlaneLane } from '@trembus/ui';
+import type { FileOp, StepOutput, StepWithRefs } from './contract';
 
 function laneFor(lanes: SwimlaneLane[], ref: string | undefined): SwimlaneLane | undefined {
   return lanes.find((l) => l.id === ref || l.label === ref);
@@ -102,7 +102,7 @@ export function StepDetail({
   lanes: SwimlaneLane[];
   allSteps: StepWithRefs[];
   /** This step's run-produced artifacts, gathered across the workflow's runs by the console. */
-  runOutputs?: RunOutputWithOp[];
+  runOutputs?: RunOutput[];
   onClose: () => void;
   onSelectStep: (id: string) => void;
   onNavigate?: (target: string) => void;

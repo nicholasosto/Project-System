@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@trembus/ui':
-        specifier: ^0.2.0
-        version: 0.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^0.8.0
+        version: 0.8.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@trembus/viz':
         specifier: ^0.3.0
         version: 0.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -444,6 +444,12 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@trembus/icons@0.2.0':
+    resolution: {integrity: sha512-zAj9Ex9p8EL0p1sdqYr5QCulL1doQ97pAkObIBiJBGE9WurFxOrc4aLRnW0wLgG/dH9OaeCmMeRT65CZLjHN2g==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      react: ^19.0.0
+
   '@trembus/tokens@0.1.0':
     resolution: {integrity: sha512-WP1MtG9B5EGea3vqdjb3v6c8mADewC858x5JEZucO7RzUaGN7ngO7mrLUoMUfO+vltUhCmxzBpel4CNvfi0sHw==}
     engines: {node: '>=20'}
@@ -453,8 +459,8 @@ packages:
       jest-axe:
         optional: true
 
-  '@trembus/ui@0.2.0':
-    resolution: {integrity: sha512-wOu09Ih1YolepTsMVyDI2Y9UUlC1P5OpIM2yuBLNtvRTPQbJSHcXdArRye3s3qdrNGVcnIgyFCeMYvZvGiUycw==}
+  '@trembus/ui@0.8.0':
+    resolution: {integrity: sha512-8fyjrRLocrdFOwEhdiQeC+9VwMTgjq60mDge9ugl8Yw1f3ZbKFzLXNJ83ZVX5VmM3e/EDJ0nxy4Wg3JyXYLFBg==}
     engines: {node: '>=20'}
     peerDependencies:
       react: ^19.0.0
@@ -984,10 +990,15 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.62.2':
     optional: true
 
+  '@trembus/icons@0.2.0(react@19.2.7)':
+    dependencies:
+      react: 19.2.7
+
   '@trembus/tokens@0.1.0': {}
 
-  '@trembus/ui@0.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@trembus/ui@0.8.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
+      '@trembus/icons': 0.2.0(react@19.2.7)
       '@trembus/tokens': 0.1.0
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
