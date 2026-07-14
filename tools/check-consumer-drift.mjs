@@ -68,6 +68,17 @@ const CONSUMERS = [
     claudeDir: "/Users/nicholasosto/Master-Managed/Project-Spaces/Asset-Studio/.claude",
   },
   {
+    name: "astrix-systems",
+    // The Astrix delivery-operations cortex workspace (REAL consumer #3). VENDORS the framework;
+    // a lean 2-kind config (decision + workflow) — its Operations Command Center app consumes the
+    // emitted graph JSON for its Processes surface. No ownValidator (vendored validate.mjs);
+    // claudeDir opts it into the HOOKS parity axis.
+    schema: "/Users/nicholasosto/Master-Managed/Project-Spaces/Astrix-Systems/.project-system/schema/project-entity.base.schema.json",
+    root: "/Users/nicholasosto/Master-Managed/Project-Spaces/Astrix-Systems",
+    config: "/Users/nicholasosto/Master-Managed/Project-Spaces/Astrix-Systems/project-system.config.json",
+    claudeDir: "/Users/nicholasosto/Master-Managed/Project-Spaces/Astrix-Systems/.claude",
+  },
+  {
     name: "soul-steel-demo",
     // An in-repo FICTIONAL consumer (adds `character` + `workflow` kinds the core has never
     // seen) — the test bed for consumer-shaped `/new`, validation, and drift. Always reachable,
