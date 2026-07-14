@@ -1,12 +1,12 @@
 // The step-detail drawer for the Processes tab. Clicking a swimlane step opens this panel with a
 // <Brief> of the step's guidance — its detail/note as the summary, status + actor as meta pills,
-// and, WHEN AUTHORED, three richer sections: a sub-step checklist, its input requirements, and its
-// outputs (with the common folder root derived across authored + run-produced artifacts). Below the
-// Brief, an interactive footer keeps what a Brief can't express: clickable cross-links to the
-// ProjectEntities the step references (navigate the Command Center) and its hand-offs (walk the flow).
+// and, WHEN AUTHORED, a sub-step checklist and its input requirements. Below the Brief, an
+// interactive footer keeps what a Brief can't express: the step's outputs as git-style file
+// operations (+ create · ~ modify · − delete, folded to their common folder root), clickable
+// cross-links to the ProjectEntities the step references, and its hand-offs (walk the flow).
 import { Brief, Card } from '@trembus/ui';
-import type { BriefContract, RunOutput, SwimlaneLane } from '@trembus/ui';
-import type { StepOutput, StepWithRefs } from './contract';
+import type { BriefContract, SwimlaneLane } from '@trembus/ui';
+import type { FileOp, RunOutputWithOp, StepOutput, StepWithRefs } from './contract';
 
 function laneFor(lanes: SwimlaneLane[], ref: string | undefined): SwimlaneLane | undefined {
   return lanes.find((l) => l.id === ref || l.label === ref);
@@ -40,13 +40,13 @@ function commonRoot(paths: string[]): string {
 const relativeTo = (root: string, path: string): string =>
   root && path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
 
+// The git-style glyph for a file operation; an op-less artifact gets a muted middot.
+const OP_GLYPH: Record<FileOp, string> = { create: '+', modify: '~', delete: '−' };
+
 // Build the step's Brief contract. Sections appear only when their data is authored/produced, so a
-// bare step still renders a clean summary card.
-function stepBrief(
-  step: StepWithRefs,
-  lane: SwimlaneLane | undefined,
-  runOutputs: RunOutput[],
-): BriefContract {
+// bare step still renders a clean summary card. (Outputs live in the interactive footer, not here —
+// the Brief's artifact items can't carry the op glyph + mono path treatment.)
+function stepBrief(step: StepWithRefs, lane: SwimlaneLane | undefined): BriefContract {
   const meta: NonNullable<BriefContract['meta']> = [];
   if (step.status) meta.push({ label: 'status', value: step.status });
   if (lane) meta.push({ label: lane.kind ?? 'lane', value: lane.label });
@@ -78,26 +78,6 @@ function stepBrief(
     });
   }
 
-  // Outputs: authored + run-produced, deduped by label. File-path labels drive the folder root,
-  // shown once as the section note; each item is then displayed relative to that root.
-  const authored: StepOutput[] = (step.outputs ?? []).map((o) => (typeof o === 'string' ? { label: o } : o));
-  const seen = new Set<string>();
-  const outs = [...authored, ...runOutputs].filter((o) => o.label && !seen.has(o.label) && seen.add(o.label));
-  if (outs.length) {
-    const root = commonRoot(outs.map((o) => o.label));
-    sections.push({
-      id: 'outputs',
-      heading: 'Outputs',
-      kind: 'artifacts',
-      note: root ? `Folder · ${root}/` : undefined,
-      items: outs.map((o) => ({
-        text: root ? relativeTo(root, o.label) : o.label,
-        status: o.kind,
-        ref: o.href,
-      })),
-    });
-  }
-
   return {
     view: 'brief',
     kind: 'plan',
@@ -122,7 +102,7 @@ export function StepDetail({
   lanes: SwimlaneLane[];
   allSteps: StepWithRefs[];
   /** This step's run-produced artifacts, gathered across the workflow's runs by the console. */
-  runOutputs?: RunOutput[];
+  runOutputs?: RunOutputWithOp[];
   onClose: () => void;
   onSelectStep: (id: string) => void;
   onNavigate?: (target: string) => void;
@@ -134,13 +114,54 @@ export function StepDetail({
   const isTerminal = Array.isArray(step.to) && step.to.length === 0;
   const refs = step.refs ?? [];
 
+  // Outputs: authored + run-produced, deduped by label. File-path labels drive the folder root
+  // (shown once beside the section head); each row is then displayed relative to that root.
+  const authored: StepOutput[] = (step.outputs ?? []).map((o) => (typeof o === 'string' ? { label: o } : o));
+  const seen = new Set<string>();
+  const outs = [...authored, ...runOutputs].filter((o) => o.label && !seen.has(o.label) && seen.add(o.label));
+  const outsRoot = commonRoot(outs.map((o) => o.label));
+
   return (
     <Card className="cc-detailpanel__card cc-stepdetail">
       <button type="button" className="cc-detailpanel__close" onClick={onClose} aria-label="Close step details">
         ✕
       </button>
 
-      <Brief data={stepBrief(step, lane, runOutputs)} className="cc-stepdetail__brief" />
+      <Brief data={stepBrief(step, lane)} className="cc-stepdetail__brief" />
+
+      {outs.length > 0 ? (
+        <div className="cc-stepdetail__section">
+          <p className="cc-stepdetail__section-head">
+            Outputs
+            {outsRoot ? <span className="cc-stepdetail__files-root"> · {outsRoot}/</span> : null}
+          </p>
+          <ul className="cc-stepdetail__files">
+            {outs.map((o) => {
+              const row = (
+                <>
+                  <span className="cc-stepdetail__file-op" aria-hidden="true">
+                    {o.op ? OP_GLYPH[o.op] : '·'}
+                  </span>
+                  <code className="cc-stepdetail__file-path">
+                    {outsRoot ? relativeTo(outsRoot, o.label) : o.label}
+                  </code>
+                  {o.kind ? <span className="cc-stepdetail__file-kind">{o.kind}</span> : null}
+                </>
+              );
+              return (
+                <li
+                  key={o.label}
+                  className="cc-stepdetail__file"
+                  data-op={o.op}
+                  title={o.op ? `${o.op} — ${o.label}` : o.label}
+                >
+                  {o.href ? <a href={o.href}>{row}</a> : row}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       {refs.length > 0 ? (
         <div className="cc-stepdetail__section">

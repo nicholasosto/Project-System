@@ -3,7 +3,7 @@
 // artifacts; it never re-reads _project/. Regenerate them with:
 //   node ../../tools/render-hub.mjs   (zero-dep)
 import type { GraphContract, GraphEdge, GraphNode, LineageTone } from '@trembus/viz';
-import type { HubContract, RunRecord, SwimlaneContract, SwimlaneStep } from '@trembus/ui';
+import type { HubContract, RunOutput, RunRecord, SwimlaneContract, SwimlaneStep } from '@trembus/ui';
 import psGraph from '../../../previews/dashboards/project-system-graph.json';
 import psHub from '../../../previews/dashboards/project-system-hub.json';
 import ssGraph from '../../../previews/dashboards/soul-steel-demo-graph.json';
@@ -384,12 +384,21 @@ export interface StepInput {
   text: string;
   detail?: string;
 }
+// The file operation a step performs on an output — rendered as a git-style glyph in the drawer
+// (+ create · ~ modify · − delete). Advisory-validated by lib/swimlane.mjs; absent = plain artifact.
+export type FileOp = 'create' | 'modify' | 'delete';
 // An authored file/artifact output — RunOutput-shaped so run-produced artifacts and authored ones
 // merge in the drawer. A `label` that reads as a path drives the folder-location readout.
 export interface StepOutput {
   label: string;
   href?: string;
   kind?: string;
+  op?: FileOp;
+}
+// A run-produced output widened with the same op — the emitted JSON may carry it, the kit's
+// RunOutput type doesn't (yet; requested kit-side via the TCL inbox).
+export interface RunOutputWithOp extends RunOutput {
+  op?: FileOp;
 }
 // A swimlane step widened with the resolved refs render-hub emits, plus the optional authored
 // facets the step-detail drawer surfaces. The kit's SwimlaneStep has none of these; extra fields

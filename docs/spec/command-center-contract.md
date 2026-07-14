@@ -116,7 +116,8 @@ authored block through verbatim, so every field below already reaches the UI):
 
 - **lane** — `{ id?, label (required), kind? }`, where `kind` ∈ `human · ai · system · tool ·
   neutral` (tints the lane). A step references its lane by `id`, else by `label`.
-- **step** — `{ id?, lane (required), label (required), col?, status?, detail?, note?, to?, refs? }`:
+- **step** — `{ id?, lane (required), label (required), col?, status?, detail?, note?, to?, refs?,
+  substeps?, inputs?, outputs? }`:
   - `status` ∈ `done · active · pending · blocked · skipped` — tints the card + status dot.
   - `detail` — a short secondary line shown **on the card**.
   - `note` — guidance shown **in the inspector** when the step is selected.
@@ -125,9 +126,18 @@ authored block through verbatim, so every field below already reaches the UI):
   - `col` — optional explicit 0-based column (otherwise steps flow sequentially).
   - `refs` — optional typed links into the planning graph: `[{ rel, target }]`, authored exactly
     like an entity's `links` and validated against `relTargetKinds` (e.g. a step
-    `references decisions/0009-…`). render-hub **denormalizes** each into `{ rel, target, title,
-    kind }` (resolving the target's title/kind from `nodes[]`); the Command Center renders them as
-    clickable cross-links in the step-detail drawer that navigate to the referenced entity.
+    `references decisions/0009-…`, or `decided-in decisions/0013-…` for the decision that shaped
+    it). render-hub **denormalizes** each into `{ rel, target, title, kind }` (resolving the
+    target's title/kind from `nodes[]`); the Command Center renders them as clickable cross-links
+    in the step-detail drawer that navigate to the referenced entity.
+  - `substeps` / `inputs` / `outputs` — optional **drawer facets**, passed through verbatim
+    (the kit's `Swimlane` ignores them; the step-detail drawer renders them):
+    - `substeps` — a finer checklist: `(string | { text, detail?, status? })[]`.
+    - `inputs` — what the step needs: `(string | { text, detail? })[]`.
+    - `outputs` — what the step produces: `(string | { label, href?, kind?, op? })[]`, with
+      `op` ∈ `create · modify · delete` — the file operation, rendered as a git-style
+      `+` / `~` / `−` glyph beside the (folder-root-folded) path. Advisory-validated by
+      `lib/swimlane.mjs` (warnings only — a typo never blocks a save).
 - top-level optional **`caption`** — a one-line summary rendered above the board.
 
 `title`/`code` default from the entity (overridable in the block). The block is parsed once at
@@ -160,8 +170,10 @@ plus a summary of the full set:
 
 A run's `stepOutcomes[].step` must match a `SwimlaneStep.id` in the same entity's workflow; the
 Command Center replays the selected run over the swimlane (steps with no outcome fall to
-`pending`). Windowing keeps the contract bounded as the log grows — see decision
-`0005-window-run-history-in-the-contract-sidecar-at-scale`.
+`pending`). A `stepOutcomes[].outputs[]` entry may carry the same `op` (`create · modify ·
+delete`) as an authored step output — run-produced artifacts merge into the step drawer's
+Outputs list with the same git-style glyph. Windowing keeps the contract bounded as the log
+grows — see decision `0005-window-run-history-in-the-contract-sidecar-at-scale`.
 
 ### `phases` — optional development phases
 

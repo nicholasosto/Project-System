@@ -12,7 +12,6 @@
 //
 // All relationship data comes from the emitted contract (edges[] + nodes[]) via the kind-agnostic
 // helpers in contract.ts — the panel adds presentation only, names no rel/kind the contract doesn't.
-import { useState } from 'react';
 import { Badge, Card, EmptyState } from '@trembus/ui';
 import { Lineage } from '@trembus/viz';
 import {
@@ -22,32 +21,41 @@ import {
   prettify,
   recordFor,
   relatedEdges,
+  swimlaneKinds,
 } from './contract';
 import type { ConstellationRow, RelatedEdge } from './contract';
+import { DetailOverlay } from './DetailOverlay';
 import { groupByStatus, statusTone } from './status';
 
-// A decision named by the `serial · 4-digit` scheme → its serial ("0013"); anything else → prettified.
-const serialOf = (id: string): string => id.match(/^(\d{4})/)?.[1] ?? prettify(id);
+// A decision named by the `serial · 4-digit` scheme → its serial ("0013"); anything else →
+// prettified. Exported: the Processes header's "Decided in" chips label themselves with it.
+export const serialOf = (id: string): string => id.match(/^(\d{4})/)?.[1] ?? prettify(id);
 
-// Bucket a decision's incident edges into the three axes the surface reads by:
+// Bucket a decision's incident edges into the four axes the surface reads by:
+//   · Processes  — the workflows this decision shapes: an inbound `decided-in`/`references` from a
+//                  swimlane-carrying kind (claimed FIRST so it never misfiles as provenance).
 //   · Provenance — where the call was recorded: an inbound `decided-in` from a report/session.
 //   · Lineage    — decision↔decision links (the ADR DAG + supersession), both directions.
 //   · Impact     — everything else: inbound from another kind (what depends on it) + outbound see-alsos.
 interface Axes {
+  processes: RelatedEdge[];
   provenance: RelatedEdge[];
   lineage: RelatedEdge[];
   impact: RelatedEdge[];
 }
 function axesFor(id: string, kind: string): Axes {
+  const processes: RelatedEdge[] = [];
   const provenance: RelatedEdge[] = [];
   const lineage: RelatedEdge[] = [];
   const impact: RelatedEdge[] = [];
   for (const r of relatedEdges(id)) {
-    if (r.dir === 'in' && r.rel === 'decided-in') provenance.push(r);
+    if (r.dir === 'in' && swimlaneKinds.includes(r.other.kind) && (r.rel === 'decided-in' || r.rel === 'references'))
+      processes.push(r);
+    else if (r.dir === 'in' && r.rel === 'decided-in') provenance.push(r);
     else if (r.other.kind === kind) lineage.push(r);
     else impact.push(r);
   }
-  return { provenance, lineage, impact };
+  return { processes, provenance, lineage, impact };
 }
 
 // A direction-aware verb for one related edge, read from the subject's point of view.
@@ -58,18 +66,21 @@ function phrase(r: RelatedEdge): string {
     return 'builds on';
   }
   if (r.rel === 'supersedes') return 'superseded by';
-  if (r.rel === 'decided-in') return 'recorded in';
+  // An inbound decided-in FROM a workflow means this decision shaped that process.
+  if (r.rel === 'decided-in') return swimlaneKinds.includes(r.other.kind) ? 'decides' : 'recorded in';
   return 'referenced by';
 }
 
-// The ledger row's compact relationship strip — the at-a-glance "shape" (builds-on ↑, governs ↓,
-// referenced-by ←, recorded ◆). Empty edge set → a muted dash.
+// The ledger row's compact relationship strip — the at-a-glance "shape" (processes ⚙, builds-on ↑,
+// governs ↓, referenced-by ←, recorded ◆). Empty edge set → a muted dash.
 function ImpactStrip({ ax }: { ax: Axes }) {
+  const procs = ax.processes.length;
   const builds = ax.lineage.filter((r) => r.dir === 'out').length;
   const refdBy = ax.lineage.filter((r) => r.dir === 'in').length;
   const governs = ax.impact.filter((r) => r.dir === 'in').length;
   const recorded = ax.provenance.length;
   const chips: { k: string; label: string }[] = [];
+  if (procs) chips.push({ k: 'proc', label: `⚙ ${procs} process${procs === 1 ? '' : 'es'}` });
   if (builds) chips.push({ k: 'builds', label: `↑ builds on ${builds}` });
   if (governs) chips.push({ k: 'governs', label: `↓ governs ${governs}` });
   if (refdBy) chips.push({ k: 'refby', label: `← ${refdBy}` });
@@ -171,6 +182,7 @@ function Detail({
         <p className="cc-decision-detail__alone">No links yet — this decision stands alone.</p>
       )}
 
+      <Axis title="Affects processes" edges={ax.processes} kind={kind} onGo={onGo} />
       <Axis title="Provenance" edges={ax.provenance} kind={kind} onGo={onGo} />
       <Axis title="Lineage" edges={ax.lineage} kind={kind} onGo={onGo} />
       <Axis title="Impact" edges={ax.impact} kind={kind} onGo={onGo} />
@@ -254,15 +266,25 @@ function Constellation({
   );
 }
 
-export function DecisionSurface({ kind, onNavigate }: { kind: string; onNavigate?: (id: string) => void }) {
+export function DecisionSurface({
+  kind,
+  onNavigate,
+  selected,
+  onSelect,
+}: {
+  kind: string;
+  onNavigate?: (id: string) => void;
+  /** The selected decision — owned by App so cross-navigation can land with a decision open. */
+  selected: string | undefined;
+  onSelect: (id: string | undefined) => void;
+}) {
   const decisions = entitiesOfKinds(kind);
-  const [sel, setSel] = useState<string | undefined>(undefined);
 
   // A same-kind target re-centers the surface (select it in the drawer); any other kind hands off to
   // the app's tab navigation. Keeps decision↔decision exploration inside the surface.
   const goTo = (id: string) => {
     const r = recordFor(id);
-    if (r && r.kind === kind) setSel(id);
+    if (r && r.kind === kind) onSelect(id);
     else onNavigate?.(id);
   };
 
@@ -276,7 +298,7 @@ export function DecisionSurface({ kind, onNavigate }: { kind: string; onNavigate
     <div className="cc-decisions">
       <section className="cc-section cc-constellation-wrap">
         <h3 className="cc-section-title">Impact constellation — what each decision touches</h3>
-        <Constellation rows={rows} columns={columns} sel={sel} onSelect={setSel} />
+        <Constellation rows={rows} columns={columns} sel={selected} onSelect={onSelect} />
       </section>
 
       <div className="cc-decisions__body">
@@ -296,8 +318,8 @@ export function DecisionSurface({ kind, onNavigate }: { kind: string; onNavigate
                     key={d.id}
                     type="button"
                     className="cc-ledger__row"
-                    data-selected={d.id === sel}
-                    onClick={() => setSel(d.id)}
+                    data-selected={d.id === selected}
+                    onClick={() => onSelect(d.id)}
                   >
                     <span className="cc-ledger__serial">{serialOf(d.id)}</span>
                     <span className="cc-ledger__main">
@@ -314,11 +336,9 @@ export function DecisionSurface({ kind, onNavigate }: { kind: string; onNavigate
           ))}
         </div>
 
-        <aside className="cc-detailpanel" data-open={Boolean(sel)} aria-label="Decision details">
-          <div className="cc-detailpanel__inner">
-            {sel ? <Detail id={sel} kind={kind} onGo={goTo} onClose={() => setSel(undefined)} /> : null}
-          </div>
-        </aside>
+        <DetailOverlay open={Boolean(selected)} onClose={() => onSelect(undefined)} label="Decision details">
+          {selected ? <Detail id={selected} kind={kind} onGo={goTo} onClose={() => onSelect(undefined)} /> : null}
+        </DetailOverlay>
       </div>
     </div>
   );

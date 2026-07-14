@@ -8,9 +8,10 @@
 // time-travel (applyRun) so selecting a run replays its state across the lanes.
 import { useMemo, useState } from 'react';
 import { RunHistory, Swimlane } from '@trembus/ui';
-import type { RunOutput, RunRecord } from '@trembus/ui';
+import type { RunRecord } from '@trembus/ui';
+import { DetailOverlay } from './DetailOverlay';
 import { StepDetail } from './StepDetail';
-import type { StepWithRefs, WorkflowContract } from './contract';
+import type { RunOutputWithOp, StepWithRefs, WorkflowContract } from './contract';
 
 // A true on/off pill that greys out + disables when there is nothing to toggle.
 // role=switch + aria-checked keeps it accessible. (Ported from the SwimlaneRuns example.)
@@ -97,8 +98,9 @@ export function SwitchPill({
 
 // Replay one run over the workflow definition ("time-travel"). The library keeps applyRun
 // page-local (it is not barrel-exported), so we carry our own copy of the same logic: index
-// outcomes by step id, set each step's status from its outcome (steps the run never mentions
-// fall to `pending`), and fold per-step output labels into the inspector note.
+// outcomes by step id and set each step's status from its outcome (steps the run never mentions
+// fall to `pending`). Outputs are NOT folded into the note — the step-detail drawer's Outputs
+// section owns them (no duplicate raw paths in the kit inspector).
 function applyRun(base: WorkflowContract, run: RunRecord): WorkflowContract {
   if (!run.stepOutcomes?.length) return base;
   const byStep = new Map(run.stepOutcomes.map((o) => [o.step, o]));
@@ -106,12 +108,7 @@ function applyRun(base: WorkflowContract, run: RunRecord): WorkflowContract {
     ...base,
     steps: base.steps.map((step): StepWithRefs => {
       const outcome = step.id != null ? byStep.get(step.id) : undefined;
-      if (!outcome) return { ...step, status: 'pending' };
-      const outs = outcome.outputs?.length
-        ? `Output: ${outcome.outputs.map((o) => o.label).join(', ')}`
-        : undefined;
-      const note = [step.note, outs].filter(Boolean).join(' · ') || undefined;
-      return { ...step, status: outcome.status, note };
+      return outcome ? { ...step, status: outcome.status } : { ...step, status: 'pending' };
     }),
   };
 }
@@ -163,13 +160,14 @@ export function WorkflowConsole({
 
   // Per-step run-produced artifacts, gathered across this workflow's (windowed) runs and keyed by
   // step id — the step-detail drawer folds these into its outputs section and folder-root readout.
+  // Widened to RunOutputWithOp: the JSON may carry a file-op (`op`) the kit type doesn't know yet.
   const stepRunOutputs = useMemo(() => {
-    const m = new Map<string, RunOutput[]>();
+    const m = new Map<string, RunOutputWithOp[]>();
     for (const r of runs) {
       for (const o of r.stepOutcomes ?? []) {
         if (o.step && o.outputs?.length) {
           const arr = m.get(o.step) ?? [];
-          arr.push(...o.outputs);
+          arr.push(...(o.outputs as RunOutputWithOp[]));
           m.set(o.step, arr);
         }
       }
@@ -198,22 +196,20 @@ export function WorkflowConsole({
           )}
         </div>
 
-        {/* Richer step guidance — opens on step-select, mirrors the Overview hub's detail drawer. */}
-        <aside className="cc-detailpanel" data-open={Boolean(selectedStep)} aria-label="Step details">
-          <div className="cc-detailpanel__inner">
-            {selectedStep ? (
-              <StepDetail
-                step={selectedStep}
-                lanes={swimlaneData.lanes}
-                allSteps={swimlaneData.steps}
-                runOutputs={selectedStep.id ? stepRunOutputs.get(selectedStep.id) : undefined}
-                onClose={() => setStepSel(undefined)}
-                onSelectStep={setStepSel}
-                onNavigate={onNavigate}
-              />
-            ) : null}
-          </div>
-        </aside>
+        {/* Richer step guidance — opens on step-select, floating over the board's right edge. */}
+        <DetailOverlay open={Boolean(selectedStep)} onClose={() => setStepSel(undefined)} label="Step details">
+          {selectedStep ? (
+            <StepDetail
+              step={selectedStep}
+              lanes={swimlaneData.lanes}
+              allSteps={swimlaneData.steps}
+              runOutputs={selectedStep.id ? stepRunOutputs.get(selectedStep.id) : undefined}
+              onClose={() => setStepSel(undefined)}
+              onSelectStep={setStepSel}
+              onNavigate={onNavigate}
+            />
+          ) : null}
+        </DetailOverlay>
       </div>
     </div>
   );

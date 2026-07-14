@@ -53,9 +53,10 @@ body,
   display: block;
 }
 
-/* Hub beside its detail drawer: the flower fills the space; the drawer opens on the right when a
-   tile is selected (collapsed to zero width otherwise). */
+/* Hub beside its detail drawer: the flower fills the space; the drawer floats over the right edge
+   when a tile is selected. position: relative anchors the overlay rail (see .cc-detailpanel). */
 .cc-overview {
+  position: relative;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -136,26 +137,48 @@ body,
   color: #43aa8b !important;
 }
 
-/* Right detail drawer — collapsed to 0 width until a hex is selected, then slides open. Sticky so
-   it stays in view while the (taller) hub scrolls. */
+/* Right detail drawer — a floating inspector that overlays the content instead of reflowing it:
+   the hub/board/ledger keep their full width. The <aside> itself is a zero-footprint anchor (it
+   must stay in the layout tree for a11y but takes no space); the card inside is FIXED to the
+   viewport's right edge, below the app bar + tab strip, so it is always fully in view and can
+   never stretch the document (a sticky card taller than its board would). Hidden tabs ([hidden]
+   subtree) suppress their drawers automatically. */
 .cc-detailpanel {
-  flex: 0 0 0;
-  align-self: stretch;
-  overflow: hidden;
-  opacity: 0;
-  position: sticky;
-  top: 0.25rem;
-  transition: flex-basis 0.22s ease, opacity 0.18s ease;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 
-.cc-detailpanel[data-open='true'] {
-  flex-basis: 25rem;
-  opacity: 1;
-}
-
-/* Fixed inner width so the Brief content doesn't reflow/squish during the flex-basis transition. */
+/* Closed = invisible + untouchable. Open = a 1rem slide-in (a small poke, not a full off-screen
+   translate — the fade + visibility gate carry the transition). Internal scroll owns overflow. */
 .cc-detailpanel__inner {
+  position: fixed;
+  top: 7rem; /* clears the app bar + tab strip */
+  right: 2rem;
+  z-index: 30; /* above kit content (Swimlane internals top out ≤5) */
   width: 25rem;
+  max-width: calc(100vw - 4rem);
+  max-height: calc(100vh - 8rem);
+  overflow: hidden auto;
+  pointer-events: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(1rem);
+  transition: transform 0.22s ease, opacity 0.18s ease, visibility 0s linear 0.22s;
+  border-radius: var(--tcl-radius-lg, 12px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px var(--tcl-border, rgba(255, 255, 255, 0.1));
+  background: var(--tcl-surface, #14161d); /* opaque — the card floats over live board pixels */
+}
+.cc-detailpanel[data-open='true'] .cc-detailpanel__inner {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: transform 0.22s ease, opacity 0.18s ease, visibility 0s;
 }
 
 .cc-detailpanel__card {
@@ -285,7 +308,8 @@ body,
   white-space: nowrap;
 }
 
-/* Stack on narrow viewports — the drawer becomes a full-width panel below the hub. */
+/* Stack on narrow viewports — the drawer leaves the overlay and becomes a normal full-width
+   panel below the content (hidden entirely while closed). */
 @media (max-width: 60rem) {
   .cc-overview,
   .cc-workflow__layout {
@@ -293,13 +317,23 @@ body,
   }
   .cc-detailpanel {
     position: static;
+    height: auto;
     width: 100%;
+    pointer-events: auto;
   }
-  .cc-detailpanel[data-open='true'] {
-    flex-basis: auto;
+  .cc-detailpanel:not([data-open='true']) {
+    display: none;
   }
   .cc-detailpanel__inner {
+    position: static;
     width: 100%;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    box-shadow: none;
   }
 }
 
@@ -514,6 +548,46 @@ body,
   white-space: nowrap;
 }
 
+/* "Decided in" — the decisions behind the active process, as clickable serial chips beside the
+   title. Decision-cyan (#44DDFF) matches the Decision Surface's serial color; a plain
+   `references` chip (data-rel) reads dimmer than a true decided-in. */
+.cc-wf-decisions {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.cc-wf-decisions__label {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.5));
+  margin-right: 0.1rem;
+}
+.cc-wf-decisions__chip {
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  line-height: 1;
+  color: #44ddff;
+  padding: 0.22rem 0.55rem;
+  border: 1px solid color-mix(in srgb, #44ddff 35%, transparent);
+  border-radius: var(--tcl-radius-full, 9999px);
+  background: color-mix(in srgb, #44ddff 10%, transparent);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cc-wf-decisions__chip:hover {
+  background: color-mix(in srgb, #44ddff 22%, transparent);
+  border-color: color-mix(in srgb, #44ddff 60%, transparent);
+}
+.cc-wf-decisions__chip[data-rel='references'] {
+  color: var(--tcl-text-dim, rgba(255, 255, 255, 0.62));
+  border-color: var(--tcl-border, rgba(255, 255, 255, 0.14));
+  background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.04));
+}
+
 .cc-wf-shell__body {
   display: flex;
   flex-direction: row;
@@ -583,9 +657,11 @@ body,
   gap: 1.25rem;
 }
 
-/* Workflow layout: the swimlane board fills; the step-detail drawer sits on the right, reusing the
-   Overview .cc-detailpanel chrome. Stacks below the board on narrow viewports (shared @media rule). */
+/* Workflow layout: the swimlane board fills the row; the step-detail drawer overlays the right
+   edge (shared .cc-detailpanel chrome — the board never narrows). Stacks on narrow viewports
+   (shared @media rule). position: relative anchors the overlay rail. */
 .cc-workflow__layout {
+  position: relative;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -709,6 +785,83 @@ body,
   font-size: 0.78rem;
   font-style: italic;
   opacity: 0.6;
+}
+
+/* Outputs as file operations — git-style rows: an op glyph (+ create · ~ modify · − delete),
+   the path in mono (relative to the folded folder root shown in the section head), and an
+   optional artifact-kind chip. Non-file artifacts ("PR #482") render the same row, glyph muted. */
+.cc-stepdetail__files-root {
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.cc-stepdetail__files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.cc-stepdetail__file {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  background: var(--tcl-surface-raised, rgba(255, 255, 255, 0.04));
+}
+.cc-stepdetail__file > a {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1 1 auto;
+  color: inherit;
+  text-decoration: none;
+}
+.cc-stepdetail__file > a:hover .cc-stepdetail__file-path {
+  text-decoration: underline;
+}
+.cc-stepdetail__file-op {
+  flex: none;
+  width: 1ch;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  color: var(--tcl-text-faint, rgba(255, 255, 255, 0.35));
+}
+.cc-stepdetail__file[data-op='create'] .cc-stepdetail__file-op {
+  color: #43aa8b;
+}
+.cc-stepdetail__file[data-op='modify'] .cc-stepdetail__file-op {
+  color: #6bc9ff;
+}
+.cc-stepdetail__file[data-op='delete'] .cc-stepdetail__file-op {
+  color: #e5484d;
+}
+.cc-stepdetail__file[data-op='delete'] .cc-stepdetail__file-path {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+.cc-stepdetail__file-path {
+  min-width: 0;
+  flex: 1 1 auto;
+  word-break: break-all;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.74rem;
+  background: none;
+  padding: 0;
+}
+.cc-stepdetail__file-kind {
+  flex: none;
+  margin-left: auto;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+  padding: 0.12rem 0.4rem;
+  border-radius: var(--tcl-radius-full, 9999px);
+  background: color-mix(in srgb, currentColor 14%, transparent);
 }
 
 .cc-section {
@@ -837,9 +990,10 @@ body,
   background: color-mix(in srgb, #b884ff calc(var(--heat, 1) * 18%), transparent);
 }
 
-/* ── Master-detail body: the ledger fills; the detail drawer rides on the right (shared
-   .cc-detailpanel chrome — sticky, slides open on selection). ── */
+/* ── Master-detail body: the ledger fills; the detail drawer overlays the right edge (shared
+   .cc-detailpanel chrome — the ledger never narrows). position: relative anchors the rail. ── */
 .cc-decisions__body {
+  position: relative;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -941,6 +1095,11 @@ body,
 .cc-ledger__chip--governs {
   color: var(--tcl-text, #fff);
   background: color-mix(in srgb, #44ddff 20%, transparent);
+}
+/* Processes this decision shapes — teal, distinct from governs-cyan and lineage-violet. */
+.cc-ledger__chip--proc {
+  color: var(--tcl-text, #fff);
+  background: color-mix(in srgb, #2dd4bf 22%, transparent);
 }
 .cc-ledger__chip--builds {
   color: var(--tcl-text, #fff);
@@ -1077,22 +1236,13 @@ body,
   text-overflow: ellipsis;
 }
 
-/* The decision drawer can exceed the viewport (excerpt + ego-graph + three axes), and the shared
-   .cc-detailpanel is sticky — so cap it to the viewport and let it scroll internally (the Field
-   Guide tree's pattern), keeping the lower axes reachable instead of clipped below the fold. */
-.cc-decisions .cc-detailpanel[data-open='true'] {
-  max-height: calc(100vh - 0.75rem);
-  overflow: hidden auto;
-}
+/* The decision drawer's viewport cap + internal scroll now come from the shared
+   .cc-detailpanel__inner overlay rules — no Decisions-specific override needed. */
 
 /* Stack the ledger above the drawer on narrow viewports (the shared 60rem rule already restyles
    .cc-detailpanel to a static full-width panel). */
 @media (max-width: 60rem) {
   .cc-decisions__body {
     flex-direction: column;
-  }
-  .cc-decisions .cc-detailpanel[data-open='true'] {
-    max-height: none;
-    overflow: visible;
   }
 }

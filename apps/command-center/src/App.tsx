@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Badge, Brief, Card, EmptyState, FolderTree, Hub, Meter, Table, Tabs, Timeline } from '@trembus/ui';
 import type { BriefContract, FolderNode, SectionKind, TimelineContract, TimelineTone } from '@trembus/ui';
 import { SystemMap } from '@trembus/viz';
@@ -18,6 +18,7 @@ import {
   kinds,
   phasesByEntity,
   prettify,
+  relatedEdges,
   ribbon,
   ribbonTitle,
   ribbonTotal,
@@ -25,10 +26,11 @@ import {
   strategy,
   swimlaneKinds,
 } from './contract';
-import type { EntityRecord, GuideNode, Phase } from './contract';
+import type { EntityRecord, GuideNode, Phase, RelatedEdge } from './contract';
 import { SwitchPill, WorkflowConsole } from './WorkflowConsole';
 import { WORKFLOWS, WORKFLOW_TREE, WORKFLOW_TREE_EXPANDED, isGroupId, resolveTreeSel } from './workflows';
-import { DecisionSurface } from './DecisionSurface';
+import { DecisionSurface, serialOf } from './DecisionSurface';
+import { DetailOverlay } from './DetailOverlay';
 import { groupByStatus, statusTone } from './status';
 
 // statusTone + groupByStatus now live in ./status — one source, shared with the DecisionSurface panel.
@@ -554,8 +556,13 @@ export function App() {
   const [guideSel, setGuideSel] = useState<string | undefined>(undefined);
   const selectedGuideNode = guideSel ? guideIndex.get(guideSel) : undefined;
 
+  // Decision Surface selection, lifted here so cross-navigation can land WITH the decision
+  // selected (symmetric with a decision's "Affects processes" link selecting the workflow).
+  const [decisionSel, setDecisionSel] = useState<string | undefined>(undefined);
+
   // Step-ref cross-navigation: jump to the entity a workflow step references. A workflow target
-  // re-points the picker + opens Workflows; anything else switches to the tab that lists its kind.
+  // re-points the picker + opens Workflows; a decision opens the Decision Surface with it
+  // selected; anything else switches to the tab that lists its kind.
   const navigateToEntity = (target: string) => {
     const e = entities.find((x) => x.id === target);
     if (!e) return;
@@ -563,9 +570,25 @@ export function App() {
       setWfTreeSel(target); // bare id = the tree's root node id, so the highlight lands there
       setTab('workflows');
     } else {
+      if (DECISION_KINDS.includes(e.kind)) setDecisionSel(target);
       setTab(tabForKind(e.kind));
     }
   };
+
+  // The decisions behind the active process — its outbound decided-in edges to decision entities
+  // (a plain `references` to a decision folds in behind, deduped so decided-in wins). Rendered as
+  // serial chips beside the process title; clicking one cross-navigates to the Decision Surface.
+  const wfDecisions = useMemo(() => {
+    if (!activeWorkflow) return [];
+    const seen = new Map<string, RelatedEdge>();
+    for (const r of relatedEdges(activeWorkflow.id)) {
+      if (r.dir !== 'out' || !DECISION_KINDS.includes(r.other.kind)) continue;
+      if (r.rel !== 'decided-in' && r.rel !== 'references') continue;
+      const prev = seen.get(r.other.id);
+      if (!prev || (prev.rel !== 'decided-in' && r.rel === 'decided-in')) seen.set(r.other.id, r);
+    }
+    return [...seen.values()].sort((a, b) => a.other.id.localeCompare(b.other.id));
+  }, [activeWorkflow]);
 
   // The three bespoke panels (compose multiple kinds + non-kind data — not auto-generatable).
   const overviewBody = (
@@ -574,28 +597,26 @@ export function App() {
       <div className="cc-overview__hub">
         <Hub data={hubData} selectedId={hubSel} onSelect={setHubSel} />
       </div>
-      <aside className="cc-detailpanel" data-open={Boolean(hubSel)} aria-label="Entity details">
-        <div className="cc-detailpanel__inner">
-          {hubSel ? (
-            <Card className="cc-detailpanel__card">
-              <button
-                type="button"
-                className="cc-detailpanel__close"
-                onClick={() => setHubSel(undefined)}
-                aria-label="Close details"
-              >
-                ✕
+      <DetailOverlay open={Boolean(hubSel)} onClose={() => setHubSel(undefined)} label="Entity details">
+        {hubSel ? (
+          <Card className="cc-detailpanel__card">
+            <button
+              type="button"
+              className="cc-detailpanel__close"
+              onClick={() => setHubSel(undefined)}
+              aria-label="Close details"
+            >
+              ✕
+            </button>
+            <Brief data={hexBrief(hubSel)} />
+            {hubSel === 'guide' && (
+              <button type="button" className="cc-guide__cta" onClick={() => setTab('guide')}>
+                Open Field Guide →
               </button>
-              <Brief data={hexBrief(hubSel)} />
-              {hubSel === 'guide' && (
-                <button type="button" className="cc-guide__cta" onClick={() => setTab('guide')}>
-                  Open Field Guide →
-                </button>
-              )}
-            </Card>
-          ) : null}
-        </div>
-      </aside>
+            )}
+          </Card>
+        ) : null}
+      </DetailOverlay>
     </div>
       <section className="cc-overview__map" aria-label="Framework system map">
         <div className="cc-overview__map-head">
@@ -653,6 +674,23 @@ export function App() {
           </button>
         )}
         <h2 className="cc-wf-shell__title">{activeWorkflow.label}</h2>
+        {wfDecisions.length > 0 && (
+          <span className="cc-wf-decisions" aria-label="Decisions behind this process">
+            <span className="cc-wf-decisions__label">Decided in</span>
+            {wfDecisions.map((r) => (
+              <button
+                key={r.other.id}
+                type="button"
+                className="cc-wf-decisions__chip"
+                data-rel={r.rel}
+                title={`${r.rel === 'decided-in' ? 'Decided in' : 'References'} “${r.other.title}”`}
+                onClick={() => navigateToEntity(r.other.id)}
+              >
+                {serialOf(r.other.id)}
+              </button>
+            ))}
+          </span>
+        )}
       </div>
       <SwitchPill
         checked={wfShowRuns}
@@ -749,7 +787,7 @@ export function App() {
   const renderPanel = (area: NavEntry) => {
     if (area.panel === 'overview') return overviewBody;
     if (area.panel === 'roadmap') return <RoadmapBoard />;
-    if (area.panel === 'decisions') return <DecisionSurface kind={area.kinds?.[0] ?? 'decision'} onNavigate={navigateToEntity} />;
+    if (area.panel === 'decisions') return <DecisionSurface kind={area.kinds?.[0] ?? 'decision'} onNavigate={navigateToEntity} selected={decisionSel} onSelect={setDecisionSel} />;
     if (area.panel === 'workflows') return workflowsBody;
     if (area.panel === 'guide') return guideBody;
     return <AreaTable kinds={area.kinds ?? []} empty={`No ${area.label.toLowerCase()} yet.`} />;

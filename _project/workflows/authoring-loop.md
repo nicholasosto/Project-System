@@ -1,12 +1,16 @@
 ---
 title: "Authoring loop"
 status: active
-updated: 2026-06-27
+updated: 2026-07-14
+links:
+  - { rel: decided-in, target: decisions/0004-pipeline-entities-carry-a-structured-workflow-block }
+  - { rel: decided-in, target: decisions/0006-workflow-as-a-first-class-kind-distinct-from-pipeline }
+  - { rel: decided-in, target: decisions/0013-validate-the-swimlane-body-and-let-steps-reference-the-graph }
 ---
 
 # Authoring loop
 
-> **Status:** active (2026-06-27)
+> **Status:** active (2026-07-14)
 
 ## Purpose
 
@@ -52,7 +56,7 @@ set but only half-realized while this loop stayed hardcoded in the consuming app
         { "text": "The chosen kind", "detail": "selects the target _project/ folder" },
         { "text": "title", "detail": "plus optional --tag key=value pairs" }
       ],
-      "outputs": ["_project/<kind>/<id>.md"],
+      "outputs": [{ "label": "_project/<kind>/<id>.md", "op": "create" }],
       "refs": [{ "rel": "references", "target": "features/new-scaffolder" }], "to": ["edit"]
     },
     {
@@ -69,7 +73,10 @@ set but only half-realized while this loop stayed hardcoded in the consuming app
         "Fail open — a guard-internal error never blocks the save"
       ],
       "inputs": ["The pending _project/ write (the file being saved)"],
-      "refs": [{ "rel": "references", "target": "features/validator-and-guard" }], "to": ["validate"]
+      "refs": [
+        { "rel": "references", "target": "features/validator-and-guard" },
+        { "rel": "decided-in", "target": "decisions/0013-validate-the-swimlane-body-and-let-steps-reference-the-graph" }
+      ], "to": ["validate"]
     },
     {
       "id": "validate", "lane": "engines", "label": "Validate the graph", "detail": "validate.mjs",
@@ -81,8 +88,8 @@ set but only half-realized while this loop stayed hardcoded in the consuming app
       "id": "render", "lane": "engines", "label": "Emit JSON contract", "detail": "render-hub.mjs · graph + hub",
       "note": "Emits graph.json + hub.json from _project/. A Vite dev plugin, not a hook — editing any _project/ file repaints the dashboard.",
       "outputs": [
-        "previews/dashboards/project-system-graph.json",
-        "previews/dashboards/project-system-hub.json"
+        { "label": "previews/dashboards/project-system-graph.json", "op": "modify" },
+        { "label": "previews/dashboards/project-system-hub.json", "op": "modify" }
       ],
       "to": ["view"]
     },
