@@ -45,18 +45,9 @@ const TEMPLATE_SETTINGS = join(FRAMEWORK_ROOT, "templates", "consumer", ".claude
 // count toward that trigger (a local demo is not an independent consumer). Demo-ness is DERIVED
 // from each consumer's config (single source), never hardcoded on the entry here.
 const CONSUMERS = [
-  {
-    name: "soul-steel",
-    // De-forked 2026-06-29: SS now VENDORS the framework. Compare its vendored base-schema copy
-    // (not the old fused documents/specs schema, which is retired) against canonical.
-    schema: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official/.project-system/schema/project-entity.base.schema.json",
-    // The consumer's _project/ root + its OWN root project-system config (no longer the golden example).
-    root: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official",
-    config: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official/project-system.config.json",
-    // No ownValidator: SS relies on the vendored validate.mjs, so there is no separate fork to compare
-    // counts against (behavioral = 0-errors). claudeDir opts SS into the HOOKS parity axis.
-    claudeDir: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Soul-Steel-Official/.claude",
-  },
+  // soul-steel was REMOVED 2026-07-19: Soul-Steel-Official de-migrated (its commit aa4a689
+  // deleted .project-system/, _project/, and the config), so its entry pointed at dead paths
+  // and failed every run. The Roblox domain's consumer is now roblox-development-studio.
   {
     name: "asset-studio",
     // The game-agnostic asset-production space (REAL consumer #2). VENDORS the framework like SS;
@@ -77,6 +68,17 @@ const CONSUMERS = [
     root: "/Users/nicholasosto/Master-Managed/Project-Spaces/Astrix-Systems",
     config: "/Users/nicholasosto/Master-Managed/Project-Spaces/Astrix-Systems/project-system.config.json",
     claudeDir: "/Users/nicholasosto/Master-Managed/Project-Spaces/Astrix-Systems/.claude",
+  },
+  {
+    name: "roblox-development-studio",
+    // The Roblox package-platform planning space (REAL consumer). VENDORS the framework;
+    // standard six kinds + a domain `package` kind mirroring the @trembus monorepo
+    // (roblox-packages-mono, wrapped via external-locations/code). No ownValidator
+    // (vendored validate.mjs); claudeDir opts it into the HOOKS parity axis.
+    schema: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Roblox-Development-Studio/.project-system/schema/project-entity.base.schema.json",
+    root: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Roblox-Development-Studio",
+    config: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Roblox-Development-Studio/project-system.config.json",
+    claudeDir: "/Users/nicholasosto/Master-Managed/Project-Spaces/Roblox-Development/Roblox-Development-Studio/.claude",
   },
   {
     name: "soul-steel-demo",
