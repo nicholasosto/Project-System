@@ -63,17 +63,21 @@ A consuming project supplies a config; the framework supplies everything else.
    project; for a project that **already has planning material** (docs, ADRs, a roadmap), the
    `migrate-project-space` skill instead *infers* the config + an initial entity set from that evidence and feeds
    the same generator. (You can still copy `examples/soul-steel.config.json` and edit by hand if you prefer.)
-3. **Copy** `templates/consumer/.claude/` into the project (`settings.json` + `commands/new.md` +
-   `skills/`). Don't edit it — the wiring is domain-neutral and identical for every
-   consumer: a blocking `PreToolUse` guard plus an advisory `SessionStart` health summary, both pointing at
-   `.project-system/tools/…` via `$CLAUDE_PROJECT_DIR`.
+3. **Copy** `templates/consumer/.claude/` into the project (`settings.json` + `commands/` —
+   the `/new` scaffolder and the `/end` session sweep — + `skills/`). Don't edit it — the wiring
+   is domain-neutral and identical for every consumer: a blocking `PreToolUse` guard plus an
+   advisory `SessionStart` health summary, both pointing at `.project-system/tools/…` via
+   `$CLAUDE_PROJECT_DIR`.
 4. **Register** the project in `tools/check-consumer-drift.mjs` (add `schema`/`root`/`config`, plus a
    `claudeDir` to opt into the hook-parity axis) so the mirror — schema, validator, **and** hooks — stays honest.
 5. **Verify:** `node .project-system/tools/check-consumer-drift.mjs` (or `npm test` from the framework).
 
 Run the engines directly any time with `node .project-system/tools/validate.mjs --root . --config ./project-system.config.json`.
 The single generic `/new <kind>` command is canonical — the scaffolder validates the kind against your config,
-so there are no per-kind commands to hand-maintain.
+so there are no per-kind commands to hand-maintain. Its bookend `/end` closes a working session:
+a drift sweep (validator · render `--check` · git · memory-vs-reality), knowledge-capture offers
+(memory · the planning ledger via `/new` · any wired vault skills), and a conflict audit across
+instructions, memory, and skills — report + proposals, never silent mutation.
 
 ## Conventions
 
@@ -104,10 +108,11 @@ so there are no per-kind commands to hand-maintain.
 ## Packaging status
 
 Per [_project/decisions/0002-…](_project/decisions/0002-mirror-the-contract-with-a-ci-check-before-publishing.md):
-the contract is **mirrored with a drift check**, not yet published. 2 consumers today
-(Soul-Steel + this dogfood). When a **3rd** independent consumer adopts it, publish
-`@trembus/project-schema` and switch consumers to installing it. Run
-`node tools/check-consumer-drift.mjs` before relying on a consumer's copy.
+the contract is **mirrored with a drift check**, not yet published. Three real consumers today —
+Asset-Studio, Astrix-Systems, and Roblox-Development-Studio (Soul-Steel de-migrated 2026-07-19)
+— so 0002's **publish trigger has fired**: publishing `@trembus/project-schema` and switching
+consumers to installing it is a pending decision (queued behind the runs/facet governance ADRs).
+Run `node tools/check-consumer-drift.mjs` before relying on a consumer's copy.
 
 ## Dogfooding
 
