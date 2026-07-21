@@ -56,13 +56,17 @@ const STANDARD_PRESET = {
     { name: "report", folder: "reports", status: ["draft", "complete"], filename: "date-slug", scaffoldSections: ["Outcome", "Surprises", "Decisions made", "Carry-forward", "Verification evidence"] },
     { name: "pipeline", folder: "pipeline", status: ["design", "qualify", "build", "ship", "archive", "shelved"], filename: "slug", scaffoldSections: ["Context", "Build plan", "Exit criteria"] },
     { name: "roadmap", folder: "roadmap", status: ["proposed", "active", "superseded", "complete"], filename: "slug", requiredSections: ["Context"], scaffoldSections: ["Context", "Plan", "Open questions"] },
-    { name: "session", folder: "sessions", status: ["planned", "active", "blocked", "completed", "shelved"], filename: "date-slug", requiredSections: ["Goal", "Success Criteria", "Source References", "Decisions", "Outputs", "Blockers", "Next Action", "Handoff Notes"] },
+    { name: "session", folder: "sessions", status: ["planned", "active", "blocked", "completed", "shelved"], filename: "date-slug", requiredSections: ["Goal", "Success Criteria", "Source References", "Decisions", "Outputs", "Blockers", "Next Action", "Handoff Notes"], scaffoldSections: ["Goal", "Success Criteria", "Source References", "Decisions", "First-Principles Candidates", "Outputs", "Blockers", "Next Action", "Handoff Notes"] },
     { name: "workflow", folder: "workflows", status: ["draft", "active", "deprecated"], filename: "slug", carriesSwimlanes: true, requiredSections: ["Workflow"], scaffoldSections: ["Purpose", "Workflow"] },
   ],
   tagRegistry: {
     priority: { type: "enum", values: ["high", "medium", "low"] },
     agent: { type: "enum", values: ["neutral", "codex", "claude", "human"] },
     horizon: { type: "enum", values: ["milestone", "phase", "cross-domain"] },
+    // Session-lifecycle tags, maintained by the /start·/end commands: last-active is the
+    // engram's freshness timestamp; kos records which context systems the session reached for.
+    "last-active": { type: "string", unknownAllowed: true },
+    kos: { type: "string", unknownAllowed: true },
   },
   relTargetKinds: {
     supersedes: ["decision", "roadmap"],
@@ -236,6 +240,7 @@ function selfTest() {
     ["extends standard + a brand-new kind appends + loads", () => { const c = buildConfig({ project: "p", extends: "standard", kinds: [{ name: "character", folder: "characters", status: ["concept", "canon"], requiredSections: ["Concept"] }] }); return Object.keys(c.kinds).length === 7 && loads(c); }],
     ["unknown preset → throws", () => throws(() => buildConfig({ project: "p", extends: "nope" }), /unknown preset/)],
     ["$schema pointer is set + overridable", () => { const a = buildConfig({ project: "p", extends: "standard" }); const b = buildConfig({ project: "p", extends: "standard" }, { schemaPath: "./schema/project-config.schema.json" }); return a.$schema === DEFAULT_SCHEMA_PATH && b.$schema === "./schema/project-config.schema.json"; }],
+    ["session-lifecycle defaults: First-Principles scaffolded (not required) + both tags registered", () => { const c = buildConfig({ project: "p", extends: "standard" }); const s = c.kinds.session; const i = s.scaffoldSections.indexOf("First-Principles Candidates"); return loads(c) && i > 0 && s.scaffoldSections[i - 1] === "Decisions" && s.scaffoldSections[i + 1] === "Outputs" && !s.requiredSections.includes("First-Principles Candidates") && c.tagRegistry["last-active"]?.type === "string" && c.tagRegistry.kos?.type === "string"; }],
   ];
 
   let pass = 0;

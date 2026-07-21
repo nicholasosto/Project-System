@@ -46,6 +46,7 @@
       "initialStatus": "planned",
       "filename": "date-slug",
       "requiredSections": ["Goal", "Success Criteria", "Source References", "Decisions", "Outputs", "Blockers", "Next Action", "Handoff Notes"],
+      "scaffoldSections": ["Goal", "Success Criteria", "Source References", "Decisions", "First-Principles Candidates", "Outputs", "Blockers", "Next Action", "Handoff Notes"],
       "render": { "dot": "#D4AF37", "tag": "Sessions", "name": "Work log", "sub": "reference shape · 8 sections" }
     },
     "workflow": {
@@ -76,7 +77,9 @@
     "agent": { "type": "enum", "values": ["neutral", "codex", "claude", "human"] },
     "scope": { "type": "string", "lintAgainst": ["framework", "tooling", "docs", "packaging"], "unknownAllowed": true },
     "horizon": { "type": "enum", "values": ["milestone", "phase", "cross-domain"] },
-    "tier": { "type": "enum", "values": ["required", "optional"] }
+    "tier": { "type": "enum", "values": ["required", "optional"] },
+    "last-active": { "type": "string", "unknownAllowed": true },
+    "kos": { "type": "string", "unknownAllowed": true }
   },
   "relTargetKinds": {
     "supersedes": ["decision", "roadmap"],

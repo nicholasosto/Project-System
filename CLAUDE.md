@@ -78,6 +78,11 @@ so there are no per-kind commands to hand-maintain. Its bookend `/end` closes a 
 a drift sweep (validator · render `--check` · git · memory-vs-reality), knowledge-capture offers
 (memory · the planning ledger via `/new` · any wired vault skills), and a conflict audit across
 instructions, memory, and skills — report + proposals, never silent mutation.
+The session lifecycle + self-improvement bridge rides the same surface: `/start` opens a tagged
+engram session (Wake · Orient · Open), `/end` closes it natively, and the consumer-template
+`/reflect` periodically mines the closed-session ledger for propose-only improvements —
+consumer-local additions to templated commands use the delimiter grammar in
+[docs/spec/schema.md §7b](docs/spec/schema.md).
 
 ## Conventions
 

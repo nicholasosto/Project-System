@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 43,
-  "migrated": 43,
+  "entities": 45,
+  "migrated": 45,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -220,6 +220,15 @@
       "excerpt": "<what is forcing this now>"
     },
     {
+      "id": "port-session-lifecycle-self-improvement-bridge",
+      "kind": "pipeline",
+      "title": "Port session lifecycle + self-improvement bridge",
+      "status": "ship",
+      "updated": "2026-07-21",
+      "file": "_project/pipeline/port-session-lifecycle-self-improvement-bridge.md",
+      "excerpt": "RDS (roblox-development-studio) ADR-0010 activated a session-lifecycle loop entirely inside its own .claude/: a /start command (Wake dangling-triage · Orient one-shot brief · Open an \"engram\" session carrying last-activ…"
+    },
+    {
       "id": "command-center",
       "kind": "roadmap",
       "title": "Command-Center",
@@ -241,10 +250,10 @@
       "id": "2026-06-24-extract-and-generalize-project-system-into-its-own-space",
       "kind": "session",
       "title": "Extract and generalize project-system into its own space",
-      "status": "active",
-      "updated": "2026-06-24",
+      "status": "shelved",
+      "updated": "2026-07-21",
       "file": "_project/sessions/2026-06-24-extract-and-generalize-project-system-into-its-own-space.md",
-      "excerpt": "<the single outcome this session targets>"
+      "excerpt": "Extract and generalize the project-system framework out of Soul-Steel into its own space."
     },
     {
       "id": "2026-06-27-command-center-evolution-and-data-driven-kinds",
@@ -263,6 +272,19 @@
       "updated": "2026-06-29",
       "file": "_project/sessions/2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a.md",
       "excerpt": "Address the report that workflow steps were \"minimally stated, with little guidance when clicked\" — and, more broadly, close the gap between the rich @trembus/ui swimlane model and the framework's thin authoring/validat…"
+    },
+    {
+      "id": "2026-07-21-port-session-lifecycle-self-improvement-bridge-implementatio",
+      "kind": "session",
+      "title": "Port session lifecycle + self-improvement bridge — implementation",
+      "status": "completed",
+      "updated": "2026-07-21",
+      "file": "_project/sessions/2026-07-21-port-session-lifecycle-self-improvement-bridge-implementatio.md",
+      "tags": {
+        "last-active": "2026-07-21T14:50",
+        "kos": "spec, consumers, memory, dashboards"
+      },
+      "excerpt": "Implement the port-session-lifecycle-self-improvement-bridge pipeline end-to-end: the 10-step framework build, per-consumer adoption (astrix pending a product call), and the pipeline's exit criteria verified."
     },
     {
       "id": "authoring-loop",
@@ -516,15 +538,16 @@
       ]
     },
     "pipeline": {
-      "total": 3,
+      "total": 4,
       "byStatus": {
-        "ship": 2,
+        "ship": 3,
         "design": 1
       },
       "ids": [
         "migrate-soul-steel-command-center",
         "migrate-soul-steel-official",
-        "package-as-trembus-project-schema"
+        "package-as-trembus-project-schema",
+        "port-session-lifecycle-self-improvement-bridge"
       ],
       "tone": "accent",
       "statusOrder": [
@@ -555,15 +578,16 @@
       ]
     },
     "session": {
-      "total": 3,
+      "total": 4,
       "byStatus": {
-        "active": 1,
-        "completed": 2
+        "shelved": 1,
+        "completed": 3
       },
       "ids": [
         "2026-06-24-extract-and-generalize-project-system-into-its-own-space",
         "2026-06-27-command-center-evolution-and-data-driven-kinds",
-        "2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a"
+        "2026-06-29-enhance-workflows-validate-the-swimlane-body-step-guidance-a",
+        "2026-07-21-port-session-lifecycle-self-improvement-bridge-implementatio"
       ],
       "tone": "warning",
       "statusOrder": [
@@ -1776,6 +1800,7 @@
                     "Success Criteria",
                     "Source References",
                     "Decisions",
+                    "First-Principles Candidates",
                     "Outputs",
                     "Blockers",
                     "Next Action",

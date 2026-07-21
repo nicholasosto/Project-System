@@ -12,7 +12,7 @@
   "stats": [
     {
       "label": "entities",
-      "value": 43
+      "value": 45
     },
     {
       "label": "kinds",
@@ -32,12 +32,12 @@
   "scope": [
     {
       "label": "Entities",
-      "num": "43",
+      "num": "45",
       "value": "across 7 kinds"
     },
     {
       "label": "Conformant",
-      "num": "43/43",
+      "num": "45/45",
       "value": "carry frontmatter · 0 pending"
     },
     {
@@ -70,7 +70,7 @@
       "tag": "Contract",
       "name": "ProjectEntity",
       "sub": "3 primitives · 1 shape",
-      "status": "43/43",
+      "status": "45/45",
       "dot": "#D4AF37",
       "note": "One non-optional contract every _project/ file derives from — Identity (kind·id·title) · State (status·updated) · Relation (links). kind & id are loader-derived from the path; the authored surface is just title/status/updated (+links/tags). The validator, scaffolder, guard, and this dashboard all read this single source.",
       "sources": [
@@ -177,7 +177,7 @@
       "tag": "Control surface",
       "name": "Commands",
       "sub": "slash commands",
-      "status": "2",
+      "status": "3",
       "dot": "#5a6478",
       "note": "The project's slash commands — the generic /new <kind> scaffolder (writes valid frontmatter, self-validates against the config) and its bookend /end, the session-close sweep: drift check · capture opportunities · conflict audit.",
       "entries": [
@@ -188,6 +188,10 @@
         {
           "text": "/new <kind> <title>",
           "desc": "Scaffold a new _project/ entity of any kind — decision · report · pipeline · roadmap · session · workflow"
+        },
+        {
+          "text": "/start [<goal>]",
+          "desc": "Session wake-up — dangling-session triage, one-shot orientation brief, and an engram-style session open"
         }
       ],
       "sources": [

@@ -56,6 +56,10 @@ const BUILTIN_HINTS = {
   "Success Criteria": "- <observable criterion>",
   "Source References": "- <spec / file link>",
   Decisions: "- <decision made this session>",
+  // The session export queue: /end's Capture pass consumes it; the /reflect bridge mines it.
+  // The <…> placeholders are load-bearing — an authored candidate line contains no "<", which
+  // is how the bridge discriminates real candidates from this untouched hint.
+  "First-Principles Candidates": "- <one-sentence insight> → <candidate home: decision · brain capture · memory · none yet>",
   Outputs: "- <artifact produced>",
   Blockers: "- <blocker, or “none”>",
   "Next Action": "<the single next concrete action>",
@@ -225,7 +229,9 @@ function syntheticCtx() {
     initialStatus,
     filenameScheme,
     requiredSections: sections,
-    scaffoldSections: sections,
+    // session scaffolds a superset of its required sections (the standard preset's real shape),
+    // so the self-test exercises the required⊂scaffold asymmetry.
+    scaffoldSections: { ...sections, session: ["Goal", "Success Criteria", "Source References", "Decisions", "First-Principles Candidates", "Outputs", "Blockers", "Next Action", "Handoff Notes"] },
     // A clean born-valid swimlane stub, so a scaffolded `workflow` exercises swimlane validation
     // (the real config's richer hint demonstrates status/detail/note; this one just must validate).
     sectionHints: { Workflow: '```json\n{\n  "lanes": [ { "id": "you", "label": "You", "kind": "human" } ],\n  "steps": [ { "id": "start", "lane": "you", "label": "Start", "status": "done", "to": [] } ]\n}\n```' },

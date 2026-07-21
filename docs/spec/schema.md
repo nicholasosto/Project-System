@@ -114,6 +114,11 @@ things, both declared in the project config, **neither a different field set**:
    structure is convention, not contract. The config splits this into
    `requiredSections` (absence → warning) and `scaffoldSections` (the fuller template the
    scaffolder writes at CREATE time, so a fresh file has zero missing-section warnings).
+   The canonical example of the asymmetry is the standard `session` kind: `## First-Principles
+   Candidates` is **scaffolded but not required** — every fresh session gets the export-queue
+   section (between `Decisions` and `Outputs`), while legacy sessions that predate it stay
+   warning-free. Its heading is a fixed framework convention (the `/reflect` bridge matches it
+   literally), not a config key.
 
 What used to tempt a per-kind field, and where it goes instead:
 
@@ -142,6 +147,13 @@ declares them. The framework's own config, for example, uses:
 | `roadmap` | `proposed` · `active` · `superseded` · `complete` |
 | `session` | `planned` · `active` · `blocked` · `completed` · `shelved` |
 
+**Session-lifecycle semantics** (the `/start` · `/end` · `/reflect` commands read the standard
+session enum this way): `planned` and `active` are the **dangling** states — a session left in
+either was never `/end`-ed, and `/start`'s wake-check hunts them. `completed` and `shelved` are
+**settled** — the only states the `/reflect` bridge mines. `blocked` with real Blockers content
+is **parked-but-alive**: a legitimate terminal state for `/end`, surfaced by Wake as a live
+thread, and excluded from bridge mining.
+
 ### 4b. `tags` — a known-key registry (`config.tagRegistry`)
 
 Facets live in `tags`. **Known keys have their VALUES validated; unknown keys are ALLOWED
@@ -155,6 +167,15 @@ universal (in the base schema, not config):
 
 Rendering richness tracks known-ness: a known tag drives a real encoding; an unknown tag
 renders generically or is ignored.
+
+**Recommended session-lifecycle tags** (in the standard preset's registry; both
+`type: "string"`, `unknownAllowed`): `last-active` — the engram's freshness timestamp
+(`YYYY-MM-DDTHH:MM`), refreshed at natural checkpoints and set at close; its presence is what
+marks a session file as a lifecycle-managed **engram** (the `/reflect` bridge's roster filter).
+`kos` — the comma-separated slugs of the context systems the session reached for, drawn from the
+`/start` roster. Two parser rules follow from the zero-dep frontmatter parser: `tags` must stay
+a **single-line flow map** (nested block maps are not parsed), and any comma-bearing value —
+`kos` almost always — must be **quoted** or it splits the map.
 
 ---
 
@@ -202,6 +223,8 @@ why the contract must exist before the first renderer.)*
 
 ## 7. Adopting the framework in a project
 
+### 7a. Adoption steps
+
 1. **Author a config.** Copy `examples/soul-steel.config.json`; declare your kinds (folder,
    status enum, initial status, filename scheme, sections) plus the tag registry,
    milestones, rel→kind rules, and render metadata.
@@ -220,6 +243,39 @@ why the contract must exist before the first renderer.)*
 then extracted here. Soul-Steel remains a live consumer (`examples/soul-steel.config.json`
 reproduces its baseline exactly).
 
+### 7b. Consumer-local additions to templated commands — the delimiter grammar
+
+The `templates/consumer/.claude/` commands are vendored verbatim and re-copied on every update —
+so anything a consumer adds in place would be silently lost. Two HTML-comment delimiter pairs
+make consumer-local content **parseable and re-vendor-safe**:
+
+- **`consumer-extension`** — a block the consumer *added* (a whole bullet, sub-step, or
+  section). Opener carries a slug and a free note; the closer repeats the slug:
+
+  ```
+  <!-- consumer-extension: <slug> · <note> -->
+  …the added content…
+  <!-- /consumer-extension: <slug> -->
+  ```
+
+  After any re-vendor, `grep "consumer-extension"` the old copy and re-apply each block into
+  the new one. The `/reflect` bridge's `consumer-extension` proposals are authored as exactly
+  this shape.
+
+- **`consumer-specific`** — a region the template *expects* each consumer to replace (e.g. the
+  `/start` context-systems roster). Opener carries a free note (conventionally including the
+  `TODO(consumer):` fill instruction); the closer is bare:
+
+  ```
+  <!-- consumer-specific: <note> -->
+  …the per-consumer content…
+  <!-- /consumer-specific -->
+  ```
+
+The distinction matters at re-vendor time: an *extension* is re-applied verbatim; a *specific*
+region is re-filled with the consumer's own content (which survives in the old copy). Neither
+pair ever appears in the framework's own `.claude/` copies — those are canonical, not templates.
+
 ---
 
 ## 8. Design decisions
@@ -229,7 +285,11 @@ reproduces its baseline exactly).
 2. **Authority direction** → **frontmatter is authority; the validator ENFORCES agreement,
    never generates.** The leading status word of the prose header (after stripping emoji)
    must map to the frontmatter `status`; trailing qualifiers are free narrative. Severity is
-   `config.proseStatusEnforcement.rollout` (`off`/`warn`/`error`).
+   `config.proseStatusEnforcement.rollout` (`off`/`warn`/`error`). Corollary for writers (the
+   paired flip ↔ guard interaction): a status change must touch the frontmatter `status:` line
+   and the prose `> **Status:** …` line in **one write** — under `error` rollout the save-time
+   guard blocks a half-flip *even as the first of two "sequential" edits*, which is why the
+   session-lifecycle commands (`/start` · `/end`) apply every flip as a single spanning Edit.
 3. **`id`/`kind` scheme** → **both derived, never authored:** `kind` = the folder, `id` =
    the filename stem. Per-kind filename conventions stay (`serial`/`date-slug`/`slug`, in
    config). A rename is a "fix inbound links" event the dangling-link check surfaces.

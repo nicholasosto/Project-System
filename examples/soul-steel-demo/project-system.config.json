@@ -38,7 +38,8 @@
       "status": ["planned", "active", "blocked", "completed", "shelved"],
       "initialStatus": "planned",
       "filename": "date-slug",
-      "requiredSections": ["Goal", "Success Criteria", "Source References", "Decisions", "Outputs", "Blockers", "Next Action", "Handoff Notes"]
+      "requiredSections": ["Goal", "Success Criteria", "Source References", "Decisions", "Outputs", "Blockers", "Next Action", "Handoff Notes"],
+      "scaffoldSections": ["Goal", "Success Criteria", "Source References", "Decisions", "First-Principles Candidates", "Outputs", "Blockers", "Next Action", "Handoff Notes"]
     },
     "character": {
       "folder": "characters",
@@ -72,7 +73,9 @@
     "priority": { "type": "enum", "values": ["high", "medium", "low"] },
     "agent": { "type": "enum", "values": ["neutral", "codex", "claude", "human"] },
     "scope": { "type": "string", "lintAgainst": ["steel-city", "ip-wide", "tooling"], "unknownAllowed": true },
-    "horizon": { "type": "enum", "values": ["milestone", "phase", "cross-domain"] }
+    "horizon": { "type": "enum", "values": ["milestone", "phase", "cross-domain"] },
+    "last-active": { "type": "string", "unknownAllowed": true },
+    "kos": { "type": "string", "unknownAllowed": true }
   },
   "relTargetKinds": {
     "supersedes": ["decision", "roadmap"],

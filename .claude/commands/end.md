@@ -25,7 +25,11 @@ Sweep the conversation for durable knowledge with no home yet:
 - **The planning ledger** — the contract's own capture surface:
   - a decision made ad hoc in conversation but recorded nowhere → offer `/new decision`;
   - substantial work completed and verified → offer `/new report` (the retro shape);
-  - work left mid-flight that a future session must pick up → offer `/new session` (the handoff shape).
+  - work left mid-flight that a future session must pick up → offer `/new session` (the handoff shape) — unless an open session entity already exists (see **Close the open session** below): then the handoff lives in ITS Handoff Notes, not a new file.
+- **Close the open session** — Grep `_project/sessions/` for frontmatter status `planned`, `active`, or `blocked`.
+  - **None** → skip in one line; the offers above are unchanged.
+  - **One this conversation actually advanced** → draft its close: backfill Outputs / Blockers / Next Action / Handoff Notes from the session; set `tags.last-active` (time of the last user message, `YYYY-MM-DDTHH:MM`) and refresh `tags.kos` (union — never truncate what /start wrote); pick the end state — `completed` (Goal met), `blocked` (parked, blocker named), `shelved` (abandoned). **Never leave `planned` or `active`** — that is the dangling signal /start's wake-check hunts. Propose the close in the checklist; on approval apply as **one Edit spanning the frontmatter `status:`/`updated:` lines through the prose `> **Status:** …` line** (this config runs `proseStatusEnforcement: error` — a lone frontmatter flip is guard-blocked).
+  - **Multiple open** → propose a real close only for the one this session advanced; list each other with a suggested `shelved` (abandoned) or `blocked` (genuinely parked) and let the user pick. Never bulk-`completed` work this conversation can't vouch for.
 - **Knowledge vaults** — concepts, patterns, or hard-won lessons that belong in a wired knowledge-capture skill (brain/vault plugins, when this space has them): list each candidate with the exact capture invocation to run. Never auto-capture into a vault — those skills own their own intake.
 
 ## 3 · Conflicts — do the instruction surfaces agree?

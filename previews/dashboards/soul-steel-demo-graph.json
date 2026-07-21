@@ -10,14 +10,27 @@
     "character": "characters",
     "workflow": "workflows"
   },
-  "entities": 3,
-  "migrated": 3,
+  "entities": 4,
+  "migrated": 4,
   "counts": {
     "error": 0,
     "warning": 0,
     "info": 0
   },
   "nodes": [
+    {
+      "id": "2026-07-21-temper-the-soul-steel-prototype-blade",
+      "kind": "session",
+      "title": "Temper the soul-steel prototype blade",
+      "status": "completed",
+      "updated": "2026-07-21",
+      "file": "_project/sessions/2026-07-21-temper-the-soul-steel-prototype-blade.md",
+      "tags": {
+        "last-active": "2026-07-21T14:33",
+        "kos": "steel-city-lore, character-pipeline"
+      },
+      "excerpt": "Take the Ember-Vein prototype blade through its first full temper cycle so the forge team can judge whether soul-steel holds an edge after quenching."
+    },
     {
       "id": "aria-vance",
       "kind": "character",
@@ -99,9 +112,13 @@
       ]
     },
     "session": {
-      "total": 0,
-      "byStatus": {},
-      "ids": [],
+      "total": 1,
+      "byStatus": {
+        "completed": 1
+      },
+      "ids": [
+        "2026-07-21-temper-the-soul-steel-prototype-blade"
+      ],
       "tone": "warning",
       "statusOrder": [
         "planned",
@@ -802,6 +819,7 @@
                     "Success Criteria",
                     "Source References",
                     "Decisions",
+                    "First-Principles Candidates",
                     "Outputs",
                     "Blockers",
                     "Next Action",
