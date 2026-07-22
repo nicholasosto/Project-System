@@ -77,13 +77,18 @@ Run the engines directly any time with `node .project-system/tools/validate.mjs 
 The single generic `/new <kind>` command is canonical — the scaffolder validates the kind against your config,
 so there are no per-kind commands to hand-maintain. Its bookend `/end` closes a working session:
 a drift sweep (validator · render `--check` · git · memory-vs-reality), knowledge-capture offers
-(memory · the planning ledger via `/new` · any wired vault skills), and a conflict audit across
-instructions, memory, and skills — report + proposals, never silent mutation.
+(memory · the planning ledger via `/new` · automation candidates · any wired vault skills), and a
+conflict audit across instructions, memory, and skills — report + proposals, never silent mutation.
 The session lifecycle + self-improvement bridge rides the same surface: `/start` opens a tagged
 engram session (Wake · Orient · Open), `/end` closes it natively, and the consumer-template
 `/reflect` periodically mines the closed-session ledger for propose-only improvements —
 consumer-local additions to templated commands use the delimiter grammar in
 [docs/spec/schema.md §7b](docs/spec/schema.md).
+Recurring toil rides the same two-stage lane: `/end` records it as a `routine` candidate in the
+session's First-Principles queue, `/reflect` aggregates the window into an approval-gated routine
+proposal, and an accepted one becomes a workflow entity tagged `cadence` — the record, never the
+runner. A routine is a scheduled run; event-shaped enforcement stays a hook. See
+[_project/decisions/0017-…](_project/decisions/0017-session-lifecycle-self-improvement-bridge-and-a-scheduled-ro.md).
 
 ## Conventions
 
