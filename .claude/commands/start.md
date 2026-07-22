@@ -40,7 +40,10 @@ review: the lexically last `_project/reports/*.md` whose frontmatter matches
 `last-active` is strictly greater than the cursor is ≥ 3, add ONE line to the wake report:
 "Bridge: <n> closed sessions since the last review — a bridge review is due (consumer spaces run
 /reflect; canonical follows `templates/consumer/.claude/commands/reflect.md` by hand)."
-Below 3 → say nothing.
+Below 3 → say nothing. (The ≥ 3 threshold and the 1–2 low-signal band in
+`templates/consumer/.claude/commands/reflect.md` §0 are two halves of one boundary constant —
+move one and you must move the other, plus the sibling nudge in
+`templates/consumer/.claude/commands/start.md`.)
 
 ## 2 · Orient — one-shot brief (compact; no re-running what hooks already ran)
 
@@ -52,7 +55,9 @@ interpret that output from context and re-run only if absent:
    Next Action and Handoff Notes, compressed. If pass 1 resumed a session, that one leads.
 3. **Open threads** — statuses greped from `_project/pipeline/*.md` and `_project/roadmap/*.md`
    directly (the emitted hub JSON may be stale; `_project/` is the source of truth and is a
-   handful of files).
+   handful of files). A `_project/workflows/*.md` entity whose frontmatter carries a `cadence`
+   tag is the ledger *record* of a standing scheduled routine — registered or still only
+   proposed, since the entity is never the runner; list them in one line.
 4. **Repo state** — `git status --porcelain` count, `git log -1 --oneline`.
 5. **Context systems** — from the roster below, name only what plausibly serves the goal.
 
@@ -95,8 +100,11 @@ them to things you already narrate:
 
 - **A decision lands** → append one line to Decisions (offer `/new decision` if formal).
 - **A durable insight surfaces** → append to First-Principles Candidates:
-  `- <one sentence> → <candidate home: decision · brain capture · memory · none yet>`.
-  /end's Capture pass consumes this list — it is the session's export queue.
+  `- <one sentence> → <candidate home: decision · brain capture · memory · routine · none yet>`.
+  /end's Capture pass consumes this list — it is the session's export queue. The `routine` home
+  marks recurring toil better served as a standing scheduled run — /end records the candidate; the
+  periodic bridge review (consumer spaces run /reflect; canonical follows
+  `templates/consumer/.claude/commands/reflect.md` by hand) turns it into a routine proposal.
 - **First reach for a context system** → append its slug to `kos`.
 - **Any natural checkpoint** (task done, before a long build, on Blockers changes) → refresh
   `last-active`; bump `updated` only if the date rolled.

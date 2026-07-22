@@ -16,10 +16,12 @@ It deliberately adds **two domain kinds the framework core knows nothing about**
 
 ## Not the real Soul-Steel baseline
 
-> This is a *demo*. The **byte-faithful** reproduction of the real Soul-Steel project lives at
-> [`../soul-steel.config.json`](../soul-steel.config.json) and is what the registered drift-check
-> consumer validates against the live Soul-Steel `_project/`. Don't conflate the two: this demo
-> adds `character`/`workflow` kinds that real Soul-Steel does not have.
+> This is a *demo*. The real Soul-Steel baseline lives at
+> [`../soul-steel.config.json`](../soul-steel.config.json), retained **frozen** as a *pre-lifecycle*
+> record: the shape the framework was generalized from, plus a worked hand-authored config. Soul-Steel
+> **de-migrated on 2026-07-19**, so that config is no longer a registered drift-check consumer and no
+> live Soul-Steel `_project/` stands behind it. Don't conflate the two: this demo is a *fictional*
+> consumer, and the `character`/`workflow` kinds it adds were never in that baseline.
 
 ## Try it
 

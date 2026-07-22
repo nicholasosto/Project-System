@@ -59,7 +59,7 @@ const BUILTIN_HINTS = {
   // The session export queue: /end's Capture pass consumes it; the /reflect bridge mines it.
   // The <…> placeholders are load-bearing — an authored candidate line contains no "<", which
   // is how the bridge discriminates real candidates from this untouched hint.
-  "First-Principles Candidates": "- <one-sentence insight> → <candidate home: decision · brain capture · memory · none yet>",
+  "First-Principles Candidates": "- <one-sentence insight> → <candidate home: decision · brain capture · memory · routine · none yet>",
   Outputs: "- <artifact produced>",
   Blockers: "- <blocker, or “none”>",
   "Next Action": "<the single next concrete action>",

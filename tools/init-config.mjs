@@ -67,6 +67,9 @@ const STANDARD_PRESET = {
     // engram's freshness timestamp; kos records which context systems the session reached for.
     "last-active": { type: "string", unknownAllowed: true },
     kos: { type: "string", unknownAllowed: true },
+    // Marks a workflow-shaped entity as a standing scheduled routine, accepted out of the
+    // /end·/reflect automation-candidates lane; the value is the cron-ish phrase it runs on.
+    cadence: { type: "string", unknownAllowed: true },
   },
   relTargetKinds: {
     supersedes: ["decision", "roadmap"],
@@ -240,7 +243,7 @@ function selfTest() {
     ["extends standard + a brand-new kind appends + loads", () => { const c = buildConfig({ project: "p", extends: "standard", kinds: [{ name: "character", folder: "characters", status: ["concept", "canon"], requiredSections: ["Concept"] }] }); return Object.keys(c.kinds).length === 7 && loads(c); }],
     ["unknown preset → throws", () => throws(() => buildConfig({ project: "p", extends: "nope" }), /unknown preset/)],
     ["$schema pointer is set + overridable", () => { const a = buildConfig({ project: "p", extends: "standard" }); const b = buildConfig({ project: "p", extends: "standard" }, { schemaPath: "./schema/project-config.schema.json" }); return a.$schema === DEFAULT_SCHEMA_PATH && b.$schema === "./schema/project-config.schema.json"; }],
-    ["session-lifecycle defaults: First-Principles scaffolded (not required) + both tags registered", () => { const c = buildConfig({ project: "p", extends: "standard" }); const s = c.kinds.session; const i = s.scaffoldSections.indexOf("First-Principles Candidates"); return loads(c) && i > 0 && s.scaffoldSections[i - 1] === "Decisions" && s.scaffoldSections[i + 1] === "Outputs" && !s.requiredSections.includes("First-Principles Candidates") && c.tagRegistry["last-active"]?.type === "string" && c.tagRegistry.kos?.type === "string"; }],
+    ["session-lifecycle defaults: First-Principles scaffolded (not required) + lifecycle & cadence tags registered", () => { const c = buildConfig({ project: "p", extends: "standard" }); const s = c.kinds.session; const i = s.scaffoldSections.indexOf("First-Principles Candidates"); return loads(c) && i > 0 && s.scaffoldSections[i - 1] === "Decisions" && s.scaffoldSections[i + 1] === "Outputs" && !s.requiredSections.includes("First-Principles Candidates") && c.tagRegistry["last-active"]?.type === "string" && c.tagRegistry.kos?.type === "string" && c.tagRegistry.cadence?.type === "string"; }],
   ];
 
   let pass = 0;

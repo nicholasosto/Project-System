@@ -1,6 +1,6 @@
 # The `ProjectEntity` contract
 
-> **Status:** active (updated 2026-06-24). The project-agnostic core of the project-system
+> **Status:** active (updated 2026-07-22). The project-agnostic core of the project-system
 > framework. Extracted and generalized from Soul-Steel-Official on 2026-06-24; the
 > machine contract is split into a universal base
 > ([project-entity.base.schema.json](../../schema/project-entity.base.schema.json)) and a
@@ -146,6 +146,8 @@ declares them. The framework's own config, for example, uses:
 | `pipeline` | `design` · `qualify` · `build` · `ship` · `archive` · `shelved` |
 | `roadmap` | `proposed` · `active` · `superseded` · `complete` |
 | `session` | `planned` · `active` · `blocked` · `completed` · `shelved` |
+| `workflow` | `draft` · `active` · `deprecated` |
+| `feature` | `planned` · `available` · `deprecated` |
 
 **Session-lifecycle semantics** (the `/start` · `/end` · `/reflect` commands read the standard
 session enum this way): `planned` and `active` are the **dangling** states — a session left in
@@ -176,6 +178,25 @@ marks a session file as a lifecycle-managed **engram** (the `/reflect` bridge's 
 `/start` roster. Two parser rules follow from the zero-dep frontmatter parser: `tags` must stay
 a **single-line flow map** (nested block maps are not parsed), and any comma-bearing value —
 `kos` almost always — must be **quoted** or it splits the map.
+
+**`cadence` — carried by a `workflow`, never by a `session`** (also `type: "string"`,
+`unknownAllowed`). A workflow-shaped entity that carries `cadence` is the **ledger record** of a
+standing scheduled routine — a recurring agent run accepted out of the `/end` · `/reflect`
+automation-candidates lane, where recurring toil is first recorded per-session as a candidate and
+later aggregated into a full routine proposal. The record is not the runner: registering with an
+actual scheduling surface is surface-agnostic and **approval-gated**, and where no such surface
+exists the proposal *stands as documentation* — so a `cadence`-tagged entity can exist with
+nothing scheduling it, and the scheduling surface, never the entity, is what runs it. Event-shaped
+enforcement is not a routine at all — that is a hook's job, and this contract wires **two hooks,
+no more** (§7a); a routine must never be a third hook in disguise. The value is a human cron-ish
+phrase (`weekly on Monday morning`), set by `--tag cadence=…` on the scaffold call — which emits
+tag values **unquoted** into the single-line flow map, so the phrase must stay **comma-free**; a
+comma-bearing value has to be hand-quoted by a follow-up Edit and can never ride a `--tag`
+argument (the trap `kos` hits above). The entity's `## Workflow` block carries the minimal honest
+swimlane — trigger → what it runs → output. `cadence` is the **contract signal** a renderer can
+group a "Scheduled" lane on; that hookup is deferred to the queued runs/facet governance ADRs, and
+the tag changes nothing in the engines today — they validate it as a registered string and nothing
+more.
 
 ---
 
@@ -225,23 +246,43 @@ why the contract must exist before the first renderer.)*
 
 ### 7a. Adoption steps
 
-1. **Author a config.** Copy `examples/soul-steel.config.json`; declare your kinds (folder,
-   status enum, initial status, filename scheme, sections) plus the tag registry,
-   milestones, rel→kind rules, and render metadata.
-2. **Run the validator** (`node tools/validate.mjs --root <project> --config <…>`). Files
-   without frontmatter report as *pending migration* (info), so it's useful before any
-   migration is complete and tracks the gap.
-3. **Wire authoring + guarding.** Copy the `/new` command and add the `PreToolUse`
-   (`Write|Edit`) guard hook — a new file is conformant by construction, an invalid write
-   is blocked at save time.
-4. **Render** (`node tools/render-hub.mjs`) for the model-driven hub dashboard.
-5. **Register** the project in `tools/check-consumer-drift.mjs` so its copy of the contract
-   stays honest.
+1. **Vendor the framework verbatim** into a reserved `.project-system/` at the project root
+   (`schema/`, `lib/`, `tools/`). Nothing inside it is edited or renamed in place; an update
+   is a re-copy of the folder.
+2. **Author the config** — `project-system.config.json` at the project root, the only
+   project-specific file a consumer writes. Prefer the generator:
+   `node .project-system/tools/init-config.mjs --preset standard --project <slug>` proves the
+   config loads through `lib/contract.mjs` before writing it, so the config is **born valid**;
+   a `--spec` adds or overrides kinds. The `setup-project-system` skill drives that generator
+   through a naming-convention interview for a **greenfield** project; `migrate-project-space`
+   instead *infers* the kinds, enums, and an initial entity set from a project that **already
+   carries planning material** (docs, ADRs, a roadmap) and feeds the same generator. (Copying
+   `examples/soul-steel.config.json` and editing by hand remains a fallback.)
+3. **Copy the control surface** — `templates/consumer/.claude/` into the project: the two
+   hooks (`settings.json` — the blocking `PreToolUse` guard and the advisory `SessionStart`
+   health summary, **and no third**), the full command set (`/new` · `/start` · `/end` ·
+   `/reflect`), and the
+   bundled skills (`setup-project-system` · `migrate-project-space`). It is domain-neutral and
+   identical for every consumer, so it is vendored, not edited.
+4. **Register the consumer** — add the project to `tools/check-consumer-drift.mjs` (`schema` ·
+   `root` · `config`, plus a `claudeDir` to opt into the hook-parity axis) so its mirror —
+   schema, validator, and hooks — stays honest.
+5. **Verify** — `node .project-system/tools/check-consumer-drift.mjs` (or `npm test` from the
+   framework). The validator runs standalone at any point
+   (`node .project-system/tools/validate.mjs --root . --config ./project-system.config.json`);
+   files without frontmatter report as *pending migration* (info), so it is useful before any
+   migration is complete and tracks the gap. Rendering rides the same sweep: once the config and
+   a first entity exist, `node .project-system/tools/render-hub.mjs` emits the JSON contract a
+   dashboard reads, and `--check` thereafter re-asserts that contract instead of rewriting it —
+   engines validate, they never mutate.
 
 *Provenance:* this framework was first built inside Soul-Steel-Official as phases A→E
-(sessions = reference shape; migrate; contract + validator; scaffolder + guard; render),
-then extracted here. Soul-Steel remains a live consumer (`examples/soul-steel.config.json`
-reproduces its baseline exactly).
+(sessions = reference shape; migrate; contract + validator; scaffolder + guard; render), then
+extracted and generalized here on 2026-06-24. Soul-Steel itself **de-migrated on 2026-07-19**
+and is no longer a consumer — its entry is gone from the drift registry in
+`tools/check-consumer-drift.mjs`. `examples/soul-steel.config.json` is retained **frozen**, as
+a pre-lifecycle baseline: the provenance record of the shape the framework was generalized
+from, and a worked example of a hand-authored config. It is no longer drift-checked.
 
 ### 7b. Consumer-local additions to templated commands — the delimiter grammar
 

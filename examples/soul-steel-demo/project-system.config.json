@@ -75,7 +75,8 @@
     "scope": { "type": "string", "lintAgainst": ["steel-city", "ip-wide", "tooling"], "unknownAllowed": true },
     "horizon": { "type": "enum", "values": ["milestone", "phase", "cross-domain"] },
     "last-active": { "type": "string", "unknownAllowed": true },
-    "kos": { "type": "string", "unknownAllowed": true }
+    "kos": { "type": "string", "unknownAllowed": true },
+    "cadence": { "type": "string", "unknownAllowed": true }
   },
   "relTargetKinds": {
     "supersedes": ["decision", "roadmap"],

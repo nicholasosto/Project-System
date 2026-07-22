@@ -62,8 +62,10 @@ fails if a consumer renames a vendored tool or forks the wiring — so "copy the
 
 ## Packaging
 
-The contract is **mirrored with a drift check**, not yet published — there are 2
-consumers and the threshold to publish `@trembus/project-schema` is 3. Run
+The contract is **mirrored with a drift check**, not yet published — there are 3 real
+consumers, so the threshold to publish `@trembus/project-schema` has been reached and
+publishing is now a pending decision (`examples/soul-steel.config.json` is a frozen
+pre-lifecycle baseline, no longer drift-checked). Run
 `node tools/check-consumer-drift.mjs` to verify every consumer still mirrors the canonical
 contract (structurally and behaviorally). The full suite runs in CI on every push/PR
 ([.github/workflows/ci.yml](.github/workflows/ci.yml), Node 18/20/22, no install — the core is

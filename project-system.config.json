@@ -79,7 +79,8 @@
     "horizon": { "type": "enum", "values": ["milestone", "phase", "cross-domain"] },
     "tier": { "type": "enum", "values": ["required", "optional"] },
     "last-active": { "type": "string", "unknownAllowed": true },
-    "kos": { "type": "string", "unknownAllowed": true }
+    "kos": { "type": "string", "unknownAllowed": true },
+    "cadence": { "type": "string", "unknownAllowed": true }
   },
   "relTargetKinds": {
     "supersedes": ["decision", "roadmap"],
@@ -108,7 +109,7 @@
           "note": "Two Claude Code hooks enforce the contract at the edges of a session — a blocking guard on every write, an advisory health check when a session opens. (Rendering isn't a hook; it's the Command Center's Vite plugin.)"
         },
         "commands": {
-          "note": "The project's slash commands — the generic /new <kind> scaffolder (writes valid frontmatter, self-validates against the config) and its bookend /end, the session-close sweep: drift check · capture opportunities · conflict audit."
+          "note": "The project's slash commands — the generic /new <kind> scaffolder (writes valid frontmatter, self-validates against the config), /start (session wake-up: dangling-session triage, orientation brief, engram open), its bookend /end (the session-close sweep: drift check · capture opportunities · conflict audit), and the consumer-template /reflect bridge review, which mines the closed-session ledger for propose-only improvements."
         },
         "workflows": {
           "note": "Operating workflows the Command Center replays as swimlanes — the authoring loop plus any entity that declares a ## Workflow block."

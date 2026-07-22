@@ -12,6 +12,14 @@ links:
 
 > **Status:** ship (2026-06-30)
 
+**Superseded (2026-07-19):** Soul-Steel-Official **de-migrated** — its commit `aa4a689` deleted the
+vendored `.project-system/`, the `_project/` tree, and the root config, so its entry was removed from
+`CONSUMERS` in `tools/check-consumer-drift.mjs`; the Roblox domain's consumer is now
+**roblox-development-studio**. `examples/soul-steel.config.json` is retained **frozen** as a
+pre-lifecycle baseline — provenance plus the worked hand-authored-config example — and is no longer
+drift-checked. Everything below is the record as it stood at ship: its drift-check PASS claims and its
+"live SS tree" were true on 2026-06-30 and are kept unedited.
+
 **Progress:** Phases 0–5 executed and verified on SS branch `migrate/project-system-defork` (not yet
 pushed/merged). SS now **consumes** the framework: vendored `.project-system/`, its own root config, the
 4 forked engines + forked `md.mjs` deleted (`build-planning-sessions` repointed; output byte-identical),
