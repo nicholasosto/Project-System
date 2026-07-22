@@ -1,13 +1,13 @@
 ---
 title: "Commands deep-review remediation and scheduled-routines bridge"
-status: active
+status: completed
 updated: 2026-07-22
-tags: { last-active: 2026-07-22T13:09, kos: "spec, decisions, consumers, dashboards" }
+tags: { last-active: 2026-07-22T13:55, kos: "spec, decisions, consumers, dashboards, memory" }
 ---
 
 # Commands deep-review remediation and scheduled-routines bridge
 
-> **Status:** active (2026-07-22)
+> **Status:** completed (2026-07-22)
 
 ## Goal
 
@@ -58,19 +58,43 @@ scheduled routine.
 - Prose that instructs a reader to transcribe a placeholder is a latent bug when a downstream parser
   discriminates on that placeholder's syntax → none yet
 - A doc surface with no engine watching it drifts on exactly the timescale of the work it describes → routine
+- Assert the vendored mirror byte-for-byte across every consumer and the demo fixture, not just its hooks block → routine
+- Re-verify the claims docs make about the consumer registry — counts, de-migrations, command enumerations — against the registry itself → routine
 
 ## Outputs
 
-- <artifact produced>
+- **ADR 0017** — [session lifecycle, self-improvement bridge, and a scheduled-routines lane](../decisions/0017-session-lifecycle-self-improvement-bridge-and-a-scheduled-ro.md) (accepted).
+- **Feature entity** — [session-lifecycle-and-bridge](../features/session-lifecycle-and-bridge.md) (available · optional · framework).
+- **Report** — [commands deep-review](../reports/2026-07-22-commands-deep-review-remediation-and-the-scheduled-routines-.md), findings A1–A8 with evidence.
+- **The routines lane**, shipped across five command files, two engines, three configs, and spec §4b.
+- **`examples/soul-steel-demo/.claude/`** re-vendored — byte-identical to the consumer template for the first time since the 2026-07-21 port.
+- Commit `d04eff1`; `README.md`, `CLAUDE.md`, spec §4a/§4b/§7a, and two shipped pipeline records reconciled to reality.
 
 ## Blockers
 
-- <blocker, or “none”>
+- none
 
 ## Next Action
 
-<the single next concrete action>
+Re-copy `templates/consumer/.claude/` into the three registered consumer spaces (Asset-Studio ·
+Astrix-Systems · Roblox-Development-Studio) — their command surfaces now trail canonical, and the
+drift check cannot see it.
 
 ## Handoff Notes
 
-<what the next session needs to know>
+The lane was **dogfooded at close**: this session's own `/end` sweep ran the Automation-candidates
+bullet it had just shipped and produced the three `→ routine` lines above. They are candidates, not
+proposals — the next `/reflect` (run by hand here; canonical ships no `/reflect`) is what turns them
+into routine proposals, and it needs a wider window than one session to justify any of them.
+
+Two things a successor should know. **The drift check has a blind spot**: hook-parity compares only
+the `hooks` block of `settings.json`, so command files, `skills/`, and `permissions` can rot green.
+That is what happened to the demo fixture, and it is why `[CF-2]` (a command-file axis) exists.
+**Governance renumbers**: 0017 is now taken by this merged decision, so the queued runs and facet
+ADRs are 0018+.
+
+One unexplained observation, recorded rather than papered over: `previews/dashboards/*.json` were
+regenerated at 13:52 by something outside the engines this session ran. `render-hub.mjs --check` is
+verifiably read-only (it exits before `write()`), and `.claude/settings.json` still wires exactly two
+hooks. The emitted content is correct and in sync; the *writer* is unidentified. If it recurs, find
+it before trusting an "in sync" result.

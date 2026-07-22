@@ -10,8 +10,8 @@
     "workflow": "workflows",
     "feature": "features"
   },
-  "entities": 46,
-  "migrated": 46,
+  "entities": 49,
+  "migrated": 49,
   "counts": {
     "error": 0,
     "warning": 0,
@@ -163,6 +163,15 @@
       "excerpt": "The Command Center grew a system-map view ([[command-center-system-map]]) — a C4-style architecture diagram via @trembus/viz SystemMap, authored in apps/command-center/src/systemMap.ts and rendered in the Overview. Stan…"
     },
     {
+      "id": "0017-session-lifecycle-self-improvement-bridge-and-a-scheduled-ro",
+      "kind": "decision",
+      "title": "Session lifecycle, self-improvement bridge, and a scheduled-routines lane",
+      "status": "accepted",
+      "updated": "2026-07-22",
+      "file": "_project/decisions/0017-session-lifecycle-self-improvement-bridge-and-a-scheduled-ro.md",
+      "excerpt": "The session lifecycle shipped on 2026-07-21 as a pipeline entity and five command files, with no decision record behind it — the port pipeline reserved exactly one ADR slot for the merged design and warned against minti…"
+    },
+    {
       "id": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
       "kind": "report",
       "title": "Extract and generalize the framework from Soul-Steel",
@@ -191,6 +200,15 @@
       "updated": "2026-06-30",
       "file": "_project/reports/2026-06-30-bootstrapping-the-asset-studio.md",
       "excerpt": "What shipped"
+    },
+    {
+      "id": "2026-07-22-commands-deep-review-remediation-and-the-scheduled-routines-",
+      "kind": "report",
+      "title": "Commands deep-review — remediation and the scheduled-routines bridge",
+      "status": "complete",
+      "updated": "2026-07-22",
+      "file": "_project/reports/2026-07-22-commands-deep-review-remediation-and-the-scheduled-routines-.md",
+      "excerpt": "A deep review of the command surface, its eight findings remediated, and the lifecycle extended with a propose-only scheduled-routines lane."
     },
     {
       "id": "migrate-soul-steel-command-center",
@@ -290,12 +308,12 @@
       "id": "2026-07-22-commands-deep-review-remediation-and-scheduled-routines-brid",
       "kind": "session",
       "title": "Commands deep-review remediation and scheduled-routines bridge",
-      "status": "active",
+      "status": "completed",
       "updated": "2026-07-22",
       "file": "_project/sessions/2026-07-22-commands-deep-review-remediation-and-scheduled-routines-brid.md",
       "tags": {
-        "last-active": "2026-07-22T13:09",
-        "kos": "spec, decisions, consumers, dashboards"
+        "last-active": "2026-07-22T13:55",
+        "kos": "spec, decisions, consumers, dashboards, memory"
       },
       "excerpt": "Close out a deep review of the command surface — remediate the drift it found — and extend the session lifecycle with a propose-only lane that spots recurring toil worth becoming a standing scheduled routine."
     },
@@ -487,6 +505,19 @@
       "excerpt": "<…>"
     },
     {
+      "id": "session-lifecycle-and-bridge",
+      "kind": "feature",
+      "title": "Session lifecycle and self-improvement bridge",
+      "status": "available",
+      "updated": "2026-07-22",
+      "file": "_project/features/session-lifecycle-and-bridge.md",
+      "tags": {
+        "tier": "optional",
+        "scope": "framework"
+      },
+      "excerpt": "A three-command loop over the session kind. /start opens a tagged engram (Wake · Orient · Open — dangling-session triage, a one-shot orientation brief, then the session entity itself); /end closes it natively through a…"
+    },
+    {
       "id": "validator-and-guard",
       "kind": "feature",
       "title": "Validator and save-time guard",
@@ -502,9 +533,9 @@
   ],
   "byKind": {
     "decision": {
-      "total": 16,
+      "total": 17,
       "byStatus": {
-        "accepted": 13,
+        "accepted": 14,
         "proposed": 3
       },
       "ids": [
@@ -523,7 +554,8 @@
         "0013-validate-the-swimlane-body-and-let-steps-reference-the-graph",
         "0014-migration-skill-infers-config-from-existing-planning",
         "0015-honor-unknownallowed-tag-lint",
-        "0016-system-map-as-a-first-class-kind-distinct-from-the-derived-f"
+        "0016-system-map-as-a-first-class-kind-distinct-from-the-derived-f",
+        "0017-session-lifecycle-self-improvement-bridge-and-a-scheduled-ro"
       ],
       "tone": "info",
       "statusOrder": [
@@ -534,15 +566,16 @@
       ]
     },
     "report": {
-      "total": 3,
+      "total": 4,
       "byStatus": {
-        "complete": 1,
+        "complete": 2,
         "draft": 2
       },
       "ids": [
         "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
         "2026-06-29-framework-review-load-bearing-surfaces-test-packaging-bootst",
-        "2026-06-30-bootstrapping-the-asset-studio"
+        "2026-06-30-bootstrapping-the-asset-studio",
+        "2026-07-22-commands-deep-review-remediation-and-the-scheduled-routines-"
       ],
       "tone": "success",
       "statusOrder": [
@@ -594,8 +627,7 @@
       "total": 5,
       "byStatus": {
         "shelved": 1,
-        "completed": 3,
-        "active": 1
+        "completed": 4
       },
       "ids": [
         "2026-06-24-extract-and-generalize-project-system-into-its-own-space",
@@ -631,10 +663,10 @@
       ]
     },
     "feature": {
-      "total": 14,
+      "total": 15,
       "byStatus": {
         "planned": 7,
-        "available": 7
+        "available": 8
       },
       "ids": [
         "brain-registration",
@@ -650,6 +682,7 @@
         "new-scaffolder",
         "projectentity-contract",
         "publish-project-schema",
+        "session-lifecycle-and-bridge",
         "validator-and-guard"
       ],
       "tone": "success",
@@ -722,6 +755,12 @@
       "target": "features/command-center-system-map"
     },
     {
+      "from": "0017-session-lifecycle-self-improvement-bridge-and-a-scheduled-ro",
+      "fromKind": "decision",
+      "rel": "references",
+      "target": "pipeline/port-session-lifecycle-self-improvement-bridge"
+    },
+    {
       "from": "2026-06-24-extract-and-generalize-the-framework-from-soul-steel",
       "fromKind": "report",
       "rel": "decided-in",
@@ -750,6 +789,30 @@
       "fromKind": "report",
       "rel": "references",
       "target": "features/new-scaffolder"
+    },
+    {
+      "from": "2026-07-22-commands-deep-review-remediation-and-the-scheduled-routines-",
+      "fromKind": "report",
+      "rel": "references",
+      "target": "decisions/0017-session-lifecycle-self-improvement-bridge-and-a-scheduled-ro"
+    },
+    {
+      "from": "2026-07-22-commands-deep-review-remediation-and-the-scheduled-routines-",
+      "fromKind": "report",
+      "rel": "references",
+      "target": "features/session-lifecycle-and-bridge"
+    },
+    {
+      "from": "2026-07-22-commands-deep-review-remediation-and-the-scheduled-routines-",
+      "fromKind": "report",
+      "rel": "references",
+      "target": "pipeline/port-session-lifecycle-self-improvement-bridge"
+    },
+    {
+      "from": "2026-07-22-commands-deep-review-remediation-and-the-scheduled-routines-",
+      "fromKind": "report",
+      "rel": "references",
+      "target": "sessions/2026-07-22-commands-deep-review-remediation-and-scheduled-routines-brid"
     },
     {
       "from": "migrate-soul-steel-command-center",
@@ -906,11 +969,17 @@
       "fromKind": "feature",
       "rel": "references",
       "target": "decisions/0007-derive-kind-presentation-from-the-contract"
+    },
+    {
+      "from": "session-lifecycle-and-bridge",
+      "fromKind": "feature",
+      "rel": "decided-in",
+      "target": "decisions/0017-session-lifecycle-self-improvement-bridge-and-a-scheduled-ro"
     }
   ],
   "edgesByRel": {
-    "references": 32,
-    "decided-in": 6,
+    "references": 37,
+    "decided-in": 7,
     "predecessor": 1,
     "successor": 2
   },
